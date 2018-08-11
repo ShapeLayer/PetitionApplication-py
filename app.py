@@ -88,7 +88,7 @@ bundles = {
     ),
 
     'main_css' : Bundle(
-        'css/Litera.css',
+        'css/minty.css',
         'css/custom.css',
         output = 'gen/main.css'
     )
