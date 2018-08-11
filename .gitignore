@@ -1,0 +1,7 @@
+LocalSettings.py
+__pycache__/*.*
+*.db
+*/*.db
+
+static/gen/*.*
+static/.webassets-cache

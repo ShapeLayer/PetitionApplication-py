@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>{{ ENTREE_APPNAME }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--common-->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
+
+    <!--Bootstrap CDN-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    
+    <!--for Webview-->
+    <link rel="stylesheet" href="./css/Litera.css">
+    <link rel="stylesheet" href="./css/custom.css">
+</head>
+<body>
+    <div class="container">
+        <div class="bs-docs-section">
+            <h1>환영합니다.</h1>
+            <div class="bs-component">
+                <form action="/register" accept-charset="utf-8" name="installation" method="post">
+                    <fieldset>
+                        <legend>계정 정보를 입력합니다.</legend>
+                        <div class="form-group">
+                            <div class="form-group">
+                                <label for="SITE_USER_LOGIN_ID">계정명</label>
+                                <input type="text" class="form-control" name="SITE_USER_LOGIN_ID" placeholder="" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="SITE_USER_LOGIN_PW">비밀번호</label>
+                                <input type="password" class="form-control" name="SITE_USER_LOGIN_PW" placeholder="" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="SITE_USER_DISPLAY_NAME">이름</label>
+                                <input type="text" class="form-control" name="SITE_USER_DISPLAY_NAME" placeholder="" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="SITE_USER_EMAIL">이메일                                </label>
+                                <input type="email" class="form-control" name="SITE_USER_EMAIL" placeholder="" required>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <button type="submit" class="btn btn-primary">계정 등록</button>
+                </form>
+            </div>
+        </div>
+        <!-- footer area -->
+        <footer id="footer">
+            <div class="row">
+                <div class="col-lg-12">
+                    <ul class="list-unstyled">
+                        <li><a href="https://github.com/kpjhg0124/entree/issues">Any Bugs?</a></li>
+                        <li><a href="https://github.com/kpjhg0124/entree/graphs/contributors">Contributors</a></li>
+                        <li><a href="https://github.com/kpjhg0124/entree/"><i class="fab fa-github"></i>   Github</a></li>
+                    </ul>
+                    <p>Made by <a href="https://github.com/kpjhg0124">kpjhg0124</a>.</p>
+                    <p>This project is licensed under the BSD 3-Clause License. See the <a href="https://github.com/kpjhg0124/entree/blob/master/README.md">LICENSE</a> document for details.</p>
+                    <p>Based on <a href="https://getbootstrap.com" rel="nofollow">Bootstrap</a>. Icons from <a href="http://fontawesome.io/" rel="nofollow">Font Awesome</a>. Web fonts from <a href="https://fonts.google.com/" rel="nofollow">Google</a>. Designs by <a href="https://bootswatch.com/">Bootswatch</a>.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE HTML>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>{{ ENTREE_APPNAME }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--common-->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
+
+    <!--Bootstrap CDN-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    
+    <!--for Webview-->
+    {% assets "main_css" %}
+    <link rel="stylesheet" href="{{ ASSET_URL }}">
+    {% endassets %}
+
+</head>
+<body>
+    <div class="navbar navbar-expand-lg fixed-top navbar-light bg-light">
+        <div class="container">
+            <a href="#" class="navbar-brand">{{ ENTREE_APPNAME }}</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                <li class="nav-item">
+                    <a class="nav-link" href="./">홈</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./manage">관리</a>
+                </li>
+            </ul>
+            <ul class="nav navbar-nav ml-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="usermenu"><img src="http://www.gravatar.com/avatar/aac6ac7a2227229f9f5ed2c798743638" alt="Gravatar" id="gravatar" height="16" width="16">User: kpjhg0124 <span class="caret"></span></a>
+                    <div class="dropdown-menu" aria-labelledby="usermenu">
+                        <a class="dropdown-item" href="/account">Account Settings</a>
+                        <a class="dropdown-item" href="/system">System Settings</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Log Out</a>
+                    </div>
+                </li>
+            </ul>
+  
+          </div>
+        </div>
+    </div>
+    <div class="container">
+        {{ ENTREE_CONTENT|safe }}
+        <!-- footer area -->
+        <footer id="footer">
+            <div class="row">
+                <div class="col-lg-12">
+                    <ul class="list-unstyled">
+                        <li><a href="https://github.com/kpjhg0124/entree/issues">Any Bugs?</a></li>
+                        <li><a href="https://github.com/kpjhg0124/entree/graphs/contributors">Contributors</a></li>
+                        <li><a href="https://github.com/kpjhg0124/entree/"><i class="fab fa-github"></i>   Github</a></li>
+                    </ul>
+                    <p>Made by <a href="https://github.com/kpjhg0124">kpjhg0124</a>.</p>
+                    <p>This project is licensed under the BSD 3-Clause License. See the <a href="https://github.com/kpjhg0124/entree/blob/master/README.md">LICENSE</a> document for details.</p>
+                    <p>Based on <a href="https://getbootstrap.com" rel="nofollow">Bootstrap</a>. Icons from <a href="http://fontawesome.io/" rel="nofollow">Font Awesome</a>. Web fonts from <a href="https://fonts.google.com/" rel="nofollow">Google</a>. Designs by <a href="https://bootswatch.com/">Bootswatch</a>.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    {% assets "main_js" %}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+    {% endassets %}
+</body>
+</html>
