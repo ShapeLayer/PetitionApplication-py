@@ -2,7 +2,7 @@
 
 _새로운 일입니다. 반가워요._
 
-openForm is a Python-based survey app application. By developing using an entree that is under development, you may still have a by-product of the entree.
+openForm is a Python-based survey app application. By developing using an entree that is under development, it may still have a by-product of the entree.
 
 ## External Project
 * [Bootstrap](https://getbootstrap.com/) - Bootstrap - [MIT License](https://opensource.org/licenses/MIT) _CDN Uses_
