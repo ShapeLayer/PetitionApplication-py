@@ -3,11 +3,13 @@ from flask import Flask, render_template, request, jsonify
 from flask_assets import Bundle, Environment
 from flask_login import LoginManager
 from flask_login import login_user, logout_user, current_user, login_required
+from datetime import datetime
 import sqlite3
 import re
 import json
 import libgravatar
 import sys
+
 
 import LocalSettings
 
@@ -77,6 +79,12 @@ def articles_write():
         form_display_name = request.form['form_display_name']
         form_notice_level = request.form['form_notice_level']
         form_body_content = request.form['form_body_content']
+        if request.form['submit'] == 'publish':
+            form_enabled = 1
+        elif request.form['submit'] == 'preview':
+            form_enabled = 0
+        form_publish_date = datetime.today()
+        curs.execute('insert into FORM_DATA_TB (form_display_name, form_notice_level, form_publish_date, form_enabled, form_body_content) values("{}", "{}", "{}", {}, "{}")'.format(form_display_name, form_notice_level, form_publish_date, form_enabled, form_body_content))
     else:
         BODY_CONTENT += CONVERSTATIONS_DICT['articles_write']
         return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
