@@ -1,9 +1,4 @@
 /*Sqlite3 Query*/
-/*
-<LOCATION_TABLE_NAME> is LOCATION_TABLE_NAME value in app.py.
-*/
-create table SEAT_LOCATION_<LOCATION_TABLE_NAME>_TB(
-    LOCATION_X INTEGER NOT NULL,
-    LOCATION_Y INTEGER NOT NULL,
-    MEMBER_ID INTEGER
-);
+create table FORM_ {{ name }} _TB(
+    FORM_BODY_CONTENT TEXT NOT NULL
+)
