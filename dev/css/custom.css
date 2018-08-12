@@ -5,6 +5,10 @@ input{
     text-align : start;
 }
 
+.bs-docs-section {
+    margin-top: 4em;
+}
+
 #footer{
     margin : 5em 0;
 }
@@ -17,55 +21,6 @@ input{
     clear : left;
     margin-bottom : 0;
 }
-
 #gravatar {
     margin-right : 0.5em;
 }
-
-.btn {
-    margin : 0.5em;
-}
-
-input[type=radio] {
-    -webkit-appearance: none;
-    margin: 0;
-    top: 2px;
-    width: 25px;
-    height: 25px;
-    background-color: #ffffff;
-    border: 1px solid #878481;
-    cursor: pointer;
-    outline: none;
-    position: absolute;
-    display: block;
-    /*background: transparent;*/
-    background-size: cover;
-    border: none;
-  }
-  input[type=radio]:checked {
-    box-shadow: inset 0 0 0 2px transparent, inset 0 0 0 1px #27f9bf;
-    transition: box-shadow 0.3s;
-  }
-  
-  input[type=radio]:checked {
-    background-color: #ffffff;
-    border: 4px solid var(--webui-primary-filled);
-    border-radius: 7px;
-    transition-duration: 0.2s;
-    transition-property: border;
-  }
-
-  .sel {
-    position: relative;
-    display: inline-flex;
-    width: 25px;
-    height: 25px;
-    font-size: 18px;
-    justify-content: center;
-    align-items: flex-end;
-    background-position-x: center;
-    background-position-y: 8px;
-    background-size: initial;
-    background-repeat: no-repeat;
-    vertical-align: middle;
-  }

@@ -9,7 +9,7 @@ import json
 import libgravatar
 import sys
 
-import installation
+import LocalSettings
 
 app = Flask(__name__)
 
@@ -17,16 +17,8 @@ try:
     FLASK_PORT_SET = int(sys.argv[1])
     print(' * 강제 포트 설정 지정됨.')
 except:
-    FLASK_PORT_SET = 2500
+    FLASK_PORT_SET = LocalSettings.FLASK_HOST_PORT
 
-try:
-    import LocalSettings
-except:
-    print(' * LocalSettings.py를 찾을 수 없습니다. ')
-    installation.start(FLASK_PORT_SET)
-    import LocalSettings
-
-import ReadLocalSettings
 
 
 
@@ -150,123 +142,8 @@ def main():
     else:
         BODY_CONTENT = BODY_CONTENT.replace('<content>', CONVERSTATIONS_DICT['MAIN_CONTAINER_NO_ACCOUNT'])
 
-    return render_template('index.html', ENTREE_APPNAME = LocalSettings.ENTREE_APPNAME, ENTREE_CONTENT = BODY_CONTENT)
-### Route: Login ###
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST': 
-        account_id = request.json['account_id']
-        account_pw_hash = request.json['account_pw_hash']
-        if account_id not in USERS:
-            json_res={'ok': False, 'error': 'Invalid account_id or password'}
-        elif not USERS[account_id].can_login(account_pw_hash):
-            json_res = {'ok': False, 'error': 'Invalid account_id or password'}
-        else:
-            json_res={'ok': True, 'msg': 'user <%s> logined' % account_id}
-            USERS[account_id].authenticated = True
-            login_user(USERS[account_id], remember=True)
-        return jsonify(json_res)
-    else:
-        BODY_CONTENT = CONVERSTATIONS_DICT['LOGIN']
-        return render_template('form.html', ENTREE_APPNAME = 'ENTREE - 로그인', ENTREE_CONTENT = BODY_CONTENT)
-
-
-### Route: Manage ###
-@app.route('/manage')
-def flask_manage():
-    BODY_CONTENT = ''
-    
-    ## Check Member IS EXISTED ##
-    try:
-        curs.execute('select * from MEMBER_TB limit 1')
-        MEMBER_IS_EXISTED = True
-    except:
-        MEMBER_IS_EXISTED = False
-
-    ## Check Seat IS EXISTED ##
-    try:
-        curs.execute('select * from SEAT_LOCATION_TB limit 1')
-        SEAT_LOCATION_IS_EXISTED = True
-    except:
-        SEAT_LOCATION_IS_EXISTED = False
-
-    ## MEMBER_IS_EXISTED ##
-    if MEMBER_IS_EXISTED:
-        pass
-    else:
-        BODY_CONTENT += CONVERSTATIONS_DICT['MEMBER_IS_EXISTED_FALSE']
-
-    ## SEAT_LOCATION_IS_EXISTED ##
-    if SEAT_LOCATION_IS_EXISTED:
-        pass
-    else:
-        BODY_CONTENT += CONVERSTATIONS_DICT['SEAT_LOCATION_IS_EXISTED_FALSE']
-
-    BODY_CONTENT += CONVERSTATIONS_DICT['MANAGE_MEMBER_TRIGGER_BUTTONS']
-
-    return render_template('index.html', ENTREE_APPNAME = LocalSettings.ENTREE_APPNAME, ENTREE_CONTENT = BODY_CONTENT)
-
-### Route: Settings ###
-@app.route('/settings')
-def flask_settings():
-    return ''
-
-@app.route('/settings/system')
-def flask_settings_system():
-    BODY_CONTENT = ''
-    ENTREE_SETTINGS = ReadLocalSettings.Request_LocalSettings()
-
-    BODY_CONTENT += '<div class="bs-component"><form action="/" accept-charset="utf-8" name="installation" method="post"><fieldset><div class="form-group">'
-    for i in range(len(ENTREE_SETTINGS)):
-        SETTINGS_NAME = ENTREE_SETTINGS['SETTINGS_'+str(i)]['NAME'].lower()
-        BODY_CONTENT += '<div class="form-group"><label for="' + SETTINGS_NAME + '">' + SETTINGS_NAME + '</label><input type="text" class="form-control" name="' + SETTINGS_NAME + '" placeholder="'+ str(ENTREE_SETTINGS['SETTINGS_'+str(i)]['VALUE']) +'"'
-        if ENTREE_SETTINGS['SETTINGS_'+str(i)]['EDITABLE']:
-            pass
-        else:
-            BODY_CONTENT += 'id="disabledInput" disabled=""'
-        BODY_CONTENT += '>'
-        try:
-            SETTINGS_DETAIL = ENTREE_SETTINGS['SETTINGS_'+str(i)]['DETAIL']
-            BODY_CONTENT += '<small id="' + SETTINGS_NAME + '_help" class="form-text text-muted">' + SETTINGS_DETAIL + '</small>'
-        except:
-            pass
-        BODY_CONTENT += '</div>'
-
-    return render_template('index.html', ENTREE_APPNAME = LocalSettings.ENTREE_APPNAME, ENTREE_CONTENT = BODY_CONTENT)
-
-@app.route('/settings/member')
-def flask_settings_member():
-    return ''
-
-@app.route('/settings/member/add', methods=['GET', 'POST'])
-def flask_settings_member_add():
-    BODY_CONTENT = open('templates/member.html', encoding='utf-8').read()
-    if request.method == 'POST':
-        MEMBER_LIST_NATIVE = request.form['member-data']
-        MEMBER_LIST_LIST = MEMBER_LIST_NATIVE.splitlines()
-        for i in range(len(MEMBER_LIST_LIST)):
-            EXECUTED = True
-            try:
-                MEMBER_USER_CLASS, MEMBER_USER_DISPLAY_NAME = MEMBER_LIST_LIST[i].split()
-            except:
-                BODY_CONTENT += '오류: {}열, 학반과 이름을 분리할 수 없습니다.<br />'.format(i+1)
-                EXECUTED = False
-            if EXECUTED:
-                try:
-                    MEMBER_USER_CLASS = int(MEMBER_USER_CLASS)
-                except:
-                    BODY_CONTENT += '오류: {}열, 학반이 정수로 이루어지지 않은 것 같습니다.<br />'.format(i+1)
-                    EXECUTED = False
-            if EXECUTED and len(str(MEMBER_USER_CLASS)) != 5:
-                BODY_CONTENT += '오류: {}열, 학반이 다섯자리 정수로 이루어지지 않은 것 같습니다.<br />'.format(i+1)
-                EXECUTED = False
-            if EXECUTED:
-                BODY_CONTENT += '완료: {}열: {} {}.<br />'.format(i+1, MEMBER_USER_CLASS, MEMBER_USER_DISPLAY_NAME)
-                curs.execute('insert into MEMBER_TB (MEMBER_USER_DISPLAY_NAME, MEMBER_USER_CLASS, MEMBER_USER_IS_ENABLED) values ("%s", %d, %d)' % (MEMBER_USER_DISPLAY_NAME, MEMBER_USER_CLASS, 1))
-        conn.commit()
-    return render_template('index.html', ENTREE_APPNAME = LocalSettings.ENTREE_APPNAME, ENTREE_CONTENT = BODY_CONTENT)
-
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
 ## Application Run ##
 if __name__ == "__main__":
-    app.run(LocalSettings.FLASK_HOST, LocalSettings.FLASK_HOST_PORT, debug = True)
+    app.run(LocalSettings.FLASK_HOST, FLASK_PORT_SET, debug = True)
