@@ -1,18 +1,18 @@
 import re
 
-title = re.compile('== [a-zA-Z가-힣ㄱ-ㅎ0-9\s]+ ==')
-short_answer = re.compile('\|\|[a-zA-Z가-힣ㄱ-ㅎ0-9\s]?\|\|')
-long_answer = re.compile('\|\|\|[a-zA-Z가-힣ㄱ-ㅎ0-9\s]?\|\|\|')
-check_box = re.compile('\[\n?(\[ \][a-zA-Z가-힣ㄱ-ㅎ0-9\s]+\n?)*\]')
-choice = re.compile('\(\n?(\( \)[a-zA-Z가-힣ㄱ-ㅎ0-9\s]+\n?)*\)')
+title = re.compile(r'== [a-zA-Z가-힣ㄱ-ㅎ0-9\s]+? ==')
+short_answer = re.compile(r'\|\|[a-zA-Z가-힣ㄱ-ㅎ0-9\s]+?\|\|')
+long_answer = re.compile(r'\|=[a-zA-Z가-힣ㄱ-ㅎ0-9\s]+?=\|')
+check_box = re.compile(r'\[\n?(\[ \][a-zA-Z가-힣ㄱ-ㅎ0-9\s]+\n?)*\]')
+choice = re.compile(r'\(\n?(\( \)[a-zA-Z가-힣ㄱ-ㅎ0-9\s]+\n?)*\)')
 
-text = '[[ ]가나](( )가나)||안녕|||||hello|||== title =='
+text = '[[ ]ab] (( )ab) || b rㄱ|| |=hello=| == title =='
 
-title_match = title.match(text)
-short_match = short_answer.match(text)
-long_match = long_answer.match(text)
-check_match = check_box.match(text)
-choice_match = choice.match(text)
+title_match = title.search(text)
+short_match = short_answer.search(text)
+long_match = long_answer.search(text)
+check_match = check_box.search(text)
+choice_match = choice.search(text)
 
 print(title_match.group())
 print(short_match.group())

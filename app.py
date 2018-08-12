@@ -44,33 +44,6 @@ except:
 CONVERSTATIONS_NATIVE = open('dic.json', encoding='utf-8').read()
 CONVERSTATIONS_DICT = json.loads(CONVERSTATIONS_NATIVE)
 
-
-## Global User Settings ##
-class User:
-    def __init__(self, account_id, account_pw_hash=None,
-                 authenticated=False):
-        self.account_id = account_id
-        self.authenticated = authenticated
-
-    def __repr__(self):
-        r = {
-            'account_id': self.account_id,
-            'authenticated': self.authenticated,
-        }
-        return str(r)
-
-    def is_active(self):
-        return True
-
-    def get_id(self):
-        return self.user_id
-
-    def is_authenticated(self):
-        return self.authenticated
-
-    def is_anonymous(self):
-        return False
-
 ## Assets Bundling ##
 
 bundles = {
@@ -90,59 +63,25 @@ assets = Environment(app)
 assets.register(bundles)
 
 
-
-## Member Import with File ##
-def import_members_file(target):
-    with open(target, 'r', encoding = 'utf-8') as data:
-        lines = data.readlines()
-    array = [[0 for cols in range(2)]for rows in range(len(lines))]
-    for i in range(len(lines)):
-        try:
-            class_data, name_data = lines[i].split()
-        except:
-            return [500, i]
-        try:
-            class_data = int(class_data)
-        except:
-            return [501, i]
-        if len(str(class_data)) != 5:
-            return [502, i]
-        array[i][0] = class_data
-        array[i][1] = name_data
-    return array
-
-def import_members_insert(target):
-    MEMBER_LIST = import_members_file(target)
-    if MEMBER_LIST[0][0] <= 500 and MEMBER_LIST[0][0] >= 502:
-        return MEMBER_LIST
-    else:
-        for i in range(len(MEMBER_LIST)):
-            curs.execute('insert into MEMBER_TB (MEMBER_USER_DISPLAY_NAME, MEMBER_USER_CLASS, MEMBER_USER_IS_ENABLED) values ("' + MEMBER_LIST[i][1] + '", ' + str(MEMBER_LIST[i][0]) + ', 1)')
-        conn.commit()
-
-
 ## Flask Route ##
 ### Route: main ###
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def main():
     BODY_CONTENT = ''
-
-    ## Check Application User Account ##
-    try:
-        curs.execute('select * from SITE_USER_TB limit 1')
-        SITE_USER_IS_EXISTED = True
-    except:
-        SITE_USER_IS_EXISTED = False
-
-    ## Main Page Container ##
-    BODY_CONTENT += CONVERSTATIONS_DICT['MAIN_CONTAINER']
-    ## Main Page: Register Suggestion ##
-    if SITE_USER_IS_EXISTED:
-        BODY_CONTENT = BODY_CONTENT.replace('<content>', '')
-    else:
-        BODY_CONTENT = BODY_CONTENT.replace('<content>', CONVERSTATIONS_DICT['MAIN_CONTAINER_NO_ACCOUNT'])
-
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+
+@app.route('/articles/write', methods=['GET', 'POST'])
+def articles_write():
+    BODY_CONTENT = ''
+    if request.method == 'POST':
+        form_display_name = request.form['form_display_name']
+        form_notice_level = request.form['form_notice_level']
+        form_body_content = request.form['form_body_content']
+    else:
+        BODY_CONTENT += CONVERSTATIONS_DICT['articles_write']
+        return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+
+
 
 ## Application Run ##
 if __name__ == "__main__":
