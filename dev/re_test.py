@@ -1,12 +1,12 @@
 import re
 
 title = re.compile(r'== [a-zA-Z가-힣ㄱ-ㅎ0-9\s]+? ==')
-short_answer = re.compile(r'\|\|[a-zA-Z가-힣ㄱ-ㅎ0-9\s]+?\|\|')
+short_answer = re.compile(r'\|-[a-zA-Z가-힣ㄱ-ㅎ0-9\s]+?-\|')
 long_answer = re.compile(r'\|=[a-zA-Z가-힣ㄱ-ㅎ0-9\s]+?=\|')
 check_box = re.compile(r'\[\n?(\[ \][a-zA-Z가-힣ㄱ-ㅎ0-9\s]+\n?)*\]')
 choice = re.compile(r'\(\n?(\( \)[a-zA-Z가-힣ㄱ-ㅎ0-9\s]+\n?)*\)')
 
-text = '[[ ]ab] (( )ab) || b rㄱ|| |=hello=| == title =='
+text = '[[ ]ab] (( )ab) |- b rㄱ-| |=hello=| == title =='
 
 title_match = title.search(text)
 short_match = short_answer.search(text)
