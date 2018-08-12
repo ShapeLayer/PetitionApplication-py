@@ -9,7 +9,7 @@ import re
 import json
 import libgravatar
 import sys
-
+import asyncio
 
 import LocalSettings
 
@@ -20,8 +20,6 @@ try:
     print(' * 강제 포트 설정 지정됨.')
 except:
     FLASK_PORT_SET = LocalSettings.FLASK_HOST_PORT
-
-
 
 
 ## DATABASE CONNECTION ##
@@ -70,7 +68,15 @@ assets.register(bundles)
 @app.route('/', methods=['GET', 'POST'])
 def main():
     BODY_CONTENT = ''
+    curs.execute('select * from FORM_DATA_TB')
+    form_data = curs.fetchall()
+    for i in range(len(form_data)):
+        pass
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+
+@app.route('/articles', methods=['GET', 'POST'])
+def articles():
+    return 0
 
 @app.route('/articles/write', methods=['GET', 'POST'])
 def articles_write():
@@ -89,8 +95,5 @@ def articles_write():
         BODY_CONTENT += CONVERSTATIONS_DICT['articles_write']
         return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
-
-
-## Application Run ##
-if __name__ == "__main__":
+while(1):
     app.run(LocalSettings.FLASK_HOST, FLASK_PORT_SET, debug = True)
