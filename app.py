@@ -74,6 +74,40 @@ def main():
         pass
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
+@app.route('/peti')
+def petitions():
+    pass
+
+@app.route('/peti/a/<form_id>')
+def peti_a(form_id):
+    if type(form_id) != 'int':
+        return 404
+    try:
+        curs.execute('select * from FORM_DATA_TB where form_id = {}', form_id)
+        result = curs.fetchall()
+    except:
+        return 404
+    return result
+
+@app.route('/peti/write', methods=['GET', 'POST'])
+def petitions_write():
+    BODY_CONTENT = ''
+    if request.method == 'POST':
+        form_display_name = request.form['form_display_name']
+        form_body_content = request.form['form_body_content']
+        form_body_content = form_body_content.replace('"', '\\"')
+        if request.form['submit'] == 'publish':
+            form_enabled = 1
+        elif request.form['submit'] == 'preview':
+            form_enabled = 0
+        form_publish_date = datetime.today()
+        form_notice_level = ' '
+        curs.execute('insert into FORM_DATA_TB (form_display_name, form_notice_level, form_publish_date, form_enabled, form_body_content) values("{}", "{}", "{}", {}, "{}")'.format(form_display_name, form_notice_level, form_publish_date, form_enabled, form_body_content))
+        conn.commit()
+    else:
+        BODY_CONTENT += open('templates/petitions.html', encoding='utf-8').read()
+        return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+
 @app.route('/articles', methods=['GET', 'POST'])
 def articles():
     return 0
