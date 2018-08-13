@@ -23,21 +23,17 @@ except:
 
 
 ## DATABASE CONNECTION ##
-
 conn = sqlite3.connect(LocalSettings.SQLITE3_FILENAME, check_same_thread = False)
 curs = conn.cursor()
 
 
-
 ## DATABASE TABLES CREATE ##
-
 try:
-    curs.execute('select * from SITE_USER_TB limit 1')
+    curs.execute('select * from FORM_DATA_TB limit 1')
 except:
     DATABASE_QUERY = open('tables/initial.sql').read()
     curs.executescript(DATABASE_QUERY)
     conn.commit
-
 
 
 ## LOAD CONVERSTATIONS ##
@@ -45,7 +41,6 @@ CONVERSTATIONS_NATIVE = open('dic.json', encoding='utf-8').read()
 CONVERSTATIONS_DICT = json.loads(CONVERSTATIONS_NATIVE)
 
 ## Assets Bundling ##
-
 bundles = {
     'main_js' : Bundle(
         'js/bootstrap.min.js',
@@ -64,7 +59,6 @@ assets.register(bundles)
 
 
 ## Flask Route ##
-### Route: main ###
 @app.route('/', methods=['GET', 'POST'])
 def main():
     BODY_CONTENT = ''
@@ -74,9 +68,12 @@ def main():
         pass
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
+## ================================================================================
 @app.route('/peti')
 def petitions():
-    pass
+    curs.execute('select * from PETITION_DATA_TB')
+    result = curs.fetchall()
+    return result
 
 @app.route('/peti/a/<form_id>')
 def peti_a(form_id):
@@ -96,18 +93,16 @@ def petitions_write():
         form_display_name = request.form['form_display_name']
         form_body_content = request.form['form_body_content']
         form_body_content = form_body_content.replace('"', '\\"')
-        if request.form['submit'] == 'publish':
-            form_enabled = 1
-        elif request.form['submit'] == 'preview':
-            form_enabled = 0
+        form_enabled = 1
         form_publish_date = datetime.today()
-        form_notice_level = ' '
-        curs.execute('insert into FORM_DATA_TB (form_display_name, form_notice_level, form_publish_date, form_enabled, form_body_content) values("{}", "{}", "{}", {}, "{}")'.format(form_display_name, form_notice_level, form_publish_date, form_enabled, form_body_content))
+        curs.execute('insert into PETITION_DATA_TB (form_display_name, form_publish_date, form_enabled, form_body_content) values("{}", "{}", {}, "{}")'.format(form_display_name, form_publish_date, form_enabled, form_body_content))
         conn.commit()
+        return 'insert into PETITION_DATA_TB (form_display_name, form_publish_date, form_enabled, form_body_content) values("{}", "{}", {}, "{}")'.format(form_display_name, form_publish_date, form_enabled, form_body_content)
     else:
         BODY_CONTENT += open('templates/petitions.html', encoding='utf-8').read()
         return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
+## ================================================================================
 @app.route('/articles', methods=['GET', 'POST'])
 def articles():
     return 0
