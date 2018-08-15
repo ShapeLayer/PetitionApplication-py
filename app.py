@@ -1,5 +1,5 @@
 ## Import Python Modules ##
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 from flask_assets import Bundle, Environment
 from flask_login import LoginManager
 from flask_login import login_user, logout_user, current_user, login_required
@@ -62,6 +62,8 @@ assets.register(bundles)
 @app.route('/', methods=['GET', 'POST'])
 def main():
     BODY_CONTENT = ''
+    BODY_CONTENT += open('templates/index_content.html').read()
+    BODY_CONTENT = BODY_CONTENT.replace('| version |', LocalSettings.OFORM_RELEASE)
     curs.execute('select * from FORM_DATA_TB')
     form_data = curs.fetchall()
     for i in range(len(form_data)):
@@ -70,21 +72,41 @@ def main():
 
 ## ================================================================================
 @app.route('/peti')
+@app.route('/peti/')
 def petitions():
+    BODY_CONTENT = ''
     curs.execute('select * from PETITION_DATA_TB')
     result = curs.fetchall()
-    return result
+    BODY_CONTENT += '<h1>새로운 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">Column heading</th></tr></thead><tbody>'
+    for i in range(len(result)):
+        BODY_CONTENT += '<tr><th scope="row">{}</th><td><a href="/peti/a/{}">{}</a></td></tr>'.format(result[i][0], result[i][0], result[i][1])
+    BODY_CONTENT += '</tbody></table>'
+    BODY_CONTENT += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
 @app.route('/peti/a/<form_id>')
 def peti_a(form_id):
-    if type(form_id) != 'int':
+    if form_id == '':
         return 404
+    BODY_CONTENT = ''
+    print(form_id)
     try:
-        curs.execute('select * from FORM_DATA_TB where form_id = {}', form_id)
+        curs.execute('select * from PETITION_DATA_TB where form_id = {}'.format(form_id))
         result = curs.fetchall()
     except:
         return 404
-    return result
+    form_display_name = result[0][1]
+    form_publish_date = result[0][2]
+    form_author = result[0][4]
+    form_body_content = result[0][5]
+    BODY_CONTENT += open('templates/peti_viewer.html').read()
+    
+    BODY_CONTENT = BODY_CONTENT.replace(' form_display_name ', form_display_name)
+    BODY_CONTENT = BODY_CONTENT.replace(' form_publish_date ', form_publish_date)
+    BODY_CONTENT = BODY_CONTENT.replace(' form_author ', form_author)
+    BODY_CONTENT = BODY_CONTENT.replace(' form_body_content ', form_body_content)
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+
 
 @app.route('/peti/write', methods=['GET', 'POST'])
 def petitions_write():
@@ -94,10 +116,17 @@ def petitions_write():
         form_body_content = request.form['form_body_content']
         form_body_content = form_body_content.replace('"', '\\"')
         form_enabled = 1
+        form_author = '익명 사용자'
         form_publish_date = datetime.today()
-        curs.execute('insert into PETITION_DATA_TB (form_display_name, form_publish_date, form_enabled, form_body_content) values("{}", "{}", {}, "{}")'.format(form_display_name, form_publish_date, form_enabled, form_body_content))
+        curs.execute('insert into PETITION_DATA_TB (form_display_name, form_publish_date, form_enabled, form_author, form_body_content) values("{}", "{}", {}, "{}", "{}")'.format(
+            form_display_name, 
+            form_publish_date, 
+            form_enabled, 
+            form_author, 
+            form_body_content)
+            )
         conn.commit()
-        return 'insert into PETITION_DATA_TB (form_display_name, form_publish_date, form_enabled, form_body_content) values("{}", "{}", {}, "{}")'.format(form_display_name, form_publish_date, form_enabled, form_body_content)
+        return redirect('/peti')
     else:
         BODY_CONTENT += open('templates/petitions.html', encoding='utf-8').read()
         return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)

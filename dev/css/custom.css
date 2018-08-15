@@ -29,8 +29,7 @@ input{
     justify-content: center;
     height: 100vh;
     min-height: 450px;
-    background-image: rgba(0, 0, 0, 0.1), url('bg.jpg'); /* need bg */
-    background-size: cover;
+    background-image:linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url('bg.jpg');
     color: #fff;
     text-align: center;
 }
@@ -39,6 +38,7 @@ input{
     font-family: 'Noto Sans', sans-serif;
     font-size: 1.5vw;
     letter-spacing: 0.2em;
+    color: #fff;
 }
 
 .hero a{
