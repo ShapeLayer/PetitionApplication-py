@@ -62,7 +62,7 @@ assets.register(bundles)
 @app.route('/', methods=['GET', 'POST'])
 def main():
     BODY_CONTENT = ''
-    BODY_CONTENT += open('templates/index_content.html').read()
+    BODY_CONTENT += open('templates/index_content.html', encoding='utf-8').read()
     BODY_CONTENT = BODY_CONTENT.replace('| version |', LocalSettings.OFORM_RELEASE)
     curs.execute('select * from FORM_DATA_TB')
     form_data = curs.fetchall()
@@ -71,7 +71,6 @@ def main():
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
 ## ================================================================================
-@app.route('/peti')
 @app.route('/peti/')
 def petitions():
     BODY_CONTENT = ''
@@ -84,7 +83,7 @@ def petitions():
     BODY_CONTENT += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
-@app.route('/peti/a/<form_id>')
+@app.route('/peti/a/<form_id>/')
 def peti_a(form_id):
     if form_id == '':
         return 404
@@ -108,15 +107,16 @@ def peti_a(form_id):
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
 
-@app.route('/peti/write', methods=['GET', 'POST'])
+@app.route('/peti/write/', methods=['GET', 'POST'])
 def petitions_write():
     BODY_CONTENT = ''
     if request.method == 'POST':
         form_display_name = request.form['form_display_name']
+        form_author_name = request.form['form_author_name']
         form_body_content = request.form['form_body_content']
         form_body_content = form_body_content.replace('"', '\\"')
         form_enabled = 1
-        form_author = '익명 사용자'
+        form_author = form_author_name
         form_publish_date = datetime.today()
         curs.execute('insert into PETITION_DATA_TB (form_display_name, form_publish_date, form_enabled, form_author, form_body_content) values("{}", "{}", {}, "{}", "{}")'.format(
             form_display_name, 
@@ -132,11 +132,11 @@ def petitions_write():
         return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
 ## ================================================================================
-@app.route('/articles', methods=['GET', 'POST'])
+@app.route('/articles/', methods=['GET', 'POST'])
 def articles():
     return 0
 
-@app.route('/articles/write', methods=['GET', 'POST'])
+@app.route('/articles/write/', methods=['GET', 'POST'])
 def articles_write():
     BODY_CONTENT = ''
     if request.method == 'POST':

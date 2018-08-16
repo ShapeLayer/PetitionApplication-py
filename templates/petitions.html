@@ -1,19 +1,22 @@
 <div class="bs-docs-section">
     <h1>새로운 청원 생성</h1>
     <div class="bs-component">
-        <form action="/peti/write" accept-charset="utf-8" name="form_write" method="post">
+        <form action="/peti/write/" accept-charset="utf-8" name="form_write" method="post">
             <fieldset>
                 <div class="form-group">
                     <div class="form-group">
                         <input type="text" class="form-control" name="form_display_name" placeholder="제목" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="form_author_name" placeholder="작성자 이름" required>
                     </div>
                     <label for="form_body_content">본문</label>
                     <textarea class="form-control" id="form_body_content" name="form_body_content" rows="20" required></textarea>
                 </div>
             </fieldset>
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input" id="customCheck1" required>
-                <label class="custom-control-label" for="customCheck1">청원 등록 후 그 내용을 수정할 수 없음을 확인하고 이에 동의합니다.</label>
+                <input type="checkbox" class="custom-control-input" id="Check" required>
+                <label class="custom-control-label" for="Check">청원 등록 후 그 내용을 수정할 수 없음을 확인하고 이에 동의합니다.</label>
             </div>
             <button type="submit" name="submit" class="btn btn-primary" value="publish">청원 등록</button>
         </form>
