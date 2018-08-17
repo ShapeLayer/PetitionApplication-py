@@ -111,10 +111,9 @@ def peti_a(form_id):
 def petitions_write():
     BODY_CONTENT = ''
     if request.method == 'POST':
-        form_display_name = request.form['form_display_name']
-        form_author_name = request.form['form_author_name']
-        form_body_content = request.form['form_body_content']
-        form_body_content = form_body_content.replace('"', '\\"')
+        form_display_name = request.form['form_display_name'].replace('"', '""')
+        form_author_name = request.form['form_author_name'].replace('"', '""')
+        form_body_content = request.form['form_body_content'].replace('"', '""')
         form_enabled = 1
         form_author = form_author_name
         form_publish_date = datetime.today()
