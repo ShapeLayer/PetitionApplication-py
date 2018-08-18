@@ -16,5 +16,5 @@ OFORM_LANGUAGE = 'ko-KR'
 
 OFORM_RELEASE = '0.1-Alpha-180815-01'
 
-FACEBOOK_APP_ID = ''
-FACEBOOK_APP_SECRET = ''
+FACEBOOK_APP_ID = open('facebook_app_id', encoding='utf-8').read()
+FACEBOOK_APP_SECRET = open('facebook_app_secret', encoding='utf-8').read()
