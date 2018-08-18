@@ -4,3 +4,5 @@ __pycache__/*.*
 
 static/gen/*.*
 static/.webassets-cache
+
+facebook_app_data

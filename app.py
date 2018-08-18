@@ -1,8 +1,9 @@
 ## Import Python Modules ##
-from flask import Flask, render_template, request, jsonify, redirect
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_assets import Bundle, Environment
 from flask_login import LoginManager
 from flask_login import login_user, logout_user, current_user, login_required
+from flask_oauthlib.client import OAuth, OAuthException
 from datetime import datetime
 import sqlite3
 import re
@@ -13,7 +14,26 @@ import asyncio
 
 import LocalSettings
 
+
 app = Flask(__name__)
+app.debug = True
+app.secret_key = LocalSettings.CRYPT_SECRET_KEY
+oauth = OAuth(app)
+
+FACEBOOK_APP_ID = LocalSettings.FACEBOOK_APP_ID
+FACEBOOK_APP_SECRET = LocalSettings.FACEBOOK_APP_SECRET
+
+facebook = oauth.remote_app(
+    'facebook',
+    consumer_key=FACEBOOK_APP_ID,
+    consumer_secret=FACEBOOK_APP_SECRET,
+    request_token_params={'scope': 'email'},
+    base_url='https://graph.facebook.com',
+    request_token_url=None,
+    access_token_url='/oauth/access_token',
+    access_token_method='GET',
+    authorize_url='https://www.facebook.com/dialog/oauth'
+)
 
 try:
     FLASK_PORT_SET = int(sys.argv[1])
@@ -70,6 +90,36 @@ def main():
         pass
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
+@app.route('/login', methods=['GET'])
+def login():
+    callback = url_for(
+        'facebook_authorized',
+        next=request.args.get('next') or request.referrer or None,
+        _external=True
+    )
+    return facebook.authorize(callback=callback)
+
+@app.route('/login/authorized')
+def facebook_authorized():
+    resp = facebook.authorized_response()
+    if resp is None:
+        return 'Access denied: reason=%s error=%s' % (
+            request.args['error_reason'],
+            request.args['error_description']
+        )
+    if isinstance(resp, OAuthException):
+        return 'Access denied: %s' % resp.message
+    
+    session['oauth_token'] = (resp['access_token'], '')
+    me = facebook.get('/me')
+    return redirect('/')
+    #return 'Logged in as id=%s name=%s redirect=%s' % \
+    #    (me.data['id'], me.data['name'], request.args.get('next'))
+
+@facebook.tokengetter
+def get_facebook_oauth_token():
+    return session.get('oauth_token')
+
 ## ================================================================================
 @app.route('/peti/')
 def petitions():
@@ -88,7 +138,6 @@ def peti_a(form_id):
     if form_id == '':
         return 404
     BODY_CONTENT = ''
-    print(form_id)
     try:
         curs.execute('select * from PETITION_DATA_TB where form_id = {}'.format(form_id))
         result = curs.fetchall()
@@ -106,10 +155,32 @@ def peti_a(form_id):
     BODY_CONTENT = BODY_CONTENT.replace(' form_body_content ', form_body_content)
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
+@app.route('/peti/a/<form_id>/delete')
+def peti_a_delete(form_id):
+    if form_id == '':
+        return 404
+    BODY_CONTENT = ''
+    try:
+        curs.execute('select * from PETITION_DATA_TB where form_id = {}'.format(form_id))
+        result = curs.fetchall()
+    except:
+        return 404
+
+    ## 수정 요함
+    
 
 @app.route('/peti/write/', methods=['GET', 'POST'])
 def petitions_write():
     BODY_CONTENT = ''
+
+    facebook_session = get_facebook_oauth_token()
+    try:
+        me = facebook.get('/me')
+        facebook_authorized_bool = True
+    except:
+        facebook_authorized_bool = False
+    #return 'Logged in as id=%s name=%s redirect=%s' % \
+    #    (me.data['id'], me.data['name'], request.args.get('next'))
     if request.method == 'POST':
         form_display_name = request.form['form_display_name'].replace('"', '""')
         form_author_name = request.form['form_author_name'].replace('"', '""')
@@ -128,6 +199,10 @@ def petitions_write():
         return redirect('/peti')
     else:
         BODY_CONTENT += open('templates/petitions.html', encoding='utf-8').read()
+        if facebook_authorized_bool:
+            BODY_CONTENT = BODY_CONTENT.replace('| sns_login_status |', '<i class="fab fa-facebook"></i> 페이스북 로그인됨: ' + me.data['name'])
+        else:
+            BODY_CONTENT = BODY_CONTENT.replace('| sns_login_status |', '<i class="fab fa-facebook"></i> 페이스북 로그인되지 않음. <a href="/login">로그인하기</a>')
         return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
 ## ================================================================================
