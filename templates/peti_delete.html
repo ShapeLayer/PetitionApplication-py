@@ -1,0 +1,23 @@
+<div class="bs-docs-section">
+    <h1>청원 삭제</h1>
+    <div class="bs-component">
+        <form action="/peti/a/| form_id |/delete/" accept-charset="utf-8" name="form_write" method="post">
+            <fieldset>
+                <div class="form-group">
+                    <div class="form-group">
+                        | sns_login_status | 
+                    </div>
+                    <div class="form-group">
+                        <label class="custom-control-label" for="secet_key">계속하려면 CRYPT_SECRET_KEY를 입력하십시오.</label>
+                        <input type="text" class="form-control" name="secret_key" placeholder="" required>
+                    </div>
+                </div>
+            </fieldset>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="Check" required>
+                <label class="custom-control-label" for="Check">청원 삭제 요청시 서버에 요청 기록이 남음을 확인하고 이 청원을 삭제합니다.</label>
+            </div>
+            <button type="submit" name="submit" class="btn btn-primary" value="publish">계속하기.</button>
+        </form>
+    </div>
+</div>

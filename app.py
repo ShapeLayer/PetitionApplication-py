@@ -143,6 +143,8 @@ def peti_a(form_id):
         result = curs.fetchall()
     except:
         return 404
+    if result[0][3] == 0:
+        return '404'
     form_display_name = result[0][1]
     form_publish_date = result[0][2]
     form_author = result[0][4]
@@ -155,19 +157,43 @@ def peti_a(form_id):
     BODY_CONTENT = BODY_CONTENT.replace(' form_body_content ', form_body_content)
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
-@app.route('/peti/a/<form_id>/delete')
+@app.route('/peti/a/<form_id>/delete/', methods=['GET', 'POST'])
 def peti_a_delete(form_id):
+
+    facebook_session = get_facebook_oauth_token()
+
+    ### === return 404
     if form_id == '':
-        return 404
-    BODY_CONTENT = ''
+        return '1'
     try:
-        curs.execute('select * from PETITION_DATA_TB where form_id = {}'.format(form_id))
+        curs.execute('select * from PETITION_DATA_TB where form_id = {} '.format(form_id))
         result = curs.fetchall()
     except:
-        return 404
+        return '2'
+    try:
+        me = facebook.get('/me')
+        facebook_authorized_bool = True
+    except:
+        facebook_authorized_bool = False
+    if facebook_authorized_bool == False:
+        return '3'
 
-    ## 수정 요함
-    
+    ### === body content
+    BODY_CONTENT = ''
+    if request.method == 'POST':
+        secret_key_received = request.form['secret_key']
+        print(secret_key_received)
+        if secret_key_received != LocalSettings.CRYPT_SECRET_KEY:
+            return '4'
+        else:
+            curs.execute('update PETITION_DATA_TB set form_enabled = 0 where form_id = {}'.format(form_id))
+            conn.commit()
+            BODY_CONTENT = '<h1>완료</h1><p>삭제되었습니다. <a href="/">메인으로 이동합니다.</a></p>'
+            return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+    BODY_CONTENT += open('templates/peti_delete.html', encoding='utf-8').read()
+    BODY_CONTENT = BODY_CONTENT.replace('| sns_login_status |', '<i class="fab fa-facebook"></i> 페이스북 로그인됨: ' + me.data['name'])
+    BODY_CONTENT = BODY_CONTENT.replace('| form_id |', form_id)
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
 @app.route('/peti/write/', methods=['GET', 'POST'])
 def petitions_write():
@@ -179,8 +205,6 @@ def petitions_write():
         facebook_authorized_bool = True
     except:
         facebook_authorized_bool = False
-    #return 'Logged in as id=%s name=%s redirect=%s' % \
-    #    (me.data['id'], me.data['name'], request.args.get('next'))
     if request.method == 'POST':
         form_display_name = request.form['form_display_name'].replace('"', '""')
         form_author_name = request.form['form_author_name'].replace('"', '""')
@@ -208,7 +232,7 @@ def petitions_write():
 ## ================================================================================
 @app.route('/articles/', methods=['GET', 'POST'])
 def articles():
-    return 0
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = '개발 중인 기능입니다.')
 
 @app.route('/articles/write/', methods=['GET', 'POST'])
 def articles_write():
@@ -225,7 +249,14 @@ def articles_write():
         curs.execute('insert into FORM_DATA_TB (form_display_name, form_notice_level, form_publish_date, form_enabled, form_body_content) values("{}", "{}", "{}", {}, "{}")'.format(form_display_name, form_notice_level, form_publish_date, form_enabled, form_body_content))
     else:
         BODY_CONTENT += CONVERSTATIONS_DICT['articles_write']
-        return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = '개발 중인 기능입니다.')
+    #return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+
+## ================================================================================
+@app.errorhandler(404)
+def error_404(self):
+    BODY_CONTENT = '<h1>Oops!</h1><h2>404 NOT FOUND</h2><p>존재하지 않는 페이지입니다.</p>'
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
 while(1):
     app.run(LocalSettings.FLASK_HOST, FLASK_PORT_SET, debug = True)

@@ -14,4 +14,10 @@ create table PETITION_DATA_TB(
     form_enabled INTEGER NOT NULL,
     form_author TEXT NOT NULL,
     form_body_content TEXT NOT NULL
+);
+create table PETITION_CONTROL_LOG_TB(
+    form_id INTEGER NOT NULL,
+    control_date TEXT NOT NULL,
+    user TEXT NOT NULL,
+    fb_id TEXT NOT NULL
 )
