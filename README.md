@@ -15,6 +15,3 @@ openForm is a Python-based survey app application, by request of Sungdeok High S
 
 ## License
 This project is licensed under the BSD 3-Clause License. See the [LICENSE](/LICENSE) file for details.
-
-## Special Thanks
-* [Hoto-Cocoa](https://github.com/Hoto-Cocoa) - [_entree README contributer_](https://github.com/kpjhg0124/entree) - [cocoa@hoto.us](mailto:hoto.us)
