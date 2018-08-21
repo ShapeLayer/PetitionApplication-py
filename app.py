@@ -49,7 +49,7 @@ curs = conn.cursor()
 
 ## DATABASE TABLES CREATE ##
 try:
-    curs.execute('select * from FORM_DATA_TB limit 1')
+    curs.execute('select * from peti_data_tb limit 1')
 except:
     DATABASE_QUERY = open('tables/initial.sql').read()
     curs.executescript(DATABASE_QUERY)
@@ -84,7 +84,7 @@ def main():
     BODY_CONTENT = ''
     BODY_CONTENT += open('templates/index_content.html', encoding='utf-8').read()
     BODY_CONTENT = BODY_CONTENT.replace('| version |', LocalSettings.OFORM_RELEASE)
-    curs.execute('select * from FORM_DATA_TB')
+    curs.execute('select * from peti_data_tb')
     form_data = curs.fetchall()
     for i in range(len(form_data)):
         pass
@@ -124,34 +124,13 @@ def get_facebook_oauth_token():
 @app.route('/peti/')
 def petitions():
     BODY_CONTENT = ''
-    curs.execute('select * from PETITION_DATA_TB')
+    curs.execute('select * from peti_data_tb')
     result = curs.fetchall()
     BODY_CONTENT += '<h1>새로운 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">Column heading</th></tr></thead><tbody>'
     for i in range(len(result)):
         BODY_CONTENT += '<tr><th scope="row">{}</th><td><a href="/peti/a/{}">{}</a></td></tr>'.format(result[i][0], result[i][0], result[i][1])
     BODY_CONTENT += '</tbody></table>'
     BODY_CONTENT += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
-    BODY_CONTENT += '<div><ul class="pagination"><li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>
-    <li class="page-item active">
-      <a class="page-link" href="#">1</a>
-    </li>
-    <li class="page-item">
-      <a class="page-link" href="#">2</a>
-    </li>
-    <li class="page-item">
-      <a class="page-link" href="#">3</a>
-    </li>
-    <li class="page-item">
-      <a class="page-link" href="#">4</a>
-    </li>
-    <li class="page-item">
-      <a class="page-link" href="#">5</a>
-    </li>
-    <li class="page-item">
-      <a class="page-link" href="#">&raquo;</a>
-    </li>
-  </ul>
-</div>
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
 @app.route('/peti/a/<form_id>/')
@@ -160,7 +139,7 @@ def peti_a(form_id):
         return 404
     BODY_CONTENT = ''
     try:
-        curs.execute('select * from PETITION_DATA_TB where form_id = {}'.format(form_id))
+        curs.execute('select * from peti_data_tb where form_id = {}'.format(form_id))
         result = curs.fetchall()
     except:
         return 404
@@ -187,7 +166,7 @@ def peti_a_delete(form_id):
     if form_id == '':
         return '1'
     try:
-        curs.execute('select * from PETITION_DATA_TB where form_id = {} '.format(form_id))
+        curs.execute('select * from peti_data_tb where form_id = {} '.format(form_id))
         result = curs.fetchall()
     except:
         return '2'
@@ -207,7 +186,7 @@ def peti_a_delete(form_id):
         if secret_key_received != LocalSettings.CRYPT_SECRET_KEY:
             return '4'
         else:
-            curs.execute('update PETITION_DATA_TB set form_enabled = 0 where form_id = {}'.format(form_id))
+            curs.execute('update peti_data_tb set form_enabled = 0 where form_id = {}'.format(form_id))
             conn.commit()
             BODY_CONTENT = '<h1>완료</h1><p>삭제되었습니다. <a href="/">메인으로 이동합니다.</a></p>'
             return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
@@ -233,7 +212,7 @@ def petitions_write():
         form_enabled = 1
         form_author = form_author_name
         form_publish_date = datetime.today()
-        curs.execute('insert into PETITION_DATA_TB (form_display_name, form_publish_date, form_enabled, form_author, form_body_content) values("{}", "{}", {}, "{}", "{}")'.format(
+        curs.execute('insert into peti_data_tb (form_display_name, form_publish_date, form_enabled, form_author, form_body_content) values("{}", "{}", {}, "{}", "{}")'.format(
             form_display_name, 
             form_publish_date, 
             form_enabled, 
@@ -249,29 +228,6 @@ def petitions_write():
         else:
             BODY_CONTENT = BODY_CONTENT.replace('| sns_login_status |', '<i class="fab fa-facebook"></i> 페이스북 로그인되지 않음. <a href="/login">로그인하기</a>')
         return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
-
-## ================================================================================
-@app.route('/articles/', methods=['GET', 'POST'])
-def articles():
-    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = '개발 중인 기능입니다.')
-
-@app.route('/articles/write/', methods=['GET', 'POST'])
-def articles_write():
-    BODY_CONTENT = ''
-    if request.method == 'POST':
-        form_display_name = request.form['form_display_name']
-        form_notice_level = request.form['form_notice_level']
-        form_body_content = request.form['form_body_content']
-        if request.form['submit'] == 'publish':
-            form_enabled = 1
-        elif request.form['submit'] == 'preview':
-            form_enabled = 0
-        form_publish_date = datetime.today()
-        curs.execute('insert into FORM_DATA_TB (form_display_name, form_notice_level, form_publish_date, form_enabled, form_body_content) values("{}", "{}", "{}", {}, "{}")'.format(form_display_name, form_notice_level, form_publish_date, form_enabled, form_body_content))
-    else:
-        BODY_CONTENT += CONVERSTATIONS_DICT['articles_write']
-    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = '개발 중인 기능입니다.')
-    #return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
 
 ## ================================================================================
 @app.errorhandler(404)
