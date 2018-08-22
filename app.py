@@ -77,10 +77,26 @@ bundles = {
 assets = Environment(app)
 assets.register(bundles)
 
+## LOAD NAV BAR ##
+def load_nav_bar():
+    facebook_session = get_facebook_oauth_token()
+    try:
+        me = facebook.get('/me')
+        FB_ACNT_IMG = '<i class="fab fa-facebook"></i>'
+        FB_ACNT_USR_NAME = me.data['name']
+        FB_ACNT_CTRL = '<a class="dropdown-item" href="#">LogOut</a>'
+    except:
+        FB_ACNT_IMG = '<i class="fab fa-facebook"></i>'
+        FB_ACNT_USR_NAME = '로그인되지 않음'
+        FB_ACNT_CTRL = '<a class="dropdown-item" href="#">LogIn</a>'
+    acnt_nav_var = '<ul class="nav navbar-nav ml-auto"><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="usermenu">{{}}{{}} <span class="caret"></span></a><div class="dropdown-menu" aria-labelledby="usermenu"><a class="dropdown-item" href="#">{{}}</a></div></li></ul>'.format(FB_ACNT_IMG, FB_ACNT_USR_NAME, FB_ACNT_CTRL)
+    return acnt_nav_var
+
 
 ## Flask Route ##
 @app.route('/', methods=['GET', 'POST'])
 def main():
+    FB_NAV_VAR = load_nav_bar()
     BODY_CONTENT = ''
     BODY_CONTENT += open('templates/index_content.html', encoding='utf-8').read()
     BODY_CONTENT = BODY_CONTENT.replace('| version |', LocalSettings.OFORM_RELEASE)
@@ -88,7 +104,7 @@ def main():
     form_data = curs.fetchall()
     for i in range(len(form_data)):
         pass
-    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
 
 @app.route('/login', methods=['GET'])
 def login():
@@ -123,6 +139,7 @@ def get_facebook_oauth_token():
 ## ================================================================================
 @app.route('/peti/')
 def petitions():
+    FB_NAV_VAR = load_nav_bar()
     BODY_CONTENT = ''
     curs.execute('select * from peti_data_tb')
     result = curs.fetchall()
@@ -131,10 +148,11 @@ def petitions():
         BODY_CONTENT += '<tr><th scope="row">{}</th><td><a href="/peti/a/{}">{}</a></td></tr>'.format(result[i][0], result[i][0], result[i][1])
     BODY_CONTENT += '</tbody></table>'
     BODY_CONTENT += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
-    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
 
 @app.route('/peti/a/<form_id>/')
 def peti_a(form_id):
+    FB_NAV_VAR = load_nav_bar()
     if form_id == '':
         return 404
     BODY_CONTENT = ''
@@ -155,11 +173,11 @@ def peti_a(form_id):
     BODY_CONTENT = BODY_CONTENT.replace(' form_publish_date ', form_publish_date)
     BODY_CONTENT = BODY_CONTENT.replace(' form_author ', form_author)
     BODY_CONTENT = BODY_CONTENT.replace(' form_body_content ', form_body_content)
-    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
 
 @app.route('/peti/a/<form_id>/delete/', methods=['GET', 'POST'])
 def peti_a_delete(form_id):
-
+    FB_NAV_VAR = load_nav_bar()
     facebook_session = get_facebook_oauth_token()
 
     ### === return 404
@@ -189,14 +207,15 @@ def peti_a_delete(form_id):
             curs.execute('update peti_data_tb set form_enabled = 0 where form_id = {}'.format(form_id))
             conn.commit()
             BODY_CONTENT = '<h1>완료</h1><p>삭제되었습니다. <a href="/">메인으로 이동합니다.</a></p>'
-            return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+            return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
     BODY_CONTENT += open('templates/peti_delete.html', encoding='utf-8').read()
     BODY_CONTENT = BODY_CONTENT.replace('| sns_login_status |', '<i class="fab fa-facebook"></i> 페이스북 로그인됨: ' + me.data['name'])
     BODY_CONTENT = BODY_CONTENT.replace('| form_id |', form_id)
-    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
 
 @app.route('/peti/write/', methods=['GET', 'POST'])
 def petitions_write():
+    FB_NAV_VAR = load_nav_bar()
     BODY_CONTENT = ''
 
     facebook_session = get_facebook_oauth_token()
@@ -209,6 +228,12 @@ def petitions_write():
         form_display_name = request.form['form_display_name'].replace('"', '""')
         form_author_name = request.form['form_author_name'].replace('"', '""')
         form_body_content = request.form['form_body_content'].replace('"', '""')
+        form_display_name = request.form['form_display_name'].replace('<', '&lt;')
+        form_author_name = request.form['form_author_name'].replace('<', '&lt;')
+        form_body_content = request.form['form_body_content'].replace('<', '&lt;')
+        form_display_name = request.form['form_display_name'].replace('>', '&gt;')
+        form_author_name = request.form['form_author_name'].replace('>', '&gt;')
+        form_body_content = request.form['form_body_content'].replace('>', '&gt;')
         form_enabled = 1
         form_author = form_author_name
         form_publish_date = datetime.today()
@@ -227,13 +252,14 @@ def petitions_write():
             BODY_CONTENT = BODY_CONTENT.replace('| sns_login_status |', '<i class="fab fa-facebook"></i> 페이스북 로그인됨: ' + me.data['name'])
         else:
             BODY_CONTENT = BODY_CONTENT.replace('| sns_login_status |', '<i class="fab fa-facebook"></i> 페이스북 로그인되지 않음. <a href="/login">로그인하기</a>')
-        return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+        return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
 
 ## ================================================================================
 @app.errorhandler(404)
 def error_404(self):
+    FB_NAV_VAR = load_nav_bar()
     BODY_CONTENT = '<h1>Oops!</h1><h2>404 NOT FOUND</h2><p>존재하지 않는 페이지입니다.</p>'
-    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT)
+    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
 
 while(1):
     app.run(LocalSettings.FLASK_HOST, FLASK_PORT_SET, debug = True)

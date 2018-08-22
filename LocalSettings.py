@@ -16,5 +16,7 @@ OFORM_LANGUAGE = 'ko-KR'
 
 OFORM_RELEASE = '0.1-Alpha-180815-01'
 
+GITHUB_REPO = 'https://github.com/kpjhg0124/PetitionApplication-py'
+
 FACEBOOK_APP_ID = open('facebook_app_id', encoding='utf-8').read()
 FACEBOOK_APP_SECRET = open('facebook_app_secret', encoding='utf-8').read()
