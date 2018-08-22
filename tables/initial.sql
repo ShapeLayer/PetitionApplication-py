@@ -4,14 +4,7 @@ CREATE TABLE peti_data_tb(
     form_display_name TEXT NOT NULL,
     form_publish_date TEXT NOT NULL,
     form_status INTEGER NOT NULL,
-    form_author TEXT NOT NULL,
-    form_body_content TEXT NOT NULL
-);
-CREATE TABLE peti_data_deleted_tb(
-    form_id INTEGER primary key AUTOINCREMENT,
-    form_display_name TEXT NOT NULL,
-    form_publish_date TEXT NOT NULL,
-    form_status INTEGER NOT NULL,
+    /*form_enabled INTEGER NOT NULL,*/
     form_author TEXT NOT NULL,
     form_body_content TEXT NOT NULL
 );
