@@ -83,13 +83,13 @@ def load_nav_bar():
     try:
         me = facebook.get('/me')
         FB_ACNT_IMG = '<i class="fab fa-facebook"></i>'
-        FB_ACNT_USR_NAME = me.data['name']
-        FB_ACNT_CTRL = '<a class="dropdown-item" href="#">LogOut</a>'
+        FB_ACNT_USR_NAME = '  ' + me.data['name']
+        FB_ACNT_CTRL = '<a class="dropdown-item" href="#">Logout</a>'
     except:
         FB_ACNT_IMG = '<i class="fab fa-facebook"></i>'
-        FB_ACNT_USR_NAME = '로그인되지 않음'
-        FB_ACNT_CTRL = '<a class="dropdown-item" href="#">LogIn</a>'
-    acnt_nav_var = '<ul class="nav navbar-nav ml-auto"><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="usermenu">{{}}{{}} <span class="caret"></span></a><div class="dropdown-menu" aria-labelledby="usermenu"><a class="dropdown-item" href="#">{{}}</a></div></li></ul>'.format(FB_ACNT_IMG, FB_ACNT_USR_NAME, FB_ACNT_CTRL)
+        FB_ACNT_USR_NAME = '  로그인되지 않음'
+        FB_ACNT_CTRL = '<a class="dropdown-item" href="/login/">Login</a>'
+    acnt_nav_var = '<ul class="nav navbar-nav ml-auto"><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="usermenu">{}{} <span class="caret"></span></a><div class="dropdown-menu" aria-labelledby="usermenu"><a class="dropdown-item" href="#">{}</a></div></li></ul>'.format(FB_ACNT_IMG, FB_ACNT_USR_NAME, FB_ACNT_CTRL)
     return acnt_nav_var
 
 
@@ -167,7 +167,7 @@ def peti_a(form_id):
     form_publish_date = result[0][2]
     form_author = result[0][4]
     form_body_content = result[0][5]
-    BODY_CONTENT += open('templates/peti_viewer.html').read()
+    BODY_CONTENT += open('templates/peti_viewer.html', encoding='utf-8').read()
     
     BODY_CONTENT = BODY_CONTENT.replace(' form_display_name ', form_display_name)
     BODY_CONTENT = BODY_CONTENT.replace(' form_publish_date ', form_publish_date)
@@ -228,16 +228,16 @@ def petitions_write():
         form_display_name = request.form['form_display_name'].replace('"', '""')
         form_author_name = request.form['form_author_name'].replace('"', '""')
         form_body_content = request.form['form_body_content'].replace('"', '""')
-        form_display_name = request.form['form_display_name'].replace('<', '&lt;')
-        form_author_name = request.form['form_author_name'].replace('<', '&lt;')
-        form_body_content = request.form['form_body_content'].replace('<', '&lt;')
-        form_display_name = request.form['form_display_name'].replace('>', '&gt;')
-        form_author_name = request.form['form_author_name'].replace('>', '&gt;')
-        form_body_content = request.form['form_body_content'].replace('>', '&gt;')
+        form_display_name = form_display_name.replace('<', '&lt;')
+        form_author_name = form_author_name.replace('<', '&lt;')
+        form_body_content = form_body_content.replace('<', '&lt;')
+        form_display_name = form_display_name.replace('>', '&gt;')
+        form_author_name = form_author_name.replace('>', '&gt;')
+        form_body_content = form_body_content.replace('>', '&gt;')
         form_enabled = 1
         form_author = form_author_name
         form_publish_date = datetime.today()
-        curs.execute('insert into peti_data_tb (form_display_name, form_publish_date, form_enabled, form_author, form_body_content) values("{}", "{}", {}, "{}", "{}")'.format(
+        curs.execute('insert into peti_data_tb (form_display_name, form_publish_date, form_status, form_author, form_body_content) values("{}", "{}", {}, "{}", "{}")'.format(
             form_display_name, 
             form_publish_date, 
             form_enabled, 
