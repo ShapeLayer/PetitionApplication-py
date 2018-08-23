@@ -51,7 +51,7 @@ curs = conn.cursor()
 try:
     curs.execute('select * from peti_data_tb limit 1')
 except:
-    DATABASE_QUERY = open('tables/initial.sql').read()
+    DATABASE_QUERY = open('tables/initial.sql', encoding='utf-8').read()
     curs.executescript(DATABASE_QUERY)
     conn.commit
 
@@ -92,6 +92,15 @@ def load_nav_bar():
     acnt_nav_var = '<ul class="nav navbar-nav ml-auto"><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="usermenu">{}{} <span class="caret"></span></a><div class="dropdown-menu" aria-labelledby="usermenu"><a class="dropdown-item" href="#">{}</a></div></li></ul>'.format(FB_ACNT_IMG, FB_ACNT_USR_NAME, FB_ACNT_CTRL)
     return acnt_nav_var
 
+## 
+def check_react_database(form_id):
+    try:
+        curs.execute('select * from peti_{}_reaction_tb'.format(form_id))
+    except:
+        database_query = open('tables/peti_react_template.sql', encoding='utf-8').read()
+        database_query = database_query.replace('<id>', form_id)
+        curs.executescript(database_query)
+        conn.commit
 
 ## Flask Route ##
 @app.route('/', methods=['GET', 'POST'])
@@ -150,9 +159,22 @@ def petitions():
     BODY_CONTENT += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
 
-@app.route('/peti/a/<form_id>/')
+@app.route('/peti/a/<form_id>/', methods=['GET', 'POST'])
 def peti_a(form_id):
     FB_NAV_VAR = load_nav_bar()
+    facebook_session = get_facebook_oauth_token()
+    #check_react_database(form_id)
+    
+    if request.method == 'POST':
+        react_content = request.form['react_content']
+        print(react_content)
+
+    try:
+        me = facebook.get('/me')
+        facebook_authorized_bool = True
+    except:
+        facebook_authorized_bool = False
+
     if form_id == '':
         return 404
     BODY_CONTENT = ''
@@ -162,17 +184,26 @@ def peti_a(form_id):
     except:
         return 404
     if result[0][3] == 0:
-        return '404'
+        return 404
+
     form_display_name = result[0][1]
     form_publish_date = result[0][2]
     form_author = result[0][4]
     form_body_content = result[0][5]
     BODY_CONTENT += open('templates/peti_viewer.html', encoding='utf-8').read()
-    
+
     BODY_CONTENT = BODY_CONTENT.replace(' form_display_name ', form_display_name)
     BODY_CONTENT = BODY_CONTENT.replace(' form_publish_date ', form_publish_date)
     BODY_CONTENT = BODY_CONTENT.replace(' form_author ', form_author)
     BODY_CONTENT = BODY_CONTENT.replace(' form_body_content ', form_body_content)
+    BODY_CONTENT = BODY_CONTENT.replace(' form_id ', form_id)
+
+    if facebook_authorized_bool == True:
+        BODY_CONTENT = BODY_CONTENT.replace(' react_content ', '동의합니다.')
+        BODY_CONTENT = BODY_CONTENT.replace(' react_enabled ', '')
+    else:
+        BODY_CONTENT = BODY_CONTENT.replace(' react_content ', '이 기능은 페이스북 로그인이 필요합니다.')
+        BODY_CONTENT = BODY_CONTENT.replace(' react_enabled ', 'disabled')
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
 
 @app.route('/peti/a/<form_id>/delete/', methods=['GET', 'POST'])
@@ -254,6 +285,10 @@ def petitions_write():
             BODY_CONTENT = BODY_CONTENT.replace('| sns_login_status |', '<i class="fab fa-facebook"></i> 페이스북 로그인되지 않음. <a href="/login">로그인하기</a>')
         return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
 
+## === import assets
+@app.route('/img/<assets>')
+def serve_pictures(assets):
+    return static_file(assets, root='views/img')
 ## ================================================================================
 @app.errorhandler(404)
 def error_404(self):
