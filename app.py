@@ -106,7 +106,7 @@ def main():
         pass
     return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
 
-@app.route('/login', methods=['GET'])
+@app.route('/login/', methods=['GET'])
 def login():
     callback = url_for(
         'facebook_authorized',
@@ -115,7 +115,7 @@ def login():
     )
     return facebook.authorize(callback=callback)
 
-@app.route('/login/authorized')
+@app.route('/login/authorized/')
 def facebook_authorized():
     resp = facebook.authorized_response()
     if resp is None:
