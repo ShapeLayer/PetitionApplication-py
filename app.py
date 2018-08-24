@@ -13,6 +13,7 @@ import sys
 import asyncio
 
 import LocalSettings
+import OAuthSettings
 
 
 app = Flask(__name__)
@@ -20,8 +21,8 @@ app.debug = True
 app.secret_key = LocalSettings.CRYPT_SECRET_KEY
 oauth = OAuth(app)
 
-FACEBOOK_APP_ID = LocalSettings.FACEBOOK_APP_ID
-FACEBOOK_APP_SECRET = LocalSettings.FACEBOOK_APP_SECRET
+FACEBOOK_APP_ID = OAuthSettings.facebook_app_id
+FACEBOOK_APP_SECRET = OAuthSettings.facebook_app_secret
 
 facebook = oauth.remote_app(
     'facebook',
