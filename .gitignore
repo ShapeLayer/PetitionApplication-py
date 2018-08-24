@@ -5,5 +5,4 @@ __pycache__/*.*
 static/gen/*.*
 static/.webassets-cache
 
-facebook_app_id
-facebook_app_secret
+OAuthSettings.py
