@@ -22,17 +22,17 @@ oauth = OAuth(app)
 FACEBOOK_APP_ID = OAuthSettings.facebook_app_id
 FACEBOOK_APP_SECRET = OAuthSettings.facebook_app_secret
 
-facebook = oauth.remote_app(
-    'facebook',
-    consumer_key=FACEBOOK_APP_ID,
-    consumer_secret=FACEBOOK_APP_SECRET,
-    request_token_params={'scope': 'email'},
-    base_url='https://graph.facebook.com',
-    request_token_url=None,
-    access_token_url='/oauth/access_token',
-    access_token_method='GET',
-    authorize_url='https://www.facebook.com/dialog/oauth'
-)
+#facebook = oauth.remote_app(
+#    'facebook',
+#    consumer_key=FACEBOOK_APP_ID,
+#    consumer_secret=FACEBOOK_APP_SECRET,
+#    request_token_params={'scope': 'email'},
+#    base_url='https://graph.facebook.com',
+#    request_token_url=None,
+#    access_token_url='/oauth/access_token',
+#    access_token_method='GET',
+#    authorize_url='https://www.facebook.com/dialog/oauth'
+#)
 
 try:
     flask_port_set = int(sys.argv[1])
@@ -73,20 +73,54 @@ bundles = {
 assets = Environment(app)
 assets.register(bundles)
 
+class parser():
+    def anti_injection(content):
+        content = content.replace('"', '""')
+        content = content.replace('<', '&lt;')
+        content = content.replace('>', '&gt;')
+
+
 @app.route('/', methods=['GET', 'POST'])
 def flask_main():
-    conte
+    body_content = ''
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
-## === import assets
-@app.route('/img/<assets>')
+
+@app.route('/a/', methods=['GET', 'POST'])
+def flask_a():
+    body_content = ''
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+@app.route('/a/<article_id>/', methods=['GET', 'POST'])
+def flask_a_article_id():
+    body_content = ''
+    template = open('templates/a.html', encoding='utf-8').read()
+    body_content += template
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+@app.route('/a/write/', methods=['GET', 'POST'])
+def flask_a_write():
+    body_content = ''
+    template = open('templates/a_write.html', encoding='utf-8').read()
+    if request.method = 'POST':
+        #content
+    body_content += template
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+@app.route('/a/<article_id>/delete/', methods=['GET', 'POST'])
+def flask_a_article_id_delete():
+    body_content = ''
+    template = open('templates/a_delete.html', encoding='utf-8').read()
+    body_content += template
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+
+@app.route('/img/<assets>/')
 def serve_pictures(assets):
     return static_file(assets, root='views/img')
-## ================================================================================
 @app.errorhandler(404)
 def error_404(self):
-    FB_NAV_VAR = load_nav_bar()
-    BODY_CONTENT = '<h1>Oops!</h1><h2>404 NOT FOUND</h2><p>존재하지 않는 페이지입니다.</p>'
-    return render_template('index.html', OFORM_APPNAME = LocalSettings.OFORM_APPNAME, OFORM_CONTENT = BODY_CONTENT, GITHUB_REPO = LocalSettings.GITHUB_REPO, NAV_VAR = FB_NAV_VAR)
+    body_content = '<h1>Oops!</h1><h2>404 NOT FOUND</h2><p>존재하지 않는 페이지입니다.</p>'
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
-while(1):
-    app.run(LocalSettings.FLASK_HOST, FLASK_PORT_SET, debug = True)
+app.run(LocalSettings.flask_host, flask_port_set, debug = True)
