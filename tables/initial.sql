@@ -3,7 +3,7 @@ CREATE TABLE peti_data_tb(
     form_id INTEGER primary key AUTOINCREMENT,
     form_display_name TEXT NOT NULL,
     form_publish_date TEXT NOT NULL,
-    form_status INTEGER NOT NULL, /* 0: Published  1: Disabled  2: Complied */
+    form_status INTEGER NOT NULL, /* 0: Published  1: Disabled  2: Completed */
     form_author TEXT NOT NULL,
     form_body_content TEXT NOT NULL
 );
@@ -12,6 +12,12 @@ CREATE TABLE peti_control_log_tb(
     control_date TEXT NOT NULL,
     user TEXT NOT NULL,
     fb_id TEXT NOT NULL
+);
+CREATE TABLE peti_react_tb(
+    peti_id
+    react_id
+    fb_id
+    content TEXT NOT NULL
 );
 CREATE TABLE user_administrator_list_tb(
     fb_id TEXT NOT NULL,
