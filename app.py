@@ -51,11 +51,6 @@ except:
     curs.executescript(DATABASE_QUERY)
     conn.commit
 
-
-## LOAD CONVERSTATIONS ##
-CONVERSTATIONS_NATIVE = open('dic.json', encoding='utf-8').read()
-CONVERSTATIONS_DICT = json.loads(CONVERSTATIONS_NATIVE)
-
 ## Assets Bundling ##
 bundles = {
     'main_js' : Bundle(
@@ -73,12 +68,25 @@ bundles = {
 assets = Environment(app)
 assets.register(bundles)
 
-class parser():
+class parser:
     def anti_injection(content):
         content = content.replace('"', '""')
         content = content.replace('<', '&lt;')
         content = content.replace('>', '&gt;')
 
+class sqlite3_control:
+    def select(query):
+        conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
+        curs = conn.cursor()
+        curs.execute(query)
+        result = curs.fetchall()
+        return result
+
+    def commit(query):
+        conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
+        curs = conn.cursor()
+        curs.execute(query)
+        conn.commit()
 
 @app.route('/', methods=['GET', 'POST'])
 def flask_main():
@@ -89,21 +97,34 @@ def flask_main():
 @app.route('/a/', methods=['GET', 'POST'])
 def flask_a():
     body_content = ''
+    peti_data = sqlite3_control.select('select * from peti_data_tb')
+    body_content += '<h1>새로운 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">Column heading</th></tr></thead><tbody>'
+    for i in range(len(peti_data)):
+        body_content += '<tr><th scope="row">{}</th><td><a href="/peti/a/{}">{}</a></td></tr>'.format(result[i][0], result[i][0], result[i][1])
+    body_content += '</tbody></table>'
+    body_content += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 @app.route('/a/<article_id>/', methods=['GET', 'POST'])
-def flask_a_article_id():
+def flask_a_article_id(article_id):
     body_content = ''
+    peti_data = template.replace('select * from peti_data_tb where peti_id = {}'.format(article_id))
     template = open('templates/a.html', encoding='utf-8').read()
-    body_content += template
+    template = template.replace('%_article_display_name_%', peti_data[0][1])
+    template = template.replace('%_article_publish_date_%', peti_data[0][2])
+    template = template.replace('%_article_author_display_name_%', author)
+    template = template.replace('%_article_react_count_%', )
+    template = template.replace('%_article_react_body_content_%', )
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 @app.route('/a/write/', methods=['GET', 'POST'])
 def flask_a_write():
     body_content = ''
     template = open('templates/a_write.html', encoding='utf-8').read()
-    if request.method = 'POST':
-        #content
+    if request.method == 'POST':
+        peti_display_name = parser.anti_injection(request.form['peti_display_name'])
+        peti_author_name = parser.anti_injection(request.form['peti_quthor_name'])
+        peti_body_content = parser.anti_injection(request.form['peti_body_content'])
     body_content += template
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
