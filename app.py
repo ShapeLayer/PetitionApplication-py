@@ -81,6 +81,7 @@ class sqlite3_control:
         curs.execute(query)
         result = curs.fetchall()
         conn.close()
+        print(result)
         return result
 
     def commit(query):
@@ -108,7 +109,7 @@ def flask_a():
     ### Render Template ###
     body_content += '<h1>새로운 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">Column heading</th></tr></thead><tbody>'
     for i in range(len(peti_data)):
-        body_content += '<tr><th scope="row">{}</th><td><a href="/peti/a/{}">{}</a></td></tr>'.format(result[i][0], result[i][0], result[i][1])
+        body_content += '<tr><th scope="row">{}</th><td><a href="/a/{}/">{}</a></td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1])
     body_content += '</tbody></table>'
     body_content += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
     ### Render End ###
@@ -117,7 +118,7 @@ def flask_a():
 @app.route('/a/<article_id>/', methods=['GET', 'POST'])
 def flask_a_article_id(article_id):
     body_content = ''
-    peti_data = template.replace('select * from peti_data_tb where peti_id = {}'.format(article_id))
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
     template = open('templates/a.html', encoding='utf-8').read()
 
     ### Render Template ###
@@ -127,6 +128,7 @@ def flask_a_article_id(article_id):
     template = template.replace('%_article_body_content_%', peti_data[0][5])
     template = template.replace('%_article_react_count_%', '0')
     template = template.replace('%_article_react_body_content_%', '')
+    body_content += template
     ### Render End ###
 
     if request.method == 'POST':
@@ -174,6 +176,7 @@ def flask_a_write():
         )
         sqlite3_control.commit(sqlite3_query)
         ### Insert End ###
+        return redirect('/a/')
     body_content += template
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 #### To-Do ####
