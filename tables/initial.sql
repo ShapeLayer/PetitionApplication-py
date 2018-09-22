@@ -10,21 +10,21 @@ CREATE TABLE peti_data_tb(
     peti_body_content TEXT NOT NULL
 );
 CREATE TABLE peti_react_tb(
-    peti_id
-    react_id
-    fb_id
+    react_id INTEGER primary key AUTOINCREMENT,
+    peti_id INTEGER NOT NULL,
+    author_id INTEGER NOT NULL,
     content TEXT NOT NULL
 );
 
 /* User Data */
 CREATE TABLE site_user_tb(
-    account_id
-    sns_type
-    sns_id
-    user_display_name
-    user_display_profile_img
-    account_password
-)
+    account_id INTEGER primary key AUTOINCREMENT,
+    sns_type TEXT NOT NULL,
+    sns_id INTEGER NOT NULL,
+    user_display_name TEXT NOT NULL,
+    user_display_profile_img TEXT NOT NULL,
+    account_password_hash TEXT NOT NULL
+);
 CREATE TABLE user_administrator_list_tb(
     fb_id TEXT NOT NULL,
     auth TEXT NOT NULL
@@ -32,7 +32,7 @@ CREATE TABLE user_administrator_list_tb(
 CREATE TABLE author_connect(
     peti_author_id INTEGER NOT NULL,
     account_user_id INTEGER NOT NULL
-)
+);
 CREATE TABLE user_group_auth(
     user_group TEXT NOT NULL,
     site_owner INTEGER NOT NULL, /* Limited */
@@ -48,7 +48,7 @@ CREATE TABLE user_group_auth(
     manage_static_page INTEGER NOT NULL,
     manage_notion INTEGER NOT NULL,
     not_display_log INTEGER NOT NULL /* Limited */
-)
+);
 
 /* Application Manage Log */
 CREATE TABLE user_activity_log_tb(
@@ -62,4 +62,3 @@ CREATE TABLE articles_indexing_tb(
     articles_type TEXT NOT NULL,
     articles_index INTEGER NOT NULL
 );
-

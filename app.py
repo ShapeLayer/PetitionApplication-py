@@ -100,12 +100,18 @@ def flask_main():
 @app.route('/a/', methods=['GET', 'POST'])
 def flask_a():
     body_content = ''
+    
+    ### Index Database ###
     peti_data = sqlite3_control.select('select * from peti_data_tb')
+    ### Index End ###
+
+    ### Render Template ###
     body_content += '<h1>새로운 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">Column heading</th></tr></thead><tbody>'
     for i in range(len(peti_data)):
         body_content += '<tr><th scope="row">{}</th><td><a href="/peti/a/{}">{}</a></td></tr>'.format(result[i][0], result[i][0], result[i][1])
     body_content += '</tbody></table>'
     body_content += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
+    ### Render End ###
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 @app.route('/a/<article_id>/', methods=['GET', 'POST'])
@@ -113,16 +119,33 @@ def flask_a_article_id(article_id):
     body_content = ''
     peti_data = template.replace('select * from peti_data_tb where peti_id = {}'.format(article_id))
     template = open('templates/a.html', encoding='utf-8').read()
-    ### Template Rendering ###
+
+    ### Render Template ###
     template = template.replace('%_article_display_name_%', peti_data[0][1])
     template = template.replace('%_article_publish_date_%', peti_data[0][2])
     template = template.replace('%_article_author_display_name_%', peti_data[0][4])
     template = template.replace('%_article_body_content_%', peti_data[0][5])
     template = template.replace('%_article_react_count_%', '0')
     template = template.replace('%_article_react_body_content_%', '')
-    ### Rendering End ###
+    ### Render End ###
+
     if request.method == 'POST':
-        pass
+
+        ### Collect React Data ###
+        peti_id = article_id
+        # author_id = 
+        author_id = 0
+        content = parser.anti_injection(request.form['react_content'])
+        ### Collect End ###
+
+        ### Insert Data into Database ###
+        sqlite3_query = 'insert into peti_react_tb (peti_id, author_id, content) values({}, {}, "{}")'.format(
+            peti_id,
+            author_id,
+            content
+        )
+        sqlite3_control.commit(sqlite3_query)
+        ### Insert End ###
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 @app.route('/a/write/', methods=['GET', 'POST'])
@@ -142,7 +165,7 @@ def flask_a_write():
         peti_body_content = parser.anti_injection(request.form['peti_body_content'])
         ### Get End ###
 
-        ### Insert Data to Database ###
+        ### Insert Data into Database ###
         sqlite3_query = 'insert into peti_data_tb (peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content) values("{}", "{}", 0, "{}", "{}")'.format(
             peti_display_name,
             peti_publish_date,
@@ -167,6 +190,7 @@ def flask_a_article_id_delete():
     body_content += template
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
+
 ### Server Log Route ###
 @app.route('/log/')
 def flask_log():
@@ -177,6 +201,8 @@ def flask_log():
 @app.route('/img/<assets>/')
 def serve_pictures(assets):
     return static_file(assets, root='views/img')
+
+### Error Handler ###
 @app.errorhandler(404)
 def error_404(self):
     body_content = '<h1>Oops!</h1><h2>404 NOT FOUND</h2><p>존재하지 않는 페이지입니다.</p>'
