@@ -80,6 +80,7 @@ class sqlite3_control:
         curs = conn.cursor()
         curs.execute(query)
         result = curs.fetchall()
+        conn.close()
         return result
 
     def commit(query):
@@ -87,13 +88,15 @@ class sqlite3_control:
         curs = conn.cursor()
         curs.execute(query)
         conn.commit()
+        conn.close()
 
+### Main Route ###
 @app.route('/', methods=['GET', 'POST'])
 def flask_main():
     body_content = ''
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
-
+### Petition Route ###
 @app.route('/a/', methods=['GET', 'POST'])
 def flask_a():
     body_content = ''
@@ -110,23 +113,52 @@ def flask_a_article_id(article_id):
     body_content = ''
     peti_data = template.replace('select * from peti_data_tb where peti_id = {}'.format(article_id))
     template = open('templates/a.html', encoding='utf-8').read()
+    ### Template Rendering ###
     template = template.replace('%_article_display_name_%', peti_data[0][1])
     template = template.replace('%_article_publish_date_%', peti_data[0][2])
-    template = template.replace('%_article_author_display_name_%', author)
-    template = template.replace('%_article_react_count_%', )
-    template = template.replace('%_article_react_body_content_%', )
+    template = template.replace('%_article_author_display_name_%', peti_data[0][4])
+    template = template.replace('%_article_body_content_%', peti_data[0][5])
+    template = template.replace('%_article_react_count_%', '0')
+    template = template.replace('%_article_react_body_content_%', '')
+    ### Rendering End ###
+    if request.method == 'POST':
+        pass
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 @app.route('/a/write/', methods=['GET', 'POST'])
 def flask_a_write():
     body_content = ''
     template = open('templates/a_write.html', encoding='utf-8').read()
+    
+    ### Template Rendering ###
+    template = template.replace('%_sns_login_status_%', '비활성화 됨')
+    ### Rendering End ###
+
     if request.method == 'POST':
-        peti_display_name = parser.anti_injection(request.form['peti_display_name'])
-        peti_author_name = parser.anti_injection(request.form['peti_quthor_name'])
+        ### Get POST Data ###
+        peti_display_name =  parser.anti_injection(request.form['peti_display_name'])
+        peti_publish_date = datetime.today()
+        peti_author_display_name = parser.anti_injection(request.form['peti_author_display_name'])
         peti_body_content = parser.anti_injection(request.form['peti_body_content'])
+        ### Get End ###
+
+        ### Insert Data to Database ###
+        sqlite3_query = 'insert into peti_data_tb (peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content) values("{}", "{}", 0, "{}", "{}")'.format(
+            peti_display_name,
+            peti_publish_date,
+            peti_author_display_name,
+            peti_body_content
+        )
+        sqlite3_control.commit(sqlite3_query)
+        ### Insert End ###
     body_content += template
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+#### To-Do ####
+"""
+ * author_id에 고유 코드 기록 (현재: 그냥 유저가 입력한 정보 그대로 insert)
+"""
+#### To-Do End ####
+
 
 @app.route('/a/<article_id>/delete/', methods=['GET', 'POST'])
 def flask_a_article_id_delete():
@@ -135,7 +167,13 @@ def flask_a_article_id_delete():
     body_content += template
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
+### Server Log Route ###
+@app.route('/log/')
+def flask_log():
+    body_content = ''
+    return render_template('index.html')
 
+### Assets Route ###
 @app.route('/img/<assets>/')
 def serve_pictures(assets):
     return static_file(assets, root='views/img')
