@@ -128,13 +128,17 @@ def flask_a_article_id(article_id):
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
     template = open('templates/a.html', encoding='utf-8').read()
 
+    ### Index React Content ###
+    react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
+    ### Index End ###
+
     ### Render Template ###
     template = template.replace('%_article_display_name_%', peti_data[0][1])
     template = template.replace('%_article_publish_date_%', peti_data[0][2])
     template = template.replace('%_article_author_display_name_%', peti_data[0][4])
     template = template.replace('%_article_body_content_%', peti_data[0][5])
     template = template.replace('%_article_react_count_%', '0')
-    template = template.replace('%_article_react_body_content_%', '')
+    template = template.replace('%_article_react_body_content_%', str(react_data))
     body_content += template
     ### Render End ###
 
