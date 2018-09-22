@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-    <title>{{ OFORM_APPNAME }}</title>
+    <title>{{ appname }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!--Fonts Import-->
@@ -32,7 +32,7 @@
 <body>
     <div class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
         <div class="container">
-            <a href="/" class="navbar-brand">{{ OFORM_APPNAME }}</a>
+            <a href="/" class="navbar-brand">{{ appname }}</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -43,32 +43,32 @@
                         <a class="nav-link" href="/">홈</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/peti/">청원 목록</a>
+                        <a class="nav-link" href="/a/">청원 목록</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/peti/done/">완료된 청원</a>
+                        <a class="nav-link" href="/a/done/">완료된 청원</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/peti/dmca/">임시 조치</a>
+                        <a class="nav-link" href="/a/dmca/">임시 조치</a>
                     </li>
                 </ul>
-                {{ NAV_VAR|safe }}
+                {{ nav_bar|safe }}
             </div>
         </div>
     </div>
     <div class="container">
-        {{ OFORM_CONTENT|safe }}
+        {{ body_content|safe }}
         <!-- footer area -->
         <footer id="footer">
             <div class="row">
                 <div class="col-lg-12">
                     <ul class="list-unstyled">
-                        <li><a href="{{ GITHUB_REPO }}">Any Bugs?</a></li>
-                        <li><a href="{{ GITHUB_REPO }}/graphs/contributors">Contributors</a></li>
-                        <li><a href="{{ GITHUB_REPO }}/"><i class="fab fa-github"></i>   Github</a></li>
+                        <li><a href="https://github.com/kpjhg0124/PetitionApplication-py">Any Bugs?</a></li>
+                        <li><a href="https://github.com/kpjhg0124/PetitionApplication-py/graphs/contributors">Contributors</a></li>
+                        <li><a href="https://github.com/kpjhg0124/PetitionApplication-py/"><i class="fab fa-github"></i>   Github</a></li>
                     </ul>
                     <p>Made by <a href="https://github.com/kpjhg0124">kpjhg0124</a>.</p>
-                    <p>This project is licensed under the BSD 3-Clause License. See the <a href="{{ GITHUB_REPO }}/blob/master/README.md">LICENSE</a> document for details.</p>
+                    <p>This project is licensed under the BSD 3-Clause License. See the <a href="https://github.com/kpjhg0124/PetitionApplication-py/blob/master/README.md">LICENSE</a> document for details.</p>
                     <p>Based on <a href="https://getbootstrap.com" rel="nofollow">Bootstrap</a>. Icons from <a href="http://fontawesome.io/" rel="nofollow">Font Awesome</a>. Web fonts from <a href="https://fonts.google.com/" rel="nofollow">Google</a>. Designs by <a href="https://bootswatch.com/">Bootswatch</a>.</p>
                 </div>
             </div>
