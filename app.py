@@ -43,14 +43,6 @@ except:
 conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
 curs = conn.cursor()
 
-
-try:
-    curs.execute('select * from peti_data_tb limit 1')
-except:
-    DATABASE_QUERY = open('tables/initial.sql', encoding='utf-8').read()
-    curs.executescript(DATABASE_QUERY)
-    conn.commit
-
 ## Assets Bundling ##
 bundles = {
     'main_js' : Bundle(
@@ -73,6 +65,7 @@ class parser:
         content = content.replace('"', '""')
         content = content.replace('<', '&lt;')
         content = content.replace('>', '&gt;')
+        return content
 
 class sqlite3_control:
     def select(query):
@@ -81,7 +74,6 @@ class sqlite3_control:
         curs.execute(query)
         result = curs.fetchall()
         conn.close()
-        print(result)
         return result
 
     def commit(query):
@@ -90,6 +82,21 @@ class sqlite3_control:
         curs.execute(query)
         conn.commit()
         conn.close()
+
+    def executescript(query):
+        conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
+        curs = conn.cursor()
+        curs.executescript(query)
+        conn.commit()
+        conn.close()
+
+### Create Database Table ###
+try:
+    sqlite3_control.select('select * from peti_data_tb limit 1')
+except:
+    database_query = open('tables/initial.sql', encoding='utf-8').read()
+    sqlite3_control.executescript(database_query)
+### Create End ###
 
 ### Main Route ###
 @app.route('/', methods=['GET', 'POST'])
