@@ -146,6 +146,10 @@ def flask_login():
     body_content = body_content.replace('%_form_alerts_%', '')
     ### Render End ###
 
+### To-Do ###
+# SNS 로그인 기능 재추가
+### To-Do End ###
+
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 @app.route('/register/', methods=['GET', 'POST'])
