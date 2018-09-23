@@ -33,7 +33,7 @@ CREATE TABLE author_connect(
     peti_author_id INTEGER NOT NULL,
     account_user_id INTEGER NOT NULL
 );
-CREATE TABLE user_group_auth(
+CREATE TABLE user_group_acl(
     user_group TEXT NOT NULL,
     site_owner INTEGER NOT NULL, /* Limited */
     peti_read INTEGER NOT NULL,

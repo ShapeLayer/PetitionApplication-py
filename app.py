@@ -260,12 +260,97 @@ def flask_admin_admins():
 @app.route('/admin/acl/')
 def flask_admin_acl():
     body_content = ''
+    ### Index User ACL ###
+    acl_data = sqlite3_control.select('select * from user_group_acl')
+    acl_name = sqlite3_control.select('pragma table_info(user_group_acl)')
+    ### Index End ###
+
+    ### Render Template ###
+    body_content += '<h1>사용자 권한 레벨</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">그룹 이름</th><th>권한 리스트</th></tr></thead><tbody>'
+    for i in range(len(acl_data)):
+        acl_control_template = """
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="%_acl_data_id_%" name="%_acl_data_id_%" %_is_enabled_% | %_is_locked_%>
+                <label class="custom-control-label" for="%_acl_data_id_%">%_acl_data_name_%</label>
+            </div>
+
+        """
+        acl_control_rendered = ''
+        for j in range(len(acl_name)-1):
+            if acl_data[i][j+1] == 0:
+                is_enabled = ''
+            else:
+                is_enabled = 'checked'
+            print('a')
+            acl_control_display = acl_control_template
+            acl_control_display = acl_control_display.replace('%_acl_data_id_%', str(j+1))
+            acl_control_display = acl_control_display.replace('%_is_enabled_%', is_enabled)
+            acl_control_display = acl_control_display.replace('%_acl_data_name_%', acl_name[j+1][1])
+            if j+1 == 1 or j+1 == 13:
+                acl_control_display = acl_control_display.replace('%_is_locked_%', 'disabled')
+            else:
+                acl_control_display = acl_control_display.replace('%_is_locked_%', '')
+            print(acl_control_display)
+            acl_control_rendered += acl_control_display
+        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}</td></tr>'.format(acl_data[i][0], acl_control_rendered)
+    body_content += '</tbody></table>'
+    ### Render End ###
+
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 @app.route('/admin/petition/')
 def flask_admin_petition():
     body_content = ''
+    ### Index Database ###
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 1 or peti_status = 404')
+    ### Index End ###
+
+    ### Render Template ###
+    body_content += '<h1>비활성화 / 삭제된 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">제목</th><th>상태</th></tr></thead><tbody>'
+    for i in range(len(peti_data)):
+        body_content += '<tr><th scope="row">{}</th><td><a href="/admin/petition/{}/">{}</a></td><td>{}</td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1], peti_data[i][3])
+    body_content += '</tbody></table>'
+    ### Render End ###
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+@app.route('/admin/petition/<article_id>/', methods=['GET', 'POST'])
+def flask_admin_petition_article_id(article_id):
+    body_content = ''
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+    template = open('templates/a.html', encoding='utf-8').read()
+
+    ### Index React Content ###
+    react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
+    ### Index End ###
+
+    ### Render React ###
+    template_react = """
+            <div class="container">
+                <h5>%_article_react_author_display_name_%</h5>
+                <p>%_article_react_body_content_%</p>
+            </div>
+            """
+    react_body_content = ''
+    template = template.replace('%_is_enabled_%', 'disabled')
+    for i in range(len(react_data)):
+        react_render_object = template_react
+        react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][2]))
+        react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
+        react_body_content += react_render_object
+    ### Render End ###
+
+    ### Render Template ###
+    template = template.replace('%_article_display_name_%', peti_data[0][1])
+    template = template.replace('%_article_publish_date_%', peti_data[0][2])
+    template = template.replace('%_article_author_display_name_%', peti_data[0][4])
+    template = template.replace('%_article_body_content_%', peti_data[0][5])
+    template = template.replace('%_article_react_count_%', str(len(react_data)))
+    template = template.replace('%_article_reacts_%', react_body_content)
+    body_content += template
+    ### Render End ###
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
 
 
 ### Server Log Route ###
