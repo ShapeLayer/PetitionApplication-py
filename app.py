@@ -245,7 +245,28 @@ def flask_a_article_id_delete(article_id):
 @app.route('/admin/')
 def flask_admin():
     body_content = ''
-    return render_template('index.html')
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+@app.route('/admin/member/')
+def flask_admin_member():
+    body_content = ''
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+@app.route('/admin/admins/')
+def flask_admin_admins():
+    body_content = ''
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+@app.route('/admin/acl/')
+def flask_admin_acl():
+    body_content = ''
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+@app.route('/admin/petition/')
+def flask_admin_petition():
+    body_content = ''
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
 
 ### Server Log Route ###
 @app.route('/log/')
