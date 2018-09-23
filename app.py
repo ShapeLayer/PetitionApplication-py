@@ -1,5 +1,5 @@
 ## Import Python Modules ##
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort
 from flask_assets import Bundle, Environment
 from flask_login import LoginManager
 from flask_login import login_user, logout_user, current_user, login_required
@@ -126,7 +126,7 @@ def flask_a():
     body_content = ''
     
     ### Index Database ###
-    peti_data = sqlite3_control.select('select * from peti_data_tb')
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status != 404')
     ### Index End ###
 
     ### Render Template ###
@@ -148,6 +148,8 @@ def flask_a_article_id(article_id):
     react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
     ### Index End ###
 
+    if peti_data[0][3] == 404:
+        abort(404)
     ### Render React ###
     template_react = """
             <div class="container">
@@ -230,10 +232,13 @@ def flask_a_write():
 
 
 @app.route('/a/<article_id>/delete/', methods=['GET', 'POST'])
-def flask_a_article_id_delete():
+def flask_a_article_id_delete(article_id):
     body_content = ''
     template = open('templates/a_delete.html', encoding='utf-8').read()
     body_content += template
+    if request.method == 'POST':
+        sqlite3_control.commit('update peti_data_tb set peti_status = 404 where peti_id = {}'.format(article_id))
+        return redirect('/a/')
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 ### Administrator Menu Route ###
