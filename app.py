@@ -298,6 +298,7 @@ def flask_a_article_id(article_id):
         )
         sqlite3_control.commit(sqlite3_query)
         ### Insert End ###
+        return redirect('/a/{}'.format(article_id))
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 @app.route('/a/write/', methods=['GET', 'POST'])
