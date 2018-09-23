@@ -20,9 +20,9 @@ CREATE TABLE peti_react_tb(
 CREATE TABLE site_user_tb(
     account_id INTEGER primary key AUTOINCREMENT,
     sns_type TEXT NOT NULL,
-    sns_id INTEGER NOT NULL,
+    sns_id TEXT NOT NULL,
     user_display_name TEXT NOT NULL,
-    user_display_profile_img TEXT NOT NULL,
+    user_display_profile_img TEXT,
     account_password_hash TEXT NOT NULL
 );
 CREATE TABLE user_administrator_list_tb(

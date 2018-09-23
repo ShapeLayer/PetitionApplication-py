@@ -11,6 +11,10 @@ import json
 import libgravatar
 import sys
 import asyncio
+import base64
+import hashlib
+import random
+from Crypto.Cipher import AES
 
 import LocalSettings
 import OAuthSettings
@@ -90,6 +94,26 @@ class sqlite3_control:
         conn.commit()
         conn.close()
 
+BS = 16
+pad = (lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS).encode())
+unpad = (lambda s: s[:-ord(s[len(s)-1:])])
+
+
+class AESCipher(object):
+    def __init__(self, key):
+        self.key = hashlib.sha256(key.encode()).digest()
+
+    def encrypt(self, target):
+        target = target.encode()
+        raw = pad(target)
+        cipher = AES.new(self.key, AES.MODE_CBC, self.__iv())
+        enc = cipher.encrypt(raw)
+        return base64.b64encode(enc).decode('utf-8')
+
+    def __iv(self):
+        return chr(0) * 16
+
+
 ### Create Database Table ###
 try:
     sqlite3_control.select('select * from peti_data_tb limit 1')
@@ -108,15 +132,93 @@ def flask_main():
 @app.route('/login/', methods=['GET', 'POST'])
 def flask_login():
     body_content = ''
-    template = open('templates/login.html', encoding='utf-8').read()
+    
+    ### Render Template ###
+    template = open('templates/account.html', encoding='utf-8').read()
+    form_body_content = '<div class="form-group"><div class="form-group"><input type="text" class="form-control form-login-object" name="account_id" placeholder="계정명" required></div><div class="form-group"><input type="password" class="form-control form-login-object" name="account_password" placeholder="비밀번호" required></div></div>'
+    form_button = '<button type="submit" class="btn btn-primary">로그인</button><a href="/register/">계정이 없으신가요?</a>'
+    template = template.replace('%_form_body_content_%', form_body_content)
+    template = template.replace('%_form_button_%', form_button)
+    ### Render End ###
     body_content += template
+
+    ### Render Alerts ###
+    body_content = body_content.replace('%_form_alerts_%', '')
+    ### Render End ###
+
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 @app.route('/register/', methods=['GET', 'POST'])
 def flask_register():
     body_content = ''
-    template = open('templates/login.html', encoding='utf-8').read()
+    template = open('templates/account.html', encoding='utf-8').read()
+    form_body_content = '<div class="form-group"><div class="form-group"><input type="text" class="form-control form-login-object" name="account_id" placeholder="계정명" required></div><div class="form-group"><input type="password" class="form-control form-login-object" name="account_password" placeholder="비밀번호" required></div><div class="form-group"><input type="text" class="form-control form-login-object" name="user_display_name" placeholder="이름" required></div><div class="form-group"><input type="text" class="form-control form-login-object" name="verify_key" placeholder="Verify Key" required></div></div>'
+    template = template.replace('%_form_body_content_%', form_body_content)
+    template = template.replace('%_form_button_%', '<p>주의: 본 서비스는 이메일 주소를 수집하고 있지 않습니다. 비밀번호를 잃어버리게 되면 복잡한 절차를 밟아야 하니 꼭 기억하세요.</p><button type="submit" class="btn btn-primary">가입하기</button>')
     body_content += template
+
+    if request.method == 'POST':
+        ### Check Verify Key ###
+        verify_key = open('verify_key', encoding='utf-8').read()
+        if verify_key != request.form['verify_key']:
+            alert_code = """
+            <div class="alert alert-dismissible alert-danger">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>진심...인가요?</strong><br> verify_key 값이 틀렸습니다. 관리자에게 문의하세요.
+            </div>
+            """
+            body_content = body_content.replace('%_form_alerts_%', alert_code)
+            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+        ### Check End ###
+
+        ### Get Register Data ###
+        sns_id = parser.anti_injection(request.form['account_id'])
+        account_password = parser.anti_injection(request.form['account_password'])
+        user_display_name = parser.anti_injection(request.form['user_display_name'])
+        ### Get End ###
+
+        ### Check Overlap ID ###
+        same_id_getter = sqlite3_control.select('select * from site_user_tb where sns_type = "entree" and sns_id = "{}"'.format(sns_id))
+        if len(same_id_getter) != 0:
+            alert_code = """
+            <div class="alert alert-dismissible alert-danger">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>흐음..이미 있는 아이디네요.</strong><br> 이미 존재하는 아이디입니다. 다른 아이디를 선택하세요.
+            </div>
+            """
+            body_content = body_content.replace('%_form_alerts_%', alert_code)
+            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+        ### Check End ###
+        
+        ### Encrypt Password ###
+        aes = AESCipher(LocalSettings.crypt_secret_key)
+        account_password_hash = aes.encrypt(account_password)
+        ### Encrypt End ###
+
+        ### Insert User Account into Database ###
+        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, account_password_hash) values("entree", "{}", "{}", "{}")'.format(
+            sns_id, user_display_name, account_password_hash
+        ))
+        ### Insert End ###
+
+        ### Verify Key Reset ###
+        string = 'abcdefghijklmfgqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!?@#$%_-'
+        verify_key = ''.join(random.choice(string) for x in range(10))
+        with open('verify_key', mode='w', encoding='utf-8') as f:
+            f.write(verify_key)
+        ### Reset End ###
+
+        alert_code = """
+        <div class="alert alert-dismissible alert-success">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>환영합니다! %_user_display_name_%</strong><br> 이제 <a href="/login/" class="alert-link">로그인</a> 해보시겠어요?
+        </div>
+        """
+        alert_code = alert_code.replace('%_user_display_name_%', user_display_name)
+        body_content = body_content.replace('%_form_alerts_%', alert_code)
+        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    
+    body_content = body_content.replace('%_form_alerts_%', '')
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 
@@ -296,6 +398,15 @@ def flask_admin_acl():
     body_content += '</tbody></table>'
     ### Render End ###
 
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+@app.route('/admin/verify_key/')
+def flask_admin_verify_key():
+    body_content = ''
+    body_content += '<h1>verify_key 정보</h1>'
+    verify_key = open('verify_key', encoding='utf-8').read()
+    body_content += '<input type="text" class="form-control" value="{}" disabled/>'.format(verify_key)
+    body_content += '<p>verify_key는 1회 사용시 갱신됩니다.</p>'
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
 @app.route('/admin/petition/')
