@@ -104,6 +104,22 @@ def flask_main():
     body_content = ''
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
+### Account Route ###
+@app.route('/login/', methods=['GET', 'POST'])
+def flask_login():
+    body_content = ''
+    template = open('templates/login.html', encoding='utf-8').read()
+    body_content += template
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+@app.route('/register/', methods=['GET', 'POST'])
+def flask_register():
+    body_content = ''
+    template = open('templates/login.html', encoding='utf-8').read()
+    body_content += template
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+
+
 ### Petition Route ###
 @app.route('/a/', methods=['GET', 'POST'])
 def flask_a():
@@ -132,13 +148,28 @@ def flask_a_article_id(article_id):
     react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
     ### Index End ###
 
+    ### Render React ###
+    template_react = """
+            <div class="container">
+                <h5>%_article_react_author_display_name_%</h5>
+                <p>%_article_react_body_content_%</p>
+            </div>
+            """
+    react_body_content = ''
+    for i in range(len(react_data)):
+        react_render_object = template_react
+        react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][2]))
+        react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
+        react_body_content += react_render_object
+    ### Render End ###
+
     ### Render Template ###
     template = template.replace('%_article_display_name_%', peti_data[0][1])
     template = template.replace('%_article_publish_date_%', peti_data[0][2])
     template = template.replace('%_article_author_display_name_%', peti_data[0][4])
     template = template.replace('%_article_body_content_%', peti_data[0][5])
-    template = template.replace('%_article_react_count_%', '0')
-    template = template.replace('%_article_react_body_content_%', str(react_data))
+    template = template.replace('%_article_react_count_%', str(len(react_data)))
+    template = template.replace('%_article_reacts_%', react_body_content)
     body_content += template
     ### Render End ###
 
@@ -187,6 +218,7 @@ def flask_a_write():
         )
         sqlite3_control.commit(sqlite3_query)
         ### Insert End ###
+
         return redirect('/a/')
     body_content += template
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
@@ -204,6 +236,11 @@ def flask_a_article_id_delete():
     body_content += template
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
 
+### Administrator Menu Route ###
+@app.route('/admin/')
+def flask_admin():
+    body_content = ''
+    return render_template('index.html')
 
 ### Server Log Route ###
 @app.route('/log/')

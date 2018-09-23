@@ -12,11 +12,21 @@ input{
 }
 
 .form_author_name {
-    width: 30%
+    width: 30%;
+}
+.form-login-object {
+    width: 30%;
 }
 
 .article-margin {
     margin: 1em;
+}
+.article-margin .container {
+    margin: 2em;
+}
+
+.login-form {
+    align-items: center;
 }
 
 #footer{
