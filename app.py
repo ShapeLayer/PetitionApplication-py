@@ -113,7 +113,7 @@ class AESCipher(object):
     def __iv(self):
         return chr(0) * 16
 
-class user_profile_data:
+class user_control:
     def load_nav_bar():
         template = """
         <ul class="nav navbar-nav ml-auto">
@@ -121,7 +121,6 @@ class user_profile_data:
                 <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download"><img src="%_user_display_profile_img_%" width="10px" height="10px"> %_user_display_name_% <span class="caret"></span></a>
                 <div class="dropdown-menu" aria-labelledby="download">
                     %_user_profile_menu_content_%
-                    <a class="dropdown-item" href="#"></a>
                 </div>
             </li>
         </ul>
@@ -146,6 +145,15 @@ class user_profile_data:
             """
         template = template.replace('%_user_profile_menu_content_%', user_profile_menu_content)
         return template
+    
+    def identify_user(target_id):
+        user_auth_group = sqlite3_control.select('select * from user_administrator_list_tb where account_id = {}'.format(target_id))
+        user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
+        print(user_auth)
+        if user_auth[0][1] != 1 and user_auth[0][2] != 1:
+            return False
+        else:
+            return True
 
 ### Create Database Table ###
 try:
@@ -163,14 +171,14 @@ except:
 @app.route('/', methods=['GET', 'POST'])
 def flask_main():
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 ### Account Route ###
 @app.route('/login/', methods=['GET', 'POST'])
 def flask_login():
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
     
     ### Render Template ###
     template = open('templates/account.html', encoding='utf-8').read()
@@ -232,7 +240,7 @@ def flask_login():
 def flask_logout():
     body_content = ''
     session.pop('now_login', None)
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     body_content += '<h1>로그아웃 완료</h1><p>{}에서 로그아웃되었습니다.</p><p>브라우저 캐시를 삭제하지 않으면 로그인한 것처럼 보일 수도 있음에 유의하세요.</p>'.format(LocalSettings.entree_appname)
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -240,7 +248,7 @@ def flask_logout():
 @app.route('/register/', methods=['GET', 'POST'])
 def flask_register():
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     template = open('templates/account.html', encoding='utf-8').read()
     form_body_content = '<div class="form-group"><div class="form-group"><input type="text" class="form-control form-login-object" name="account_id" placeholder="계정명" required></div><div class="form-group"><input type="password" class="form-control form-login-object" name="account_password" placeholder="비밀번호" required></div><div class="form-group"><input type="text" class="form-control form-login-object" name="user_display_name" placeholder="이름" required></div><div class="form-group"><input type="text" class="form-control form-login-object" name="verify_key" placeholder="Verify Key" required></div></div>'
@@ -320,7 +328,7 @@ def flask_register():
 @app.route('/a/', methods=['GET', 'POST'])
 def flask_a():
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
     
     ### Index Database ###
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status != 404')
@@ -338,7 +346,7 @@ def flask_a():
 @app.route('/a/<article_id>/', methods=['GET', 'POST'])
 def flask_a_article_id(article_id):
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
     template = open('templates/a.html', encoding='utf-8').read()
@@ -397,7 +405,7 @@ def flask_a_article_id(article_id):
 @app.route('/a/write/', methods=['GET', 'POST'])
 def flask_a_write():
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     template = open('templates/a_write.html', encoding='utf-8').read()
     
@@ -436,7 +444,7 @@ def flask_a_write():
 @app.route('/a/<article_id>/delete/', methods=['GET', 'POST'])
 def flask_a_article_id_delete(article_id):
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     template = open('templates/a_delete.html', encoding='utf-8').read()
     body_content += template
@@ -445,18 +453,31 @@ def flask_a_article_id_delete(article_id):
         return redirect('/a/')
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+
 ### Administrator Menu Route ###
 @app.route('/admin/')
 def flask_admin():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+        
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/member/')
 def flask_admin_member():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     ### Index User List form Database ###
     user_list = sqlite3_control.select('select * from site_user_tb')
@@ -473,8 +494,14 @@ def flask_admin_member():
 
 @app.route('/admin/admins/')
 def flask_admin_admins():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     ### Index Administrator List form Database ###
     admin_list = sqlite3_control.select('select * from user_administrator_list_tb')
@@ -492,8 +519,14 @@ def flask_admin_admins():
 
 @app.route('/admin/acl/')
 def flask_admin_acl():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     ### Index User ACL ###
     acl_data = sqlite3_control.select('select * from user_group_acl')
@@ -535,8 +568,14 @@ def flask_admin_acl():
 
 @app.route('/admin/verify_key/')
 def flask_admin_verify_key():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     body_content += '<h1>verify_key 정보</h1>'
     verify_key = open('verify_key', encoding='utf-8').read()
@@ -546,8 +585,14 @@ def flask_admin_verify_key():
 
 @app.route('/admin/petition/')
 def flask_admin_petition():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     ### Index Database ###
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 1 or peti_status = 404')
@@ -563,8 +608,14 @@ def flask_admin_petition():
 
 @app.route('/admin/petition/<article_id>/', methods=['GET', 'POST'])
 def flask_admin_petition_article_id(article_id):
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
     body_content = ''
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
     template = open('templates/a.html', encoding='utf-8').read()
@@ -615,10 +666,17 @@ def serve_pictures(assets):
     return static_file(assets, root='views/img')
 
 ### Error Handler ###
+@app.route('/error/acl/')
+def error_acl():
+    body_content = '<h1>Oops!</h1><h2>ACL NOT SATISFIED</h2><p>ACL이 만족되지 않아 접근할 수 없습니다.</p>'
+    nav_bar = user_control.load_nav_bar()
+
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
 @app.errorhandler(404)
 def error_404(self):
     body_content = '<h1>Oops!</h1><h2>404 NOT FOUND</h2><p>존재하지 않는 페이지입니다.</p>'
-    nav_bar = user_profile_data.load_nav_bar()
+    nav_bar = user_control.load_nav_bar()
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 

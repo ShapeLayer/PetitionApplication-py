@@ -38,13 +38,17 @@
             <div class="collapse navbar-collapse" id="navbarResponsive">
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/">관리자 홈</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download">홈 <span class="caret"></span></a>
+                        <div class="dropdown-menu" aria-labelledby="download">
+                            <a class="dropdown-item" href="/">홈</a>
+                            <a class="dropdown-item" href="/admin/">관리자 홈</a>                        </div>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download">사용자 관리 <span class="caret"></span></a>
                         <div class="dropdown-menu" aria-labelledby="download">
                             <a class="dropdown-item" href="/admin/member/">전체 사용자 목록</a>
+                            <a class="dropdown-item" href="/admin/block/">접속 차단된 사용자 관리</a>
                             <a class="dropdown-item" href="/admin/admins/">관리자 관리</a>
                             <a class="dropdown-item" href="/admin/acl/">사용자 권한 레벨</a>
                             <a class="dropdown-item" href="/admin/verify_key/">verify_key 정보</a>
@@ -53,7 +57,14 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download">청원 관리 <span class="caret"></span></a>
                         <div class="dropdown-menu" aria-labelledby="download">
-                            <a class="dropdown-item" href="/admin/petition/">청원 삭제 / 비활성화 상태</a>
+                            <a class="dropdown-item" href="/admin/petition/">청원 비정규 상태</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download">사이트 관리 <span class="caret"></span></a>
+                        <div class="dropdown-menu" aria-labelledby="download">
+                            <a class="dropdown-item" href="/admin/static/">정적 페이지 관리</a>
+                            <a class="dropdown-item" href="/admin/notice/">공지 관리</a>
                         </div>
                     </li>
                     </li>  
