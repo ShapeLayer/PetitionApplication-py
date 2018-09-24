@@ -113,25 +113,64 @@ class AESCipher(object):
     def __iv(self):
         return chr(0) * 16
 
+class user_profile_data:
+    def load_nav_bar():
+        template = """
+        <ul class="nav navbar-nav ml-auto">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download"><img src="%_user_display_profile_img_%" width="10px" height="10px"> %_user_display_name_% <span class="caret"></span></a>
+                <div class="dropdown-menu" aria-labelledby="download">
+                    %_user_profile_menu_content_%
+                    <a class="dropdown-item" href="#"></a>
+                </div>
+            </li>
+        </ul>
+        """
+        user_profile_menu_content = ''
+        if 'now_login' in session:
+            user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+            user_auth_group = sqlite3_control.select('select * from user_administrator_list_tb where account_id = {}'.format(session['now_login']))
+            user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
+            template = template.replace('%_user_display_name_%', user_data[0][3])
+            if user_auth[0][2] == 1:
+                user_profile_menu_content += """
+                <a class="dropdown-item" href="/admin/">관리자 메뉴</a>
+                """
+            user_profile_menu_content += """
+            <a class="dropdown-item" href="/logout/">로그아웃</a>
+            """
+        else:
+            template = template.replace('%_user_display_name_%', '비로그인 상태')
+            user_profile_menu_content += """
+            <a class="dropdown-item" href="/login/">로그인</a>
+            """
+        template = template.replace('%_user_profile_menu_content_%', user_profile_menu_content)
+        return template
 
 ### Create Database Table ###
 try:
     sqlite3_control.select('select * from peti_data_tb limit 1')
 except:
-    database_query = open('tables/initial.sql', encoding='utf-8').read()
+    database_query = open('tables/tables.sql', encoding='utf-8').read()
     sqlite3_control.executescript(database_query)
+    ### Initialize Database ###
+    database_query = open('tables/initialize.sql', encoding='utf-8').read()
+    sqlite3_control.executescript(database_query)
+    ### Initialize End ###
 ### Create End ###
 
 ### Main Route ###
 @app.route('/', methods=['GET', 'POST'])
 def flask_main():
     body_content = ''
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    nav_bar = user_profile_data.load_nav_bar()
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 ### Account Route ###
 @app.route('/login/', methods=['GET', 'POST'])
 def flask_login():
     body_content = ''
+    nav_bar = user_profile_data.load_nav_bar()
     
     ### Render Template ###
     template = open('templates/account.html', encoding='utf-8').read()
@@ -142,6 +181,44 @@ def flask_login():
     ### Render End ###
     body_content += template
 
+    if request.method == 'POST':
+        sns_id = parser.anti_injection(request.form['account_id'])
+        account_password = parser.anti_injection(request.form['account_password'])
+        
+        ### Get User Data ###
+        user_data = sqlite3_control.select('select * from site_user_tb where sns_id = "{}"'.format(sns_id))
+        ### Get End ###
+
+        ### Encrypt Password ###
+        aes = AESCipher(LocalSettings.crypt_secret_key)
+        account_password_hash = aes.encrypt(account_password)
+        ### Encrypt End ###
+        if len(user_data) == 0:
+            ### 아이디가 없습니다.
+            alert_code = """
+            <div class="alert alert-dismissible alert-danger">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>누구세요?</strong><br> entree 엔진 서버에서 데이터를 찾을 수없습니다.
+            </div>
+            """
+            body_content = body_content.replace('%_form_alerts_%', alert_code)
+            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+        elif account_password_hash == user_data[0][5]:
+            session['now_login'] = user_data[0][0]
+            alert_code = ''
+            body_content = body_content.replace('%_form_alerts_%', alert_code)
+            return redirect('/')
+        else:
+            alert_code = """
+            <div class="alert alert-dismissible alert-danger">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>로그인 실패</strong><br> 알맞지 않은 계정 정보입니다.
+            </div>
+            """
+            body_content = body_content.replace('%_form_alerts_%', alert_code)
+            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+            ### 로그인 실패
+
     ### Render Alerts ###
     body_content = body_content.replace('%_form_alerts_%', '')
     ### Render End ###
@@ -149,12 +226,22 @@ def flask_login():
 ### To-Do ###
 # SNS 로그인 기능 재추가
 ### To-Do End ###
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+@app.route('/logout/')
+def flask_logout():
+    body_content = ''
+    session.pop('now_login', None)
+    nav_bar = user_profile_data.load_nav_bar()
+
+    body_content += '<h1>로그아웃 완료</h1><p>{}에서 로그아웃되었습니다.</p><p>브라우저 캐시를 삭제하지 않으면 로그인한 것처럼 보일 수도 있음에 유의하세요.</p>'.format(LocalSettings.entree_appname)
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/register/', methods=['GET', 'POST'])
 def flask_register():
     body_content = ''
+    nav_bar = user_profile_data.load_nav_bar()
+
     template = open('templates/account.html', encoding='utf-8').read()
     form_body_content = '<div class="form-group"><div class="form-group"><input type="text" class="form-control form-login-object" name="account_id" placeholder="계정명" required></div><div class="form-group"><input type="password" class="form-control form-login-object" name="account_password" placeholder="비밀번호" required></div><div class="form-group"><input type="text" class="form-control form-login-object" name="user_display_name" placeholder="이름" required></div><div class="form-group"><input type="text" class="form-control form-login-object" name="verify_key" placeholder="Verify Key" required></div></div>'
     template = template.replace('%_form_body_content_%', form_body_content)
@@ -172,7 +259,7 @@ def flask_register():
             </div>
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
         ### Check End ###
 
         ### Get Register Data ###
@@ -191,7 +278,7 @@ def flask_register():
             </div>
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
         ### Check End ###
         
         ### Encrypt Password ###
@@ -203,6 +290,9 @@ def flask_register():
         sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, account_password_hash) values("entree", "{}", "{}", "{}")'.format(
             sns_id, user_display_name, account_password_hash
         ))
+        same_id_getter = sqlite3_control.select('select * from site_user_tb where sns_type = "entree" and sns_id = "{}"'.format(sns_id))
+        if same_id_getter[0][0] != 1:
+            sqlite3_control.commit('insert into user_administrator_list_tb values({}, "user")'.format(same_id_getter[0][0]))
         ### Insert End ###
 
         ### Verify Key Reset ###
@@ -220,16 +310,17 @@ def flask_register():
         """
         alert_code = alert_code.replace('%_user_display_name_%', user_display_name)
         body_content = body_content.replace('%_form_alerts_%', alert_code)
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
     
     body_content = body_content.replace('%_form_alerts_%', '')
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 
 ### Petition Route ###
 @app.route('/a/', methods=['GET', 'POST'])
 def flask_a():
     body_content = ''
+    nav_bar = user_profile_data.load_nav_bar()
     
     ### Index Database ###
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status != 404')
@@ -242,11 +333,13 @@ def flask_a():
     body_content += '</tbody></table>'
     body_content += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
     ### Render End ###
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/a/<article_id>/', methods=['GET', 'POST'])
 def flask_a_article_id(article_id):
     body_content = ''
+    nav_bar = user_profile_data.load_nav_bar()
+
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
     template = open('templates/a.html', encoding='utf-8').read()
 
@@ -299,11 +392,13 @@ def flask_a_article_id(article_id):
         sqlite3_control.commit(sqlite3_query)
         ### Insert End ###
         return redirect('/a/{}'.format(article_id))
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/a/write/', methods=['GET', 'POST'])
 def flask_a_write():
     body_content = ''
+    nav_bar = user_profile_data.load_nav_bar()
+
     template = open('templates/a_write.html', encoding='utf-8').read()
     
     ### Template Rendering ###
@@ -330,7 +425,7 @@ def flask_a_write():
 
         return redirect('/a/')
     body_content += template
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 #### To-Do ####
 """
  * author_id에 고유 코드 기록 (현재: 그냥 유저가 입력한 정보 그대로 insert)
@@ -341,32 +436,42 @@ def flask_a_write():
 @app.route('/a/<article_id>/delete/', methods=['GET', 'POST'])
 def flask_a_article_id_delete(article_id):
     body_content = ''
+    nav_bar = user_profile_data.load_nav_bar()
+
     template = open('templates/a_delete.html', encoding='utf-8').read()
     body_content += template
     if request.method == 'POST':
         sqlite3_control.commit('update peti_data_tb set peti_status = 404 where peti_id = {}'.format(article_id))
         return redirect('/a/')
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 ### Administrator Menu Route ###
 @app.route('/admin/')
 def flask_admin():
     body_content = ''
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    nav_bar = user_profile_data.load_nav_bar()
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/member/')
 def flask_admin_member():
     body_content = ''
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    nav_bar = user_profile_data.load_nav_bar()
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/admins/')
 def flask_admin_admins():
     body_content = ''
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    nav_bar = user_profile_data.load_nav_bar()
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/acl/')
 def flask_admin_acl():
     body_content = ''
+    nav_bar = user_profile_data.load_nav_bar()
+
     ### Index User ACL ###
     acl_data = sqlite3_control.select('select * from user_group_acl')
     acl_name = sqlite3_control.select('pragma table_info(user_group_acl)')
@@ -403,20 +508,24 @@ def flask_admin_acl():
     body_content += '</tbody></table>'
     ### Render End ###
 
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/verify_key/')
 def flask_admin_verify_key():
     body_content = ''
+    nav_bar = user_profile_data.load_nav_bar()
+
     body_content += '<h1>verify_key 정보</h1>'
     verify_key = open('verify_key', encoding='utf-8').read()
     body_content += '<input type="text" class="form-control" value="{}" disabled/>'.format(verify_key)
     body_content += '<p>verify_key는 1회 사용시 갱신됩니다.</p>'
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/petition/')
 def flask_admin_petition():
     body_content = ''
+    nav_bar = user_profile_data.load_nav_bar()
+
     ### Index Database ###
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 1 or peti_status = 404')
     ### Index End ###
@@ -427,11 +536,13 @@ def flask_admin_petition():
         body_content += '<tr><th scope="row">{}</th><td><a href="/admin/petition/{}/">{}</a></td><td>{}</td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1], peti_data[i][3])
     body_content += '</tbody></table>'
     ### Render End ###
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/petition/<article_id>/', methods=['GET', 'POST'])
 def flask_admin_petition_article_id(article_id):
     body_content = ''
+    nav_bar = user_profile_data.load_nav_bar()
+
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
     template = open('templates/a.html', encoding='utf-8').read()
 
@@ -465,7 +576,7 @@ def flask_admin_petition_article_id(article_id):
     body_content += template
     ### Render End ###
 
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 
 
@@ -484,6 +595,8 @@ def serve_pictures(assets):
 @app.errorhandler(404)
 def error_404(self):
     body_content = '<h1>Oops!</h1><h2>404 NOT FOUND</h2><p>존재하지 않는 페이지입니다.</p>'
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content)
+    nav_bar = user_profile_data.load_nav_bar()
+
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 app.run(LocalSettings.flask_host, flask_port_set, debug = True)

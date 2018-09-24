@@ -26,7 +26,7 @@ CREATE TABLE site_user_tb(
     account_password_hash TEXT NOT NULL
 );
 CREATE TABLE user_administrator_list_tb(
-    fb_id TEXT NOT NULL,
+    account_id TEXT NOT NULL,
     auth TEXT NOT NULL
 );
 CREATE TABLE author_connect(
@@ -35,7 +35,8 @@ CREATE TABLE author_connect(
 );
 CREATE TABLE user_group_acl(
     user_group TEXT NOT NULL,
-    site_owner INTEGER NOT NULL, /* Limited */
+    site_owner INTEGER NOT NULL,
+    site_administrator INTEGER NOT NULL, /* Limited */
     peti_read INTEGER NOT NULL,
     peti_write INTEGER NOT NULL,
     peti_react INTEGER NOT NULL,
