@@ -149,7 +149,6 @@ class user_control:
     def identify_user(target_id):
         user_auth_group = sqlite3_control.select('select * from user_administrator_list_tb where account_id = {}'.format(target_id))
         user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
-        print(user_auth)
         if user_auth[0][1] != 1 and user_auth[0][2] != 1:
             return False
         else:
@@ -331,11 +330,11 @@ def flask_a():
     nav_bar = user_control.load_nav_bar()
     
     ### Index Database ###
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status != 404')
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status != 1 and peti_status != 404 order by peti_id desc')
     ### Index End ###
 
     ### Render Template ###
-    body_content += '<h1>새로운 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">Column heading</th></tr></thead><tbody>'
+    body_content += '<h1>새로운 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">청원 제목</th></tr></thead><tbody>'
     for i in range(len(peti_data)):
         body_content += '<tr><th scope="row">{}</th><td><a href="/a/{}/">{}</a></td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1])
     body_content += '</tbody></table>'
@@ -355,7 +354,7 @@ def flask_a_article_id(article_id):
     react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
     ### Index End ###
 
-    if peti_data[0][3] == 404:
+    if peti_data[0][3] == 1 or peti_data[0][3] == 404:
         abort(404)
     ### Render React ###
     template_react = """
@@ -372,10 +371,14 @@ def flask_a_article_id(article_id):
         react_body_content += react_render_object
     ### Render End ###
 
+    ### Get Author Data ###
+    author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
+    ### Get End ###
+
     ### Render Template ###
     template = template.replace('%_article_display_name_%', peti_data[0][1])
     template = template.replace('%_article_publish_date_%', peti_data[0][2])
-    template = template.replace('%_article_author_display_name_%', peti_data[0][4])
+    template = template.replace('%_article_author_display_name_%', author_data[0][1])
     template = template.replace('%_article_body_content_%', peti_data[0][5])
     template = template.replace('%_article_react_count_%', str(len(react_data)))
     template = template.replace('%_article_reacts_%', react_body_content)
@@ -410,10 +413,21 @@ def flask_a_write():
     template = open('templates/a_write.html', encoding='utf-8').read()
     
     ### Template Rendering ###
-    template = template.replace('%_sns_login_status_%', '비활성화 됨')
+    if 'now_login' in session:
+        user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+        template = template.replace('%_sns_login_status_%', '로그인 됨: {}'.format(user_profile_data[0][3]))
+    else:
+        template = template.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
     ### Rendering End ###
 
     if request.method == 'POST':
+        ### Get Login Data ###
+        if 'now_login' in session:
+            peti_status = 0
+        else:
+            peti_status = 1
+        ### Get End ###
+
         ### Get POST Data ###
         peti_display_name =  parser.anti_injection(request.form['peti_display_name'])
         peti_publish_date = datetime.today()
@@ -421,11 +435,25 @@ def flask_a_write():
         peti_body_content = parser.anti_injection(request.form['peti_body_content'])
         ### Get End ###
 
+        ### Save Author Data ###
+        if peti_status == 1:
+            account_user_id = 0
+        else:
+            account_user_id = session['now_login']
+        author_list_len = len(sqlite3_control.select('select * from author_connect'))
+        sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id) values("{}", {})'.format(
+            peti_author_display_name,
+            account_user_id
+        ))
+        peti_author_id = author_list_len + 1
+        ### Save End ###
+
         ### Insert Data into Database ###
-        sqlite3_query = 'insert into peti_data_tb (peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content) values("{}", "{}", 0, "{}", "{}")'.format(
+        sqlite3_query = 'insert into peti_data_tb (peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content) values("{}", "{}", {}, {}, "{}")'.format(
             peti_display_name,
             peti_publish_date,
-            peti_author_display_name,
+            peti_status,
+            peti_author_id,
             peti_body_content
         )
         sqlite3_control.commit(sqlite3_query)
@@ -595,13 +623,17 @@ def flask_admin_petition():
     nav_bar = user_control.load_nav_bar()
 
     ### Index Database ###
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 1 or peti_status = 404')
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 1 or peti_status = 404 order by peti_id desc')
     ### Index End ###
 
     ### Render Template ###
     body_content += '<h1>비활성화 / 삭제된 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">제목</th><th>상태</th></tr></thead><tbody>'
     for i in range(len(peti_data)):
-        body_content += '<tr><th scope="row">{}</th><td><a href="/admin/petition/{}/">{}</a></td><td>{}</td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1], peti_data[i][3])
+        if peti_data[i][3] == 1:
+            peti_status = '비공개'
+        if peti_data[i][3] == 404:
+            peti_status = '삭제됨'
+        body_content += '<tr><th scope="row">{}</th><td><a href="/admin/petition/{}/">{}</a></td><td>{}</td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1], peti_status)
     body_content += '</tbody></table>'
     ### Render End ###
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -624,6 +656,11 @@ def flask_admin_petition_article_id(article_id):
     react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
     ### Index End ###
 
+    ### Get Author Data ###
+    author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
+    author_display_name = author_data[0][1]
+    ### Get End ###
+
     ### Render React ###
     template_react = """
             <div class="container">
@@ -643,7 +680,7 @@ def flask_admin_petition_article_id(article_id):
     ### Render Template ###
     template = template.replace('%_article_display_name_%', peti_data[0][1])
     template = template.replace('%_article_publish_date_%', peti_data[0][2])
-    template = template.replace('%_article_author_display_name_%', peti_data[0][4])
+    template = template.replace('%_article_author_display_name_%', author_display_name)
     template = template.replace('%_article_body_content_%', peti_data[0][5])
     template = template.replace('%_article_react_count_%', str(len(react_data)))
     template = template.replace('%_article_reacts_%', react_body_content)

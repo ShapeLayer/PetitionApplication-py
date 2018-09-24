@@ -6,7 +6,7 @@ CREATE TABLE peti_data_tb(
     peti_display_name TEXT NOT NULL,
     peti_publish_date TEXT NOT NULL,
     peti_status INTEGER NOT NULL, /* 0: Published  1: Disabled  2: Completed  404: Return 404*/
-    peti_author_id TEXT NOT NULL,
+    peti_author_id INTEGER NOT NULL,
     peti_body_content TEXT NOT NULL
 );
 CREATE TABLE peti_react_tb(
@@ -30,7 +30,8 @@ CREATE TABLE user_administrator_list_tb(
     auth TEXT NOT NULL
 );
 CREATE TABLE author_connect(
-    peti_author_id INTEGER NOT NULL,
+    peti_author_id INTEGER primary key AUTOINCREMENT,
+    peti_author_display_name TEXT NOT NULL,
     account_user_id INTEGER NOT NULL
 );
 CREATE TABLE user_group_acl(
