@@ -26,7 +26,7 @@ CREATE TABLE site_user_tb(
     account_password_hash TEXT NOT NULL
 );
 CREATE TABLE user_administrator_list_tb(
-    account_id TEXT NOT NULL,
+    account_id INTEGER NOT NULL,
     auth TEXT NOT NULL
 );
 CREATE TABLE author_connect(

@@ -458,12 +458,35 @@ def flask_admin_member():
     body_content = ''
     nav_bar = user_profile_data.load_nav_bar()
 
+    ### Index User List form Database ###
+    user_list = sqlite3_control.select('select * from site_user_tb')
+    ### Index End ###
+
+    ### Render Template ###
+    body_content += '<h1>사용자 목록</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">이름</th><th>내부 구분자, 아이디(구분자)</th><th>플랫폼</th></tr></thead><tbody>'
+    for i in range(len(user_list)):
+        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td></tr>'.format(user_list[i][3], user_list[i][0], user_list[i][2], user_list[i][1])
+    body_content += '</tbody></table>'
+    ### Render End ###
+
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/admins/')
 def flask_admin_admins():
     body_content = ''
     nav_bar = user_profile_data.load_nav_bar()
+
+    ### Index Administrator List form Database ###
+    admin_list = sqlite3_control.select('select * from user_administrator_list_tb')
+    ### Index End ###
+
+    ### Render Template ###
+    body_content += '<h1>관리자 목록</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">이름</th><th>내부 구분자, 아이디(구분자)</th><th>플랫폼</th><th>권한 그룹</th></tr></thead><tbody>'
+    for i in range(len(admin_list)):
+        target_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(admin_list[i][0]))
+        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td><td>{}</td></tr>'.format(target_profile[0][3], target_profile[0][0], target_profile[0][2], target_profile[0][1], admin_list[i][1])
+    body_content += '</tbody></table>'
+    ### Render End ###
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
