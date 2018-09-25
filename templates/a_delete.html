@@ -3,13 +3,17 @@
     <div class="bs-component">
         <form action="" accept-charset="utf-8" name="form_write" method="post">
             <fieldset>
+                %_form_alerts_%
                 <div class="form-group">
                     <div class="form-group">
                         %_sns_login_status_%
                     </div>
                     <div class="form-group">
-                        <label class="custom-control-label" for="secet_key">계속하려면 CRYPT_SECRET_KEY를 입력하십시오.</label>
-                        <input type="text" class="form-control" name="secret_key" placeholder="" required>
+                        <label class="custom-control-label" for="verify_key">계속하려면 verify_key를 입력하십시오.</label>
+                        <input type="text" class="form-control" name="verify_key" id="verify_key" placeholder="" required>
+
+                        <label class="custom-control-label" for="description">삭제 사유를 입력하십시오.</label>
+                        <input type="text" class="form-control" name="description" id="description" placeholder="" required>
                     </div>
                 </div>
             </fieldset>

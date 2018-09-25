@@ -81,6 +81,7 @@ class sqlite3_control:
         return result
 
     def commit(query):
+        print(query)
         conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
         curs = conn.cursor()
         curs.execute(query)
@@ -256,11 +257,13 @@ def flask_register():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
+    ### Render Template ###
     template = open('templates/account.html', encoding='utf-8').read()
     form_body_content = '<div class="form-group"><div class="form-group"><input type="text" class="form-control form-login-object" name="account_id" placeholder="계정명" required></div><div class="form-group"><input type="password" class="form-control form-login-object" name="account_password" placeholder="비밀번호" required></div><div class="form-group"><input type="text" class="form-control form-login-object" name="user_display_name" placeholder="이름" required></div><div class="form-group"><input type="text" class="form-control form-login-object" name="verify_key" placeholder="Verify Key" required></div></div>'
     template = template.replace('%_form_body_content_%', form_body_content)
     template = template.replace('%_form_button_%', '<p>주의: 본 서비스는 이메일 주소를 수집하고 있지 않습니다. 비밀번호를 잃어버리게 되면 복잡한 절차를 밟아야 하니 꼭 기억하세요.</p><button type="submit" class="btn btn-primary">가입하기</button>')
     body_content += template
+    ### Render End ###
 
     if request.method == 'POST':
         ### Check Verify Key ###
@@ -478,14 +481,87 @@ def flask_a_write():
 
 @app.route('/a/<article_id>/delete/', methods=['GET', 'POST'])
 def flask_a_article_id_delete(article_id):
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
     template = open('templates/a_delete.html', encoding='utf-8').read()
     body_content += template
+
+    ### Render Login Status ###
+    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+    body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
+    ### Render End ###
+    
     if request.method == 'POST':
+        ### Load Verify Key ###
+        verify_key = open('verify_key', encoding='utf-8').read()
+        ### Load End ###
+
+        ### Check Verify Key ###
+        if verify_key != request.form['verify_key']:
+            alert_code = """
+            <div class="alert alert-dismissible alert-danger">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>진심...인가요?</strong><br> verify_key 값이 틀렸습니다. 관리자 메뉴에서 확인하세요.
+            </div>
+            """
+            body_content = body_content.replace('%_form_alerts_%', alert_code)
+            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+        else:
+            body_content = body_content.replace('%_form_alerts_%', '')
+        ### Check End ###
+
+        ### Verify Key Reset ###
+        string = 'abcdefghijklmfgqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!?@#$%_-'
+        verify_key = ''.join(random.choice(string) for x in range(10))
+        with open('verify_key', mode='w', encoding='utf-8') as f:
+            f.write(verify_key)
+        ### Reset End ###
+
+        ### Log Activity ###
+        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+        activity_date = datetime.today()
+        activity_object = '청원(<i>{}</i>)'.format(peti_data[0][1])
+        activity_description = request.form['description']
+        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            session['now_login'],
+            activity_object,
+            '삭제',
+            activity_description,
+            activity_date
+        ))
+        ### Log End ###
+
         sqlite3_control.commit('update peti_data_tb set peti_status = 404 where peti_id = {}'.format(article_id))
         return redirect('/a/')
+    body_content = body_content.replace('%_form_alerts_%', '')
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+
+### Log Route ###
+@app.route('/log/')
+def flask_log():        
+    body_content = ''
+    body_content += '<h1>투명성 보고서</h1>'
+
+    ### Index Server Log ###
+    log = sqlite3_control.select('select * from user_activity_log_tb order by log_id desc')
+    ### Index End ###
+
+    ### Render Log ###
+    for i in range(len(log)):
+        profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(log[i][1]))
+        body_content += '<p>{}  {}(이)가 {}을(를) {}함 (사유: {})'.format(log[i][5], profile[0][3], log[i][2], log[i][3], log[i][4])
+    ### Render End ###
+
+    nav_bar = user_control.load_nav_bar()
+
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 
@@ -752,13 +828,6 @@ def flask_admin_static():
     nav_bar = user_control.load_nav_bar()
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-
-
-### Server Log Route ###
-@app.route('/log/')
-def flask_log():
-    body_content = ''
-    return render_template('index.html')
 
 ### Assets Route ###
 @app.route('/img/<assets>/')

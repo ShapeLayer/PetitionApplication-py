@@ -55,9 +55,13 @@ CREATE TABLE user_group_acl(
 /* Application Manage Log */
 CREATE TABLE user_activity_log_tb(
     log_id INTEGER primary key AUTOINCREMENT,
-    fb_id TEXT NOT NULL,
+    account_id INTEGER NOT NULL,
+    activity_object TEXT NOT NULL,
     activity TEXT NOT NULL,
+    activity_description TEXT NOT NULL,
     activity_date TEXT NOT NULL
+    /* <activity_date>  <account_id:user_display_name>이(가) 
+    <activity_object>을(를) <activity>함. (<activity_description>)*/
 );
 
 CREATE TABLE articles_indexing_tb(
