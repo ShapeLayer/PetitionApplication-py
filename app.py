@@ -171,6 +171,13 @@ except:
 def flask_main():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
+    
+    ### Load From Database ###
+    static_data = sqlite3_control.select('select * from static_page_tb where page_name = "frontpage"')
+    ### Load End ###
+
+    body_content += static_data[0][1]
+
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 ### Account Route ###
@@ -577,7 +584,6 @@ def flask_admin_acl():
                 is_enabled = ''
             else:
                 is_enabled = 'checked'
-            print('a')
             acl_control_display = acl_control_template
             acl_control_display = acl_control_display.replace('%_acl_data_id_%', str(j+1))
             acl_control_display = acl_control_display.replace('%_is_enabled_%', is_enabled)
@@ -586,7 +592,6 @@ def flask_admin_acl():
                 acl_control_display = acl_control_display.replace('%_is_locked_%', 'disabled')
             else:
                 acl_control_display = acl_control_display.replace('%_is_locked_%', '')
-            print(acl_control_display)
             acl_control_rendered += acl_control_display
         body_content += '<tr><th scope="row"></th><td>{}</td><td>{}</td></tr>'.format(acl_data[i][0], acl_control_rendered)
     body_content += '</tbody></table>'
@@ -689,6 +694,64 @@ def flask_admin_petition_article_id(article_id):
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+@app.route('/admin/static/', methods=['GET', 'POST'])
+def flask_admin_static():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+        
+    body_content = ''
+    body_content += '<h1>정적 페이지 관리</h1>'
+
+    ### Index Static Page Data ###
+    static_page = sqlite3_control.select('select * from static_page_tb')
+    template = """
+    <ul class="nav nav-pills">
+        %_pill_body_content_%
+    </ul>
+    """
+    ### Index End ###
+
+    ### Render Pill Object ###
+    pill_body_content = ''
+    for i in range(len(static_page)):
+        pill_body_object = '<li class="nav-item"><a class="nav-link %_is_active_%" href="?page={}">{}</a></li>'.format(static_page[i][0], static_page[i][0])
+        if request.method == 'GET':
+            if request.args.get('page') == static_page[i][0]:
+                pill_body_object = pill_body_object.replace('%_is_active_%', 'active')
+        pill_body_content += pill_body_object
+    template = template.replace('%_pill_body_content_%', pill_body_content)
+    body_content += template
+    ### End Render ###
+
+    ### Render Ststic Page Editor ###
+    if request.args.get('page') != None:
+        target = request.args.get('page')
+        target_content = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(target))
+        textarea = """
+        <div class="bs-docs-section">
+            <form action="" accept-charset="utf-8" method="post">
+                <textarea class="form-control" name="content" rows="3" placeholder="html 코드로 작성합니다.">%_textarea_content_%</textarea>
+                <button type="submit" name="submit" class="btn btn-primary" value="publish">업데이트</button>
+            </form>
+        </div>
+        """
+        textarea = textarea.replace('%_textarea_content_%', target_content[0][1])
+        body_content += textarea
+    ### End Render ###
+
+    if request.method == 'POST':
+        ### Update Static Page Data ###
+        received_content = request.form['content'].replace('"', '""')
+        sqlite3_control.commit('update static_page_tb set content = "{}" where page_name = "{}"'.format(received_content, request.args.get('page')))
+        ### End Update ###
+        return redirect('/admin/static/?page={}'.format(request.args.get('page')))
+
+    nav_bar = user_control.load_nav_bar()
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 
 ### Server Log Route ###
