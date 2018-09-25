@@ -116,6 +116,7 @@ class AESCipher(object):
 
 class user_control:
     def load_nav_bar():
+        ### Render Template ###
         template = """
         <ul class="nav navbar-nav ml-auto">
             <li class="nav-item dropdown">
@@ -126,11 +127,16 @@ class user_control:
             </li>
         </ul>
         """
+        ### Render End ###
         user_profile_menu_content = ''
         if 'now_login' in session:
+            ### Index Database Data ###
             user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
             user_auth_group = sqlite3_control.select('select * from user_administrator_list_tb where account_id = {}'.format(session['now_login']))
             user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
+            ### Index End ###
+
+            ### Render Navbar ###
             template = template.replace('%_user_display_name_%', user_data[0][3])
             if user_auth[0][2] == 1:
                 user_profile_menu_content += """
@@ -139,11 +145,14 @@ class user_control:
             user_profile_menu_content += """
             <a class="dropdown-item" href="/logout/">로그아웃</a>
             """
+            ### Render End ###
         else:
+            ### Render Navbar ###
             template = template.replace('%_user_display_name_%', '비로그인 상태')
             user_profile_menu_content += """
             <a class="dropdown-item" href="/login/">로그인</a>
             """
+            ### Render End ###
         template = template.replace('%_user_profile_menu_content_%', user_profile_menu_content)
         return template
     
@@ -154,6 +163,10 @@ class user_control:
             return False
         else:
             return True
+
+    def user_controller(target_id):
+        user_block_badge = '<a href="/admin/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
+        user_identify_badge = '<a href="/admin/identify?user{}"><span class="badge badge-pill badge-info">Info</span></a>'.format(target_id)
 
 ### Create Database Table ###
 try:
@@ -357,12 +370,14 @@ def flask_a_article_id(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
+    ### Index Data from Database ###
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
-    template = open('templates/a.html', encoding='utf-8').read()
-
-    ### Index React Content ###
     react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
     ### Index End ###
+    
+    ### Load Template ###
+    template = open('templates/a.html', encoding='utf-8').read()
+    ### Load End ###
 
     if peti_data[0][3] == 1 or peti_data[0][3] == 404:
         abort(404)
@@ -600,6 +615,32 @@ def flask_admin_member():
         body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td></tr>'.format(user_list[i][3], user_list[i][0], user_list[i][2], user_list[i][1])
     body_content += '</tbody></table>'
     ### Render End ###
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+@app.route('/admin/member/identify')
+def flask_admin_identify():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+        
+    body_content = ''
+    nav_bar = user_control.load_nav_bar()
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+@app.route('/admin/block')
+def flask_admin_block():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+        
+    body_content = ''
+    nav_bar = user_control.load_nav_bar()
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
