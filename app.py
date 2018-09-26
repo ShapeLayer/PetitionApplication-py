@@ -8,7 +8,6 @@ from datetime import datetime
 import sqlite3
 import re
 import json
-import libgravatar
 import sys
 import asyncio
 import base64
@@ -165,8 +164,15 @@ class user_control:
             return True
 
     def user_controller(target_id):
+        if 'now_login' in session:
+            if user_control.identify_user(session['now_login']) == False:
+                return ''
+            else:
+                return ''
         user_block_badge = '<a href="/admin/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
         user_identify_badge = '<a href="/admin/identify?user{}"><span class="badge badge-pill badge-info">Info</span></a>'.format(target_id)
+        body_content = user_block_badge + user_identify_badge
+        return body_content
 
 ### Create Database Table ###
 try:
@@ -401,9 +407,10 @@ def flask_a_article_id(article_id):
     ### Get End ###
 
     ### Render Template ###
+    author_data_display = user_control.user_controller(author_data[0][1], session['now_login'])
     template = template.replace('%_article_display_name_%', peti_data[0][1])
     template = template.replace('%_article_publish_date_%', peti_data[0][2])
-    template = template.replace('%_article_author_display_name_%', author_data[0][1])
+    template = template.replace('%_article_author_display_name_%', author_data_display)
     template = template.replace('%_article_body_content_%', peti_data[0][5])
     template = template.replace('%_article_react_count_%', str(len(react_data)))
     template = template.replace('%_article_reacts_%', react_body_content)
