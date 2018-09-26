@@ -2,4 +2,4 @@ flask
 flask-assets
 flask-login
 flask-oauthlib
-pycrypto
+pycryptodome
