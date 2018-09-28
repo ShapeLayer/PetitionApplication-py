@@ -150,14 +150,20 @@ class user_control:
             return True
 
     def user_controller(target_id):
+
+        ## Index User Data ##
+        user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(target_id))
+        ## Index End ##
+
         if 'now_login' in session:
             if user_control.identify_user(session['now_login']) == False:
-                return ''
-            else:
-                return ''
-        user_block_badge = '<a href="/admin/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
-        user_identify_badge = '<a href="/admin/identify?user{}"><span class="badge badge-pill badge-info">Info</span></a>'.format(target_id)
-        body_content = user_block_badge + user_identify_badge
+                return user_data[0][3]
+        else:
+            return user_data[0][3]
+
+        user_block_badge = ' <a href="/admin/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
+        user_identify_badge = ' <a href="/admin/identify?user{}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
+        body_content = user_data[0][3] + user_block_badge + user_identify_badge
         return body_content
 
 ### Create Database Table ###
@@ -392,7 +398,7 @@ def flask_a_article_id(article_id):
     ### Get End ###
 
     ### Render Template ###
-    author_data_display = user_control.user_controller(author_data[0][1], session['now_login'])
+    author_data_display = user_control.user_controller(author_data[0][0])
     template = template.replace('%_article_display_name_%', peti_data[0][1])
     template = template.replace('%_article_publish_date_%', peti_data[0][2])
     template = template.replace('%_article_author_display_name_%', author_data_display)
@@ -406,8 +412,7 @@ def flask_a_article_id(article_id):
 
         ### Collect React Data ###
         peti_id = article_id
-        # author_id = 
-        author_id = 0
+        author_id = 0 ##<< 이거 수정 (Todo List)
         content = parser.anti_injection(request.form['react_content'])
         ### Collect End ###
 
