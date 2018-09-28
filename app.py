@@ -13,7 +13,7 @@ import asyncio
 import base64
 import hashlib
 import random
-from Crypto.Cipher import AES
+import bcrypt
 
 import LocalSettings
 import OAuthSettings
@@ -39,7 +39,7 @@ FACEBOOK_APP_SECRET = OAuthSettings.facebook_app_secret
 
 try:
     flask_port_set = int(sys.argv[1])
-    print(' * 강제 포트 설정 지정됨 : {}'.format(flask_port_set))
+    print(' * 강제 포트 지정 설정됨 : {}'.format(flask_port_set))
 except:
     flask_port_set = LocalSettings.flask_host_port
 
@@ -98,20 +98,6 @@ BS = 16
 pad = (lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS).encode())
 unpad = (lambda s: s[:-ord(s[len(s)-1:])])
 
-
-class AESCipher(object):
-    def __init__(self, key):
-        self.key = hashlib.sha256(key.encode()).digest()
-
-    def encrypt(self, target):
-        target = target.encode()
-        raw = pad(target)
-        cipher = AES.new(self.key, AES.MODE_CBC, self.__iv())
-        enc = cipher.encrypt(raw)
-        return base64.b64encode(enc).decode('utf-8')
-
-    def __iv(self):
-        return chr(0) * 16
 
 class user_control:
     def load_nav_bar():
@@ -224,8 +210,8 @@ def flask_login():
         ### Get End ###
 
         ### Encrypt Password ###
-        aes = AESCipher(LocalSettings.crypt_secret_key)
-        account_password_hash = aes.encrypt(account_password)
+        print(user_data[0][5])
+        account_password_hash = bcrypt.hashpw(account_password.encode(), user_data[0][5].encode())
         ### Encrypt End ###
         if len(user_data) == 0:
             ### 아이디가 없습니다.
@@ -237,7 +223,7 @@ def flask_login():
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
             return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-        elif account_password_hash == user_data[0][5]:
+        elif account_password_hash == user_data[0][5].encode():
             session['now_login'] = user_data[0][0]
             alert_code = ''
             body_content = body_content.replace('%_form_alerts_%', alert_code)
@@ -318,13 +304,12 @@ def flask_register():
         ### Check End ###
         
         ### Encrypt Password ###
-        aes = AESCipher(LocalSettings.crypt_secret_key)
-        account_password_hash = aes.encrypt(account_password)
+        account_password_hash = bcrypt.hashpw(account_password.encode(), bcrypt.gensalt())
         ### Encrypt End ###
 
         ### Insert User Account into Database ###
         sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, account_password_hash) values("entree", "{}", "{}", "{}")'.format(
-            sns_id, user_display_name, account_password_hash
+            sns_id, user_display_name, account_password_hash.decode()
         ))
         same_id_getter = sqlite3_control.select('select * from site_user_tb where sns_type = "entree" and sns_id = "{}"'.format(sns_id))
         if same_id_getter[0][0] != 1:

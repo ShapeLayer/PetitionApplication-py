@@ -23,7 +23,7 @@ CREATE TABLE site_user_tb(
     sns_id TEXT NOT NULL,
     user_display_name TEXT NOT NULL,
     user_display_profile_img TEXT,
-    account_password_hash TEXT NOT NULL
+    account_password_hash TEXT
 );
 CREATE TABLE user_administrator_list_tb(
     account_id INTEGER NOT NULL,
