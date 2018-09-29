@@ -1,9 +1,6 @@
 ## Import Python Modules ##
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort
 from flask_assets import Bundle, Environment
-from flask_login import LoginManager
-from flask_login import login_user, logout_user, current_user, login_required
-from flask_oauthlib.client import OAuth, OAuthException
 from datetime import datetime
 import sqlite3
 import re
@@ -14,26 +11,12 @@ import base64
 import hashlib
 import random
 import bcrypt
-from oauth2client.contrib.flask_util import UserOAuth2
 
 import LocalSettings
 import OAuthSettings
 
 app = Flask(__name__)
 app.secret_key = LocalSettings.crypt_secret_key
-oauth2 = UserOAuth2(app)
-
-#facebook = oauth.remote_app(
-#    'facebook',
-#    consumer_key=FACEBOOK_APP_ID,
-#    consumer_secret=FACEBOOK_APP_SECRET,
-#    request_token_params={'scope': 'email'},
-#    base_url='https://graph.facebook.com',
-#    request_token_url=None,
-#    access_token_url='/oauth/access_token',
-#    access_token_method='GET',
-#    authorize_url='https://www.facebook.com/dialog/oauth'
-#)
 
 try:
     flask_port_set = int(sys.argv[1])
@@ -209,28 +192,10 @@ def flask_login():
     body_content += login_button_display
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-@app.route('/login/google/', methods=['GET', 'POST'])
-def flask_login_google():
+@app.route('/login/facebook/', methods=['GET', 'POST'])
+def flask_login_facebook():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
-    if 'oauth_google' not in session:
-        flow = client.flow_from_clientsecrets(
-            'client_secrets.json',
-            scope = 'https://www.googleapis.com/auth/drive.metadata.readonly',
-            redirect_uri = flask.url_for('/login/googe/', _external=True),
-            include_granted_scopes = True
-            )
-        if 'code' not in flask.request.args:
-            auth_uri = flow.step1_get_authorize_url()
-            return flask.redirect(auth_uri)
-        else:
-            auth_code = flask.request.args.get('code')
-            credentials = flow.step2_exchange(auth_code)
-            flask.session['oauth_google'] = credentials.to_json()
-        return flask.redirect('/login/google/')
-    else:
-        body_content = '<h1>로그인 성공</h1><p>환영합니다. {}</p>'.format(user_display_name)
-
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/login/entree/', methods=['GET', 'POST'])
@@ -282,7 +247,7 @@ def flask_login_entree():
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
             return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-            ### 로그인 실패
+            ### 로그인 실패 #
 
     ### Render Alerts ###
     body_content = body_content.replace('%_form_alerts_%', '')
