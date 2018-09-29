@@ -14,16 +14,14 @@ import base64
 import hashlib
 import random
 import bcrypt
+from oauth2client.contrib.flask_util import UserOAuth2
 
 import LocalSettings
 import OAuthSettings
 
 app = Flask(__name__)
 app.secret_key = LocalSettings.crypt_secret_key
-oauth = OAuth(app)
-
-FACEBOOK_APP_ID = OAuthSettings.facebook_app_id
-FACEBOOK_APP_SECRET = OAuthSettings.facebook_app_secret
+oauth2 = UserOAuth2(app)
 
 #facebook = oauth.remote_app(
 #    'facebook',
@@ -209,6 +207,30 @@ def flask_login():
     ## Render End ##
 
     body_content += login_button_display
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+@app.route('/login/google/', methods=['GET', 'POST'])
+def flask_login_google():
+    body_content = ''
+    nav_bar = user_control.load_nav_bar()
+    if 'oauth_google' not in session:
+        flow = client.flow_from_clientsecrets(
+            'client_secrets.json',
+            scope = 'https://www.googleapis.com/auth/drive.metadata.readonly',
+            redirect_uri = flask.url_for('/login/googe/', _external=True),
+            include_granted_scopes = True
+            )
+        if 'code' not in flask.request.args:
+            auth_uri = flow.step1_get_authorize_url()
+            return flask.redirect(auth_uri)
+        else:
+            auth_code = flask.request.args.get('code')
+            credentials = flow.step2_exchange(auth_code)
+            flask.session['oauth_google'] = credentials.to_json()
+        return flask.redirect('/login/google/')
+    else:
+        body_content = '<h1>로그인 성공</h1><p>환영합니다. {}</p>'.format(user_display_name)
+
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/login/entree/', methods=['GET', 'POST'])
