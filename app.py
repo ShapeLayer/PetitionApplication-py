@@ -80,7 +80,6 @@ class sqlite3_control:
         return result
 
     def commit(query):
-        print(query)
         conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
         curs = conn.cursor()
         curs.execute(query)
@@ -197,6 +196,25 @@ def flask_main():
 def flask_login():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
+
+    ## Render OAuth Buttons ##
+    login_button_display = """
+    <ul>
+        <li><a href="/login/naver/">네이버 로그인</a></li>
+        <li><a href="/login/facebook/">Facebook 로그인</a></li>
+        <li><a href="/login/google/">Google 로그인</a></li>
+        <li><a href="/login/entree/">entree 로그인</a></li>
+    </ul>
+    """
+    ## Render End ##
+
+    body_content += login_button_display
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+@app.route('/login/entree/', methods=['GET', 'POST'])
+def flask_login_entree():
+    body_content = ''
+    nav_bar = user_control.load_nav_bar()
     
     ### Render Template ###
     template = open('templates/account.html', encoding='utf-8').read()
@@ -216,7 +234,6 @@ def flask_login():
         ### Get End ###
 
         ### Encrypt Password ###
-        print(user_data[0][5])
         account_password_hash = bcrypt.hashpw(account_password.encode(), user_data[0][5].encode())
         ### Encrypt End ###
         if len(user_data) == 0:
@@ -332,7 +349,7 @@ def flask_register():
         alert_code = """
         <div class="alert alert-dismissible alert-success">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <strong>환영합니다! %_user_display_name_%</strong><br> 이제 <a href="/login/" class="alert-link">로그인</a> 해보시겠어요?
+            <strong>환영합니다! %_user_display_name_%</strong><br> 이제 <a href="/login/entree/" class="alert-link">로그인</a> 해보시겠어요?
         </div>
         """
         alert_code = alert_code.replace('%_user_display_name_%', user_display_name)
@@ -615,7 +632,7 @@ def flask_admin_member():
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-@app.route('/admin/member/identify')
+@app.route('/admin/member/identify/')
 def flask_admin_identify():
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -628,7 +645,7 @@ def flask_admin_identify():
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-@app.route('/admin/block')
+@app.route('/admin/member/block/')
 def flask_admin_block():
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -637,6 +654,8 @@ def flask_admin_block():
         return redirect('/error/acl/')
         
     body_content = ''
+
+    sqlite3_control.select('select * from block_user_tb')
     nav_bar = user_control.load_nav_bar()
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)

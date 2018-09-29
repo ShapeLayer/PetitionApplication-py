@@ -34,6 +34,10 @@ CREATE TABLE author_connect(
     peti_author_display_name TEXT NOT NULL,
     account_user_id INTEGER NOT NULL
 );
+CREATE TABLE block_user_tb(
+    account_id INTEGER NOT NULL,
+    block_delay INTEGER NOT NULL
+);
 CREATE TABLE user_group_acl(
     user_group TEXT NOT NULL,
     site_owner INTEGER NOT NULL,
