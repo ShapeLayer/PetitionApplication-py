@@ -2,7 +2,9 @@
 
 _새로운 일입니다. 반가워요._
 
-openForm is a Python-based survey app application, by request of Sungdeok High School Student Council. By developing using an entree that is under development, this may still have a by-product of the entree.
+이 애플리케이션은 숭덕고등학교 학생회의 요청으로 제작된 파이썬 기반의 청원 웹앱입니다. entree의 파생 프로젝트로, 몇몇 명칭에 entree를 사용하고 있습니다.
+
+This application is a Python-based petition web application, by request of Sungdeok High School Student Council. By developing using an entree that is under development, this may still have a by-product of the entree.
 
 ## External Project
 * [Bootstrap](https://getbootstrap.com/) - Bootstrap - [MIT License](https://opensource.org/licenses/MIT) _CDN Uses_
