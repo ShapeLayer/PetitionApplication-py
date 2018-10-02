@@ -40,6 +40,7 @@ CREATE TABLE block_user_tb(
 );
 CREATE TABLE user_group_acl(
     user_group TEXT NOT NULL,
+    group_priority INTEGER NOT NULL,
     site_owner INTEGER NOT NULL,
     site_administrator INTEGER NOT NULL, /* Limited */
     peti_read INTEGER NOT NULL,

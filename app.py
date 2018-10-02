@@ -124,7 +124,7 @@ class user_control:
     def identify_user(target_id):
         user_auth_group = sqlite3_control.select('select * from user_administrator_list_tb where account_id = {}'.format(target_id))
         user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
-        if user_auth[0][1] != 1 and user_auth[0][2] != 1:
+        if user_auth[0][2] != 1 and user_auth[0][3] != 1:
             return False
         else:
             return True
@@ -415,7 +415,6 @@ def flask_a_article_id(article_id):
     ### Render End ###
 
     if request.method == 'POST':
-
         ### Collect React Data ###
         peti_id = article_id
         author_id = 0 ##<< 이거 수정 (Todo List)
@@ -690,32 +689,74 @@ def flask_admin_acl():
     acl_name = sqlite3_control.select('pragma table_info(user_group_acl)')
     ### Index End ###
 
+
     ### Render Template ###
-    body_content += '<h1>사용자 권한 레벨</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">그룹 이름</th><th>권한 리스트</th></tr></thead><tbody>'
+    body_content += '<h1>사용자 권한 레벨</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">그룹 이름</th><th>권한 리스트</th><th>편집</th></tr></thead><tbody>'
     for i in range(len(acl_data)):
         acl_control_template = """
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input" id="%_acl_data_id_%" name="%_acl_data_id_%" %_is_enabled_% | %_is_locked_%>
+                <input type="checkbox" class="custom-control-input" id="%_acl_data_id_%" %_is_enabled_% | %_is_locked_%>
                 <label class="custom-control-label" for="%_acl_data_id_%">%_acl_data_name_%</label>
             </div>
 
         """
         acl_control_rendered = ''
-        for j in range(len(acl_name)-1):
-            if acl_data[i][j+1] == 0:
+        for j in range(len(acl_name)-2):
+            if acl_data[i][j+2] == 0:
                 is_enabled = ''
             else:
                 is_enabled = 'checked'
             acl_control_display = acl_control_template
             acl_control_display = acl_control_display.replace('%_acl_data_id_%', str(j+1))
             acl_control_display = acl_control_display.replace('%_is_enabled_%', is_enabled)
-            acl_control_display = acl_control_display.replace('%_acl_data_name_%', acl_name[j+1][1])
+            acl_control_display = acl_control_display.replace('%_acl_data_name_%', acl_name[j+2][1])
+            if j+1 == 1 or j+1 == 14:
+                acl_control_display = acl_control_display.replace('%_is_locked_%', 'disabled')
+            else:
+                acl_control_display = acl_control_display.replace('%_is_locked_%', '')
+            acl_control_rendered += acl_control_display
+        acl_edit_link = '<a href="/admin/acl/?target={}">편집</a>'.format(i)
+        group_name = acl_data[i][0]
+
+    if request.args.get('target') != '': 
+        print('not none')
+        acl_control_template = """
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="%_acl_data_id_%" %_is_enabled_% | %_is_locked_%>
+                <label class="custom-control-label" for="%_acl_data_id_%">%_acl_data_name_%</label>
+            </div>
+
+        """
+        acl_control_rendered = ''
+        for j in range(len(acl_name)-2):
+            try:
+                target = int(request.args.get('target'))
+            except:
+                break
+            if acl_data[target][j+2] == 0:
+                is_enabled = ''
+            else:
+                is_enabled = 'checked'
+            acl_control_display = acl_control_template
+            acl_control_display = acl_control_display.replace('%_acl_data_id_%', str(j+1))
+            acl_control_display = acl_control_display.replace('%_is_enabled_%', is_enabled)
+            acl_control_display = acl_control_display.replace('%_acl_data_name_%', acl_name[j+2][1])
             if j+1 == 1 or j+1 == 13:
                 acl_control_display = acl_control_display.replace('%_is_locked_%', 'disabled')
             else:
                 acl_control_display = acl_control_display.replace('%_is_locked_%', '')
             acl_control_rendered += acl_control_display
-        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}</td></tr>'.format(acl_data[i][0], acl_control_rendered)
+        group_name = acl_data[target][0]
+        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}</td><td>{}</td></tr>'.format(group_name, acl_control_rendered, acl_edit_link)
+        return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+
+
+
+    body_content += '<tr><th scope="row"></th><td>{}</td><td>{}</td><td>{}</td></tr>'.format(group_name, acl_control_rendered, acl_edit_link)
+
+
+    
     body_content += '</tbody></table>'
     ### Render End ###
 

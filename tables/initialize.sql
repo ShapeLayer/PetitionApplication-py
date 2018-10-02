@@ -3,6 +3,7 @@
 
 INSERT INTO user_group_acl (
     user_group,
+    group_priority,
     site_owner,
     site_administrator,
     peti_read,
@@ -19,6 +20,7 @@ INSERT INTO user_group_acl (
     not_display_log
 ) values(
     "owner",
+    1001,
     1,
     1,
     1,
@@ -37,6 +39,7 @@ INSERT INTO user_group_acl (
 
 INSERT INTO user_group_acl (
     user_group,
+    group_priority,
     site_owner,
     site_administrator,
     peti_read,
@@ -53,6 +56,7 @@ INSERT INTO user_group_acl (
     not_display_log
 ) values(
     "administrator",
+    70,
     0,
     1,
     1,
@@ -71,6 +75,7 @@ INSERT INTO user_group_acl (
 
 INSERT INTO user_group_acl (
     user_group,
+    group_priority,
     site_owner,
     site_administrator,
     peti_read,
@@ -87,6 +92,7 @@ INSERT INTO user_group_acl (
     not_display_log
 ) values(
     "user",
+    30,
     0,
     0,
     1,
