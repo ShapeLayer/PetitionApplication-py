@@ -141,9 +141,11 @@ class user_control:
         else:
             return user_data[0][3]
 
+        script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
+        user_id_badge = ' <span class="badge badge-pill badge-light" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
         user_block_badge = ' <a href="/admin/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
         user_identify_badge = ' <a href="/admin/identify?user{}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
-        body_content = user_data[0][3] + user_block_badge + user_identify_badge
+        body_content = script + user_data[0][3] + user_id_badge + user_block_badge + user_identify_badge
         return body_content
 
 ### Create Database Table ###
