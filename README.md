@@ -1,10 +1,6 @@
-# openForm
+# PetitionApplication-py
 
-_새로운 일입니다. 반가워요._
-
-이 애플리케이션은 숭덕고등학교 학생회의 요청으로 제작된 파이썬 기반의 청원 웹앱입니다. entree의 파생 프로젝트로, 몇몇 명칭에 entree를 사용하고 있습니다.
-
-This application is a Python-based petition web application, by request of Sungdeok High School Student Council. By developing using an entree that is under development, this may still have a by-product of the entree.
+PetitionApplication-py는 숭덕고등학교 학생회의 요청으로 개발되고 있는 플라스크 기반의 웹 애플리케이션입니다. SNS 로그인 기능으로 청원을 작성하거나 비로그인 상태에서 비공개 청원을 보낼 수 있습니다.
 
 ## External Project
 * [Bootstrap](https://getbootstrap.com/) - Bootstrap - [MIT License](https://opensource.org/licenses/MIT) _CDN Uses_
