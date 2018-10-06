@@ -673,7 +673,7 @@ def flask_admin_admins():
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-@app.route('/admin/acl/')
+@app.route('/admin/acl/', methods=['GET', 'POST'])
 def flask_admin_acl():
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -691,9 +691,9 @@ def flask_admin_acl():
     ### Index End ###
 
 
- ### Render Template ###
-    body_content += '<h1>사용자 권한 레벨</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">그룹 이름</th><th>권한 리스트</th><th>편집</th></tr></thead></table>'
-    table_template = '<form action=""><table class="table table-hover"><tbody>%_table_content_%</tbody></table></form>'
+    ### Render Template ###
+    body_content += '<h1>사용자 권한 레벨</h1><table class="table table-hover"><thead><tr><th width="10%">N</th><th scope="col" width="30%">그룹 이름</th><th width="50%">권한 리스트</th><th width="10%">편집</th></tr></thead></table>'
+    table_template = '<form action="" accept-charset="utf-8" method="post"><table class="table table-hover"><tbody>%_table_content_%</tbody></table></form>'
     for i in range(len(acl_data)):
         table_content = ''
         acl_control_template = """
@@ -709,35 +709,34 @@ def flask_admin_acl():
             else:
                 is_enabled = 'checked'
             acl_control_display = acl_control_template
-            acl_control_display = acl_control_display.replace('%_acl_data_id_%', str(i+1)+str(j+1))
+            acl_control_display = acl_control_display.replace('%_acl_data_id_%', str(j))
             acl_control_display = acl_control_display.replace('%_is_enabled_%', is_enabled)
             acl_control_display = acl_control_display.replace('%_acl_data_name_%', acl_name[j+2][1])
-            if j+1 == 1 or j+1 == 13:
+            if j+1 == 1 or j+1 == 14:
                 acl_control_display = acl_control_display.replace('%_is_locked_%', 'disabled')
             else:
                 acl_control_display = acl_control_display.replace('%_is_locked_%', '')
             acl_control_rendered += acl_control_display
 
-            link_editor = '<a href="?target=%_target_id_%"><input type="submit" value="편집" class="btn btn-link"></input></a>'
+            link_editor = '<a href="?target=%_target_id_%"><input type="submit" value="편집" class="btn btn-link"></input></a><input type="hidden" name="acl_id" value="{}">'.format(i)
             link_editor_rendered = link_editor.replace('%_target_id_%', str(i))
             if i == 0:
-                link_editor_rendered = '편집불가'
-        table_content += '<tr><th scope="row"></th><td>{}</td><td>{}</td><td>{}</td></tr>'.format(acl_data[i][0], acl_control_rendered, link_editor_rendered)
+                link_editor_rendered = '<input type="submit" value="불가" class="btn btn-link" disabled></input></a>'
+        table_content += '<tr><th width="10%"></th><td scope="row" width="30%">{}</td><td width="60%">{}</td><td width="10%">{}</td></tr>'.format(acl_data[i][0], acl_control_rendered, link_editor_rendered)
         table_container += table_template.replace('%_table_content_%', table_content)
     ### Render End ###
 
-    ### ACL Editor ###
-    if request.args.get('target') != None:
-        try:
-            target = int(request.args.get('target'))
-        except:
-            pass
-        
-    ### Editor End ###
-
     ### Confirm Edit ###
     if request.method == 'POST':
-        pass
+        new_acl_data = []
+        for i in range(14):
+            acl_data = request.form.get(str(i))
+            if acl_data == None:
+                new_acl_data += [0]
+            else:
+                new_acl_data += [1]
+        print(new_acl_data)
+        sqlite3_control.commit('')#need edit
     ### Confirm End ###
 
     body_content += table_container
