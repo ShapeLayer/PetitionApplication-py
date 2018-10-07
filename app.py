@@ -698,7 +698,7 @@ def flask_admin_acl():
         table_content = ''
         acl_control_template = """
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input" id="%_acl_data_id_%" name="%_acl_data_id_%" %_is_enabled_% | %_is_locked_%>
+                <input type="checkbox" class="custom-control-input" id="%_acl_data_id_%" name="%_acl_data_id_name_%" %_is_enabled_% | %_is_locked_%>
                 <label class="custom-control-label" for="%_acl_data_id_%">%_acl_data_name_%</label>
             </div>
         """
@@ -709,7 +709,8 @@ def flask_admin_acl():
             else:
                 is_enabled = 'checked'
             acl_control_display = acl_control_template
-            acl_control_display = acl_control_display.replace('%_acl_data_id_%', str(j))
+            acl_control_display = acl_control_display.replace('%_acl_data_id_%', str(i)+str(j))
+            acl_control_display = acl_control_display.replace('%_acl_data_id_name_%', str(j))
             acl_control_display = acl_control_display.replace('%_is_enabled_%', is_enabled)
             acl_control_display = acl_control_display.replace('%_acl_data_name_%', acl_name[j+2][1])
             if j+1 == 1 or j+1 == 14:
@@ -718,7 +719,7 @@ def flask_admin_acl():
                 acl_control_display = acl_control_display.replace('%_is_locked_%', '')
             acl_control_rendered += acl_control_display
 
-            link_editor = '<a href="?target=%_target_id_%"><input type="submit" value="편집" class="btn btn-link"></input></a><input type="hidden" name="acl_id" value="{}">'.format(i)
+            link_editor = '<a href="?target=%_target_id_%"><input type="submit" value="편집" class="btn btn-link"></input></a><input type="hidden" name="acl_group" value="{}">'.format(acl_data[i][0])
             link_editor_rendered = link_editor.replace('%_target_id_%', str(i))
             if i == 0:
                 link_editor_rendered = '<input type="submit" value="불가" class="btn btn-link" disabled></input></a>'
@@ -735,8 +736,25 @@ def flask_admin_acl():
                 new_acl_data += [0]
             else:
                 new_acl_data += [1]
-        print(new_acl_data)
-        sqlite3_control.commit('')#need edit
+        acl_group = request.form['acl_group']
+        sqlite3_control.commit('update user_group_acl set site_owner = {}, site_administrator = {}, peti_read = {}, peti_write = {}, peti_react = {}, peti_disable = {}, peti_delete = {}, user_identify = {}, user_block = {}, manage_user = {}, manage_acl = {}, manage_static_page = {}, manage_notion = {}, not_display_log = {} where user_group = "{}"'.format(
+            new_acl_data[0],
+            new_acl_data[1],
+            new_acl_data[2],
+            new_acl_data[3],
+            new_acl_data[4],
+            new_acl_data[5],
+            new_acl_data[6],
+            new_acl_data[7],
+            new_acl_data[8],
+            new_acl_data[9],
+            new_acl_data[10],
+            new_acl_data[11],
+            new_acl_data[12],
+            new_acl_data[13],
+            acl_group
+        ))
+        return redirect('/admin/acl/')
     ### Confirm End ###
 
     body_content += table_container
