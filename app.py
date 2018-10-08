@@ -692,7 +692,7 @@ def flask_admin_acl():
 
 
     ### Render Template ###
-    body_content += '<h1>사용자 권한 레벨</h1><table class="table table-hover"><thead><tr><th width="10%">N</th><th scope="col" width="30%">그룹 이름</th><th width="50%">권한 리스트</th><th width="10%">편집</th></tr></thead></table>'
+    body_content += '<h1>사용자 권한 레벨</h1><table class="table table-hover"><thead><tr><th width="10%">N</th><th scope="col" width="30%">그룹 이름</th><th width="15%">권한 우선도</th><th width="45%">권한 리스트</th><th width="10%">편집</th></tr></thead></table>'
     table_template = '<form action="" accept-charset="utf-8" method="post"><table class="table table-hover"><tbody>%_table_content_%</tbody></table></form>'
     for i in range(len(acl_data)):
         table_content = ''
@@ -723,7 +723,10 @@ def flask_admin_acl():
             link_editor_rendered = link_editor.replace('%_target_id_%', str(i))
             if i == 0:
                 link_editor_rendered = '<input type="submit" value="불가" class="btn btn-link" disabled></input></a>'
-        table_content += '<tr><th width="10%"></th><td scope="row" width="30%">{}</td><td width="60%">{}</td><td width="10%">{}</td></tr>'.format(acl_data[i][0], acl_control_rendered, link_editor_rendered)
+            ### Render ACL Priority ###
+            priority_rendered = '<input type="text" class="form-control" name="group_priority" value="{}">'.format(acl_data[i][1])
+            ### Render End ###
+        table_content += '<tr><th width="10%"></th><td scope="row" width="30%">{}</td><td width="15%">{}</td><td width="45%">{}</td><td width="10%">{}</td></tr>'.format(acl_data[i][0], priority_rendered, acl_control_rendered, link_editor_rendered)
         table_container += table_template.replace('%_table_content_%', table_content)
     ### Render End ###
 
