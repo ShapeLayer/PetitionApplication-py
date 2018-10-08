@@ -97,7 +97,7 @@ class user_control:
         if 'now_login' in session:
             ### Index Database Data ###
             user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
-            user_auth_group = sqlite3_control.select('select * from user_administrator_list_tb where account_id = {}'.format(session['now_login']))
+            user_auth_group = sqlite3_control.select('select * from user_acl_list_tb where account_id = {}'.format(session['now_login']))
             user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
             ### Index End ###
 
@@ -122,7 +122,7 @@ class user_control:
         return template
     
     def identify_user(target_id):
-        user_auth_group = sqlite3_control.select('select * from user_administrator_list_tb where account_id = {}'.format(target_id))
+        user_auth_group = sqlite3_control.select('select * from user_acl_list_tb where account_id = {}'.format(target_id))
         user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
         if user_auth[0][2] != 1 and user_auth[0][3] != 1:
             return False
@@ -144,7 +144,7 @@ class user_control:
         script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
         user_id_badge = ' <span class="badge badge-pill badge-success" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
         user_block_badge = ' <a href="/admin/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
-        user_identify_badge = ' <a href="/admin/identify?user{}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
+        user_identify_badge = ' <a href="/admin/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
         body_content = script + user_data[0][3] + user_id_badge + user_block_badge + user_identify_badge
         return body_content
 
@@ -325,7 +325,7 @@ def flask_register():
         ))
         same_id_getter = sqlite3_control.select('select * from site_user_tb where sns_type = "entree" and sns_id = "{}"'.format(sns_id))
         if same_id_getter[0][0] != 1:
-            sqlite3_control.commit('insert into user_administrator_list_tb values({}, "user")'.format(same_id_getter[0][0]))
+            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(same_id_getter[0][0]))
         ### Insert End ###
 
         ### Verify Key Reset ###
@@ -620,7 +620,7 @@ def flask_admin_member():
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-@app.route('/admin/member/identify/')
+@app.route('/admin/member/identify/', methods=['GET', 'POST'])
 def flask_admin_identify():
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -630,6 +630,18 @@ def flask_admin_identify():
         
     body_content = ''
     nav_bar = user_control.load_nav_bar()
+
+    if request.args.get('error') == 'no_int':
+        body_content += """<div class="alert alert-dismissible alert-danger">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>으악!</strong> 내부 오류.
+        </div>"""
+
+    if request.args.get('user') != None:
+        try:
+            target_id = int(request.args.get('user'))
+        except:
+            return redirect('/admin/member/identify/?error=no_int')
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
@@ -660,7 +672,7 @@ def flask_admin_admins():
     nav_bar = user_control.load_nav_bar()
 
     ### Index Administrator List form Database ###
-    admin_list = sqlite3_control.select('select * from user_administrator_list_tb')
+    admin_list = sqlite3_control.select('select * from user_acl_list_tb')
     ### Index End ###
 
     ### Render Template ###
@@ -719,12 +731,14 @@ def flask_admin_acl():
                 acl_control_display = acl_control_display.replace('%_is_locked_%', '')
             acl_control_rendered += acl_control_display
 
+            ### Render Etc. ###
             link_editor = '<a href="?target=%_target_id_%"><input type="submit" value="편집" class="btn btn-link"></input></a><input type="hidden" name="acl_group" value="{}">'.format(acl_data[i][0])
             link_editor_rendered = link_editor.replace('%_target_id_%', str(i))
+            priority_rendered = '<input type="text" class="form-control" name="group_priority" value="{}">'.format(acl_data[i][1])
+
             if i == 0:
                 link_editor_rendered = '<input type="submit" value="불가" class="btn btn-link" disabled></input></a>'
-            ### Render ACL Priority ###
-            priority_rendered = '<input type="text" class="form-control" name="group_priority" value="{}">'.format(acl_data[i][1])
+                priority_rendered = '<input type="text" class="form-control" name="group_priority" value="{}" disabled>'.format(acl_data[i][1])
             ### Render End ###
         table_content += '<tr><th width="10%"></th><td scope="row" width="30%">{}</td><td width="15%">{}</td><td width="45%">{}</td><td width="10%">{}</td></tr>'.format(acl_data[i][0], priority_rendered, acl_control_rendered, link_editor_rendered)
         table_container += table_template.replace('%_table_content_%', table_content)
@@ -732,6 +746,25 @@ def flask_admin_acl():
 
     ### Confirm Edit ###
     if request.method == 'POST':
+
+        acl_group = request.form['acl_group']
+
+        ### Check Auth ###
+        #### 1: manage auth ####
+        acl_data = sqlite3_control.select('select user_acl_list_tb.auth, user_group_acl.manage_acl from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(session['now_login']))
+        if acl_data[0][1] == 1:
+            pass
+        else:
+            return redirect('/error/acl/')
+        
+        #### 2: acl priority ####
+        acl_pri_user = sqlite3_control.select('select user_group_acl.group_priority from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(session['now_login']))
+        acl_pri_target = sqlite3_control.select('select group_priority from user_group_acl where user_group = "{}"'.format(acl_group))
+        if acl_pri_user[0][0] < acl_pri_target[0][0]:
+            return redirect('/error/acl/?error=high_acl')
+        ### Check End ###
+
+
         new_acl_data = []
         for i in range(14):
             acl_data = request.form.get(str(i))
@@ -739,7 +772,7 @@ def flask_admin_acl():
                 new_acl_data += [0]
             else:
                 new_acl_data += [1]
-        acl_group = request.form['acl_group']
+        
         sqlite3_control.commit('update user_group_acl set site_owner = {}, site_administrator = {}, peti_read = {}, peti_write = {}, peti_react = {}, peti_disable = {}, peti_delete = {}, user_identify = {}, user_block = {}, manage_user = {}, manage_acl = {}, manage_static_page = {}, manage_notion = {}, not_display_log = {} where user_group = "{}"'.format(
             new_acl_data[0],
             new_acl_data[1],
@@ -923,9 +956,15 @@ def serve_pictures(assets):
     return static_file(assets, root='views/img')
 
 ### Error Handler ###
-@app.route('/error/acl/')
+@app.route('/error/acl/', methods=['GET'])
 def error_acl():
-    body_content = '<h1>Oops!</h1><h2>ACL NOT SATISFIED</h2><p>ACL이 만족되지 않아 접근할 수 없습니다.</p>'
+    body_content = '<h1>Oops!</h1><h2>ACL NOT SATISFIED</h2>'
+    if request.args.get('error') == 'no_write':
+        body_content += '<p>당신의 acl은 쓰기 권한을 포함하고 있지 않습니다.<p><p>당신의 <i>%_block_cause_%<i>로 이 서비스 사용이 일시적으로 중지된 것 같습니다.</p>'
+    elif request.args.get('error') == 'acl_high':
+        body_content += '<p>당신보다 높은 acl 레벨을 가지고 있는 사용자 그룹의 acl은 편집할 수 없습니다.</p>'
+    else:
+        body_content += '<p>ACL이 만족되지 않아 접근할 수 없습니다.</p>'
     nav_bar = user_control.load_nav_bar()
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)

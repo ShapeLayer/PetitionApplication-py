@@ -25,7 +25,7 @@ CREATE TABLE site_user_tb(
     user_display_profile_img TEXT,
     account_password_hash TEXT
 );
-CREATE TABLE user_administrator_list_tb(
+CREATE TABLE user_acl_list_tb(
     account_id INTEGER NOT NULL,
     auth TEXT NOT NULL
 );

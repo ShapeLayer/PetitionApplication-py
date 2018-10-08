@@ -109,5 +109,5 @@ INSERT INTO user_group_acl (
     0
 );
 
-INSERT INTO user_administrator_list_tb values(1, "owner");
+INSERT INTO user_acl_list_tb values(1, "owner");
 INSERT INTO static_page_tb values("frontpage", "")
