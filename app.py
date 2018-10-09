@@ -734,11 +734,11 @@ def flask_admin_acl():
             ### Render Etc. ###
             link_editor = '<a href="?target=%_target_id_%"><input type="submit" value="편집" class="btn btn-link"></input></a><input type="hidden" name="acl_group" value="{}">'.format(acl_data[i][0])
             link_editor_rendered = link_editor.replace('%_target_id_%', str(i))
-            priority_rendered = '<input type="text" class="form-control" name="group_priority" value="{}">'.format(acl_data[i][1])
+            priority_rendered = '<input type="number" class="form-control" name="group_priority" value="{}">'.format(acl_data[i][1])
 
             if i == 0:
                 link_editor_rendered = '<input type="submit" value="불가" class="btn btn-link" disabled></input></a>'
-                priority_rendered = '<input type="text" class="form-control" name="group_priority" value="{}" disabled>'.format(acl_data[i][1])
+                priority_rendered = '<input type="number" class="form-control" name="group_priority" value="{}" disabled>'.format(acl_data[i][1])
             ### Render End ###
         table_content += '<tr><th width="10%"></th><td scope="row" width="30%">{}</td><td width="15%">{}</td><td width="45%">{}</td><td width="10%">{}</td></tr>'.format(acl_data[i][0], priority_rendered, acl_control_rendered, link_editor_rendered)
         table_container += table_template.replace('%_table_content_%', table_content)
