@@ -143,8 +143,8 @@ class user_control:
 
         script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
         user_id_badge = ' <span class="badge badge-pill badge-success" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
-        user_block_badge = ' <a href="/admin/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
-        user_identify_badge = ' <a href="/admin/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
+        user_block_badge = ' <a href="/admin/member/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
+        user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
         body_content = script + user_data[0][3] + user_id_badge + user_block_badge + user_identify_badge
         return body_content
 
@@ -639,29 +639,36 @@ def flask_admin_identify():
         </div>"""
     ### Render End ###
 
-    ### 
+    ### Review Errors ###
     if request.args.get('user') != None:
         try:
             target_id = int(request.args.get('user'))
         except:
             return redirect('/admin/member/identify/?error=no_int')
-    ###
+    ### Review End ###
 
+    ### Template: Search Bar ###
     searchbar_template = """
 <div class="form-group">
   <div class="form-group">
     <div class="input-group mb-3">
       <div class="input-group-prepend">
-        <span class="input-group-text"> </span>
+        <span class="input-group-text"></span>
       </div>
-      <input type="text" class="form-control" aria-label="검색">
+      <input type="number" class="form-control" id="search_target" aria-label="검색">
       <div class="input-group-append">
-        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <span class="input-group-text" id="search"><i class="fas fa-search"></i></span>
       </div>
     </div>
   </div>
 </div>
+<script type="text/javascript">
+    document.getElementById("search").onclick = function () {
+        location.href = "/admin/member/identify/?user=" + document.getElementById('search_target').value;
+    };
+</script>
     """
+    ### Template End ###
 
     body_content += searchbar_template
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -811,7 +818,8 @@ def flask_admin_acl():
             else:
                 new_acl_data += [1]
         
-        sqlite3_control.commit('update user_group_acl set site_owner = {}, site_administrator = {}, peti_read = {}, peti_write = {}, peti_react = {}, peti_disable = {}, peti_delete = {}, user_identify = {}, user_block = {}, manage_user = {}, manage_acl = {}, manage_static_page = {}, manage_notion = {}, not_display_log = {} where user_group = "{}"'.format(
+        sqlite3_control.commit('update user_group_acl set group_priority = {}, site_owner = {}, site_administrator = {}, peti_read = {}, peti_write = {}, peti_react = {}, peti_disable = {}, peti_delete = {}, user_identify = {}, user_block = {}, manage_user = {}, manage_acl = {}, manage_static_page = {}, manage_notion = {}, not_display_log = {} where user_group = "{}"'.format(
+            group_priority,
             new_acl_data[0],
             new_acl_data[1],
             new_acl_data[2],
