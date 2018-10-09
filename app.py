@@ -703,19 +703,29 @@ def flask_admin_identify():
         </tr><tbody>%_tbody_content_%</tbody></thead></table>
         """
         search_result = search_result_template.replace('%_tbody_content_%',
-        '<td scope="row">{}</td><td>{}</td><td>{}</td><td><form action="" accept-charset="utf-8" method="post"><input type="submit" value="확인" class="btn btn-link" style="margin: 0; padding: 0"><input type="hidden" name="target_id" value="{}"></form></td>'.format(
+        '<td scope="row">{}</td><td>{}</td><td>{}</td><td><form action="" accept-charset="utf-8" method="get"><input type="submit" value="확인" class="btn btn-link" style="margin: 0; padding: 0"><input type="hidden" name="target_id" value="{}"></form></td>'.format(
             target_data[0][0], target_data[0][2], target_data[0][1], target
         ))
         body_content += search_result
     ### Render End ###
 
     ### Lookup Target ###
-    if request.method == 'POST':
-        ### Load Template ###
+    if request.args.get('target_id') != None:
+        try:
+            target_id = int(request.args.get('target_id'))
+        except:
+            return redirect('/admin/member/identify/?error=no_int')
+        
+        ### Load Confirm Page ###
+        static_template = open('templates/confirm.html', encoding='utf-8').read()
         ### Load End ###
-        if request.args.get('agree') == 'yes':
-            pass
-            ### Todo: log / display
+
+        ### Render Confirm Page ###
+        static_page_rendered = static_template.replace('%_confirm_head_%', '명의 확인')
+        static_page_rendered = static_page_rendered.replace('%_form_alerts_%', '')
+        #static_page_rendered = static_page_rendered.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
+        ### Render End ###
+        body_content = static_page_rendered
     ### Lookup End ###
 
     
