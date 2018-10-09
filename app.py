@@ -711,7 +711,8 @@ def flask_admin_identify():
 
     ### Lookup Target ###
     if request.method == 'POST':
-        pass ### Todo: confirm
+        ### Load Template ###
+        ### Load End ###
         if request.args.get('agree') == 'yes':
             pass
             ### Todo: log / display
