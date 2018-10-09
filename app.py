@@ -631,18 +631,39 @@ def flask_admin_identify():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
+    ### Render Errors ###
     if request.args.get('error') == 'no_int':
         body_content += """<div class="alert alert-dismissible alert-danger">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <strong>으악!</strong> 내부 오류.
+            <strong>으악!</strong>내부 오류.
         </div>"""
+    ### Render End ###
 
+    ### 
     if request.args.get('user') != None:
         try:
             target_id = int(request.args.get('user'))
         except:
             return redirect('/admin/member/identify/?error=no_int')
+    ###
 
+    searchbar_template = """
+<div class="form-group">
+  <div class="form-group">
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text"> </span>
+      </div>
+      <input type="text" class="form-control" aria-label="검색">
+      <div class="input-group-append">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+      </div>
+    </div>
+  </div>
+</div>
+    """
+
+    body_content += searchbar_template
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/member/block/')
@@ -701,6 +722,15 @@ def flask_admin_acl():
     acl_data = sqlite3_control.select('select * from user_group_acl')
     acl_name = sqlite3_control.select('pragma table_info(user_group_acl)')
     ### Index End ###
+
+    ### Render Error ###
+    if request.args.get('error') == 'out_of_range':
+        body_content += """<div class="alert alert-dismissible alert-warning">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <h4 class="alert-heading">오류!</h4>
+            <p class="mb-0">권한 우선도는 0부터 1000 사이의 정수만 가능합니다.</p>
+        </div>"""
+    ### End Render ###
 
 
     ### Render Template ###
@@ -762,6 +792,14 @@ def flask_admin_acl():
         acl_pri_target = sqlite3_control.select('select group_priority from user_group_acl where user_group = "{}"'.format(acl_group))
         if acl_pri_user[0][0] < acl_pri_target[0][0]:
             return redirect('/error/acl/?error=high_acl')
+        ### Check End ###
+
+        ### Check group_priority Value ###
+        group_priority = int(request.form['group_priority'])
+        if group_priority >= 0 and group_priority <= 1000:
+            pass
+        else:
+            return redirect('/admin/acl/?error=out_of_range')
         ### Check End ###
 
 
