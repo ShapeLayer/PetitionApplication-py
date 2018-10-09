@@ -647,6 +647,17 @@ def flask_admin_identify():
             return redirect('/admin/member/identify/?error=no_int')
     ### Review End ###
 
+    ### Get Target User Data ###
+    target = request.args.get('user')
+    if target == None:
+        target = ''
+    else:
+        try:
+            int(target)
+        except:
+            target =''
+    ### Get End ###
+
     ### Template: Search Bar ###
     searchbar_template = """
 <div class="form-group">
@@ -655,7 +666,7 @@ def flask_admin_identify():
       <div class="input-group-prepend">
         <span class="input-group-text"></span>
       </div>
-      <input type="number" class="form-control" id="search_target" aria-label="검색">
+      <input type="number" class="form-control" id="search_target" aria-label="검색" value="%_searchbar_value_%">
       <div class="input-group-append">
         <span class="input-group-text" id="search"><i class="fas fa-search"></i></span>
       </div>
@@ -666,11 +677,47 @@ def flask_admin_identify():
     document.getElementById("search").onclick = function () {
         location.href = "/admin/member/identify/?user=" + document.getElementById('search_target').value;
     };
+    document.addEventListener("keydown", function(event) {
+        if(event.keyCode == 13) {
+            location.href = "/admin/member/identify/?user=" + document.getElementById('search_target').value;
+        }
+    });
 </script>
     """
     ### Template End ###
 
-    body_content += searchbar_template
+    ### Render Template ###
+    body_content += searchbar_template.replace('%_searchbar_value_%', target)
+    ### Render End ### 
+
+    ### Render Search Result ###
+    if target != '':
+        target_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(target))
+        search_result_template = """
+        <h2>검색결과</h2>
+        <table class="table table-hover"><thead><tr>
+        <th scope="col">ID</th>
+        <th>고유 식별자</th>
+        <th>사용 SNS</th>
+        <th>확인</th>
+        </tr><tbody>%_tbody_content_%</tbody></thead></table>
+        """
+        search_result = search_result_template.replace('%_tbody_content_%',
+        '<td scope="row">{}</td><td>{}</td><td>{}</td><td><form action="" accept-charset="utf-8" method="post"><input type="submit" value="확인" class="btn btn-link" style="margin: 0; padding: 0"><input type="hidden" name="target_id" value="{}"></form></td>'.format(
+            target_data[0][0], target_data[0][2], target_data[0][1], target
+        ))
+        body_content += search_result
+    ### Render End ###
+
+    ### Lookup Target ###
+    if request.method == 'POST':
+        pass ### Todo: confirm
+        if request.args.get('agree') == 'yes':
+            pass
+            ### Todo: log / display
+    ### Lookup End ###
+
+    
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/member/block/')
