@@ -968,7 +968,7 @@ def flask_admin_petition_article_id(article_id):
 
     ### Get Author Data ###
     author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
-    author_display_name = author_data[0][1]
+    author_display_name = user_control.user_controller(author_data[0][0])
     ### Get End ###
 
     ### Render React ###
