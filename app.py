@@ -507,12 +507,16 @@ def flask_a_article_id_delete(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    template = open('templates/a_delete.html', encoding='utf-8').read()
+    template = open('templates/confirm.html', encoding='utf-8').read()
     body_content += template
 
     ### Render Login Status ###
     user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
     body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
+    ### Render End ###
+    
+    ### Render Etc ###
+    body_content = body_content.replace('%_confirm_head_%', '청원 삭제')
     ### Render End ###
     
     if request.method == 'POST':
