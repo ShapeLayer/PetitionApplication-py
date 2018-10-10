@@ -133,6 +133,7 @@ class user_control:
 
         ## Index User Data ##
         user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+        target_data = sqlite3_control.select('select peti_author_display_name from author_connect where peti_author_id = {}'.format(target_id))
         ## Index End ##
 
         if 'now_login' in session:
@@ -144,9 +145,56 @@ class user_control:
         script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
         user_id_badge = ' <span class="badge badge-pill badge-success" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
         user_block_badge = ' <a href="/admin/member/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
-        user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
-        body_content = script + user_data[0][3] + user_id_badge + user_block_badge + user_identify_badge
+        user_identify_badge = ' <a href="/admin/member/identify?target_id={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
+        body_content = script + target_data[0][0] + user_id_badge + user_block_badge + user_identify_badge
         return body_content
+
+class viewer:
+    def load_petition(target_id):
+        body_content = ''
+
+        ### Index Data from Database ###
+        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(target_id))
+        react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(target_id))
+        ### Index End ###
+
+        ### Load Template ###
+        template = open('templates/a.html', encoding='utf-8').read()
+        ### Load End ###
+
+        ### Render React ###
+        template_react = """
+                <div class="container">
+                    <h5>%_article_react_author_display_name_%</h5>
+                    <p>%_article_react_body_content_%</p>
+                </div>
+                """
+        react_body_content = ''
+        for i in range(len(react_data)):
+            react_render_object = template_react
+            react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][2]))
+            react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
+            react_body_content += react_render_object
+        ### Render End ###
+
+        ### Get Author Data ###
+        author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
+        ### Get End ###
+
+        ### Render Template ###
+        author_data_display = user_control.user_controller(author_data[0][0])
+        template = template.replace('%_article_display_name_%', peti_data[0][1])
+        template = template.replace('%_article_publish_date_%', peti_data[0][2])
+        template = template.replace('%_article_author_display_name_%', author_data_display)
+        template = template.replace('%_article_body_content_%', peti_data[0][5])
+        template = template.replace('%_article_react_count_%', str(len(react_data)))
+        template = template.replace('%_article_reacts_%', react_body_content)
+        body_content += template
+        ### Render End ###
+        
+        return body_content
+    
+
 
 ### Create Database Table ###
 try:
@@ -373,45 +421,15 @@ def flask_a_article_id(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    ### Index Data from Database ###
+    ### Load Petition Data ###
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
-    react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
-    ### Index End ###
-    
-    ### Load Template ###
-    template = open('templates/a.html', encoding='utf-8').read()
-    ### Load End ###
 
     if peti_data[0][3] == 1 or peti_data[0][3] == 404:
         abort(404)
-    ### Render React ###
-    template_react = """
-            <div class="container">
-                <h5>%_article_react_author_display_name_%</h5>
-                <p>%_article_react_body_content_%</p>
-            </div>
-            """
-    react_body_content = ''
-    for i in range(len(react_data)):
-        react_render_object = template_react
-        react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][2]))
-        react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
-        react_body_content += react_render_object
-    ### Render End ###
+    ### Load End ###
 
-    ### Get Author Data ###
-    author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
-    ### Get End ###
-
-    ### Render Template ###
-    author_data_display = user_control.user_controller(author_data[0][0])
-    template = template.replace('%_article_display_name_%', peti_data[0][1])
-    template = template.replace('%_article_publish_date_%', peti_data[0][2])
-    template = template.replace('%_article_author_display_name_%', author_data_display)
-    template = template.replace('%_article_body_content_%', peti_data[0][5])
-    template = template.replace('%_article_react_count_%', str(len(react_data)))
-    template = template.replace('%_article_reacts_%', react_body_content)
-    body_content += template
+    ### Render Bodycontent ###
+    body_content += viewer.load_petition(article_id)
     ### Render End ###
 
     if request.method == 'POST':
@@ -419,7 +437,18 @@ def flask_a_article_id(article_id):
         peti_id = article_id
         author_id = 0 ##<< 이거 수정 (Todo List)
         content = parser.anti_injection(request.form['react_content'])
+        author_display = parser.anti_injection(request.form[''])###Need Edit
         ### Collect End ###
+
+        ### Save React Author Data ###
+        author_list_len = len(sqlite3_control.select('select * from author_connect'))
+        sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id) values("{}", {})'.format(
+            uthor_display_name,
+            account_user_id
+        ))
+        react_author_id = author_list_len + 1
+        ### Save End ###
+
 
         ### Insert Data into Database ###
         sqlite3_query = 'insert into peti_react_tb (peti_id, author_id, content) values({}, {}, "{}")'.format(
@@ -959,42 +988,8 @@ def flask_admin_petition_article_id(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
-    template = open('templates/a.html', encoding='utf-8').read()
-
-    ### Index React Content ###
-    react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
-    ### Index End ###
-
-    ### Get Author Data ###
-    author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
-    author_display_name = user_control.user_controller(author_data[0][0])
-    ### Get End ###
-
-    ### Render React ###
-    template_react = """
-            <div class="container">
-                <h5>%_article_react_author_display_name_%</h5>
-                <p>%_article_react_body_content_%</p>
-            </div>
-            """
-    react_body_content = ''
-    template = template.replace('%_is_enabled_%', 'disabled')
-    for i in range(len(react_data)):
-        react_render_object = template_react
-        react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][2]))
-        react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
-        react_body_content += react_render_object
-    ### Render End ###
-
-    ### Render Template ###
-    template = template.replace('%_article_display_name_%', peti_data[0][1])
-    template = template.replace('%_article_publish_date_%', peti_data[0][2])
-    template = template.replace('%_article_author_display_name_%', author_display_name)
-    template = template.replace('%_article_body_content_%', peti_data[0][5])
-    template = template.replace('%_article_react_count_%', str(len(react_data)))
-    template = template.replace('%_article_reacts_%', react_body_content)
-    body_content += template
+    ### Render Bodycontent ###
+    body_content += viewer.load_petition(article_id)
     ### Render End ###
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
