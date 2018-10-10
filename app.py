@@ -132,7 +132,7 @@ class user_control:
     def user_controller(target_id):
 
         ## Index User Data ##
-        user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(target_id))
+        user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
         ## Index End ##
 
         if 'now_login' in session:
