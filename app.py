@@ -130,17 +130,20 @@ class user_control:
             return True
 
     def user_controller(target_id):
-
-        ## Index User Data ##
-        user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+        ### Index User Data ###
         target_data = sqlite3_control.select('select peti_author_display_name from author_connect where peti_author_id = {}'.format(target_id))
-        ## Index End ##
+        print(target_data)
+        ### Index End ###
 
         if 'now_login' in session:
             if user_control.identify_user(session['now_login']) == False:
-                return user_data[0][3]
+                return target_data[0][0]
         else:
-            return user_data[0][3]
+            return target_data[0][0]
+
+        ### Index User Data ###
+        user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+        ### Index End ###
 
         script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
         user_id_badge = ' <span class="badge badge-pill badge-success" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
@@ -165,14 +168,15 @@ class viewer:
         ### Render React ###
         template_react = """
                 <div class="container">
-                    <h5>%_article_react_author_display_name_%</h5>
+                    <p>사용자: %_article_react_author_display_name_%</p>
                     <p>%_article_react_body_content_%</p>
                 </div>
                 """
         react_body_content = ''
         for i in range(len(react_data)):
+            react_author_data = sqlite3_control.select('select author_connect.peti_author_id from author_connect, peti_react_tb where author_connect.peti_author_id = peti_react_tb.author_id and peti_react_tb.react_id = {}'.format(i+1))
             react_render_object = template_react
-            react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][2]))
+            react_render_object = react_render_object.replace('%_article_react_author_display_name_%', user_control.user_controller(react_author_data[0][0]))
             react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
             react_body_content += react_render_object
         ### Render End ###
@@ -182,6 +186,11 @@ class viewer:
         ### Get End ###
 
         ### Render Template ###
+        if 'now_login' in session:
+            if user_control.identify_user(session['now_login']) == False:
+                template = template.replace('%_is_enabled_%', 'disabled')
+        else:
+            template = template.replace('%_is_enabled_%', 'disabled')
         author_data_display = user_control.user_controller(author_data[0][0])
         template = template.replace('%_article_display_name_%', peti_data[0][1])
         template = template.replace('%_article_publish_date_%', peti_data[0][2])
@@ -433,17 +442,21 @@ def flask_a_article_id(article_id):
     ### Render End ###
 
     if request.method == 'POST':
+        account_user_id = session['now_login']
+
         ### Collect React Data ###
         peti_id = article_id
-        author_id = 0 ##<< 이거 수정 (Todo List)
+        #author_id = 0 ##<< 이거 수정 (Todo List)
         content = parser.anti_injection(request.form['react_content'])
-        author_display = parser.anti_injection(request.form[''])###Need Edit
+        author_display = parser.anti_injection(request.form['react_author_display_name'])
+        if author_display == '':
+            author_display = '익명 사용자'
         ### Collect End ###
 
         ### Save React Author Data ###
         author_list_len = len(sqlite3_control.select('select * from author_connect'))
         sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id) values("{}", {})'.format(
-            uthor_display_name,
+            author_display,
             account_user_id
         ))
         react_author_id = author_list_len + 1
@@ -453,7 +466,7 @@ def flask_a_article_id(article_id):
         ### Insert Data into Database ###
         sqlite3_query = 'insert into peti_react_tb (peti_id, author_id, content) values({}, {}, "{}")'.format(
             peti_id,
-            author_id,
+            react_author_id,
             content
         )
         sqlite3_control.commit(sqlite3_query)
