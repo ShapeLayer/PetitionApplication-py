@@ -1,6 +1,8 @@
-# PetitionApplication-py
+# Fe-tea, PetitionApplication based on Flask
 
-PetitionApplication-py는 숭덕고등학교 학생회의 요청으로 개발되고 있는 플라스크 기반의 웹 애플리케이션입니다. SNS 로그인 기능으로 청원을 작성하거나 비로그인 상태에서 비공개 청원을 보낼 수 있습니다.
+Fe-tea는 숭덕고등학교 학생회의 요청으로 개발되고 있는 플라스크 기반의 웹 애플리케이션입니다. SNS 로그인 기능으로 청원을 작성하거나 비로그인 상태에서 비공개 청원을 보낼 수 있습니다.
+
+## 시작하기
 
 ## External Project
 * [Bootstrap](https://getbootstrap.com/) - Bootstrap - [MIT License](https://opensource.org/licenses/MIT) _CDN Uses_

@@ -103,7 +103,7 @@ class user_control:
 
             ### Render Navbar ###
             template = template.replace('%_user_display_name_%', user_data[0][3])
-            if user_auth[0][3] == 1:
+            if user_auth[0][2] == 1:
                 user_profile_menu_content += """
                 <a class="dropdown-item" href="/admin/">관리자 메뉴</a>
                 """
@@ -130,80 +130,23 @@ class user_control:
             return True
 
     def user_controller(target_id):
-        ### Index User Data ###
-        target_data = sqlite3_control.select('select peti_author_display_name from author_connect where peti_author_id = {}'.format(target_id))
-        print(target_data)
-        ### Index End ###
+
+        ## Index User Data ##
+        user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(target_id))
+        ## Index End ##
 
         if 'now_login' in session:
             if user_control.identify_user(session['now_login']) == False:
-                return target_data[0][0]
+                return user_data[0][3]
         else:
-            return target_data[0][0]
-
-        ### Index User Data ###
-        user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
-        ### Index End ###
+            return user_data[0][3]
 
         script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
         user_id_badge = ' <span class="badge badge-pill badge-success" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
         user_block_badge = ' <a href="/admin/member/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
-        user_identify_badge = ' <a href="/admin/member/identify?target_id={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
-        body_content = script + target_data[0][0] + user_id_badge + user_block_badge + user_identify_badge
+        user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
+        body_content = script + user_data[0][3] + user_id_badge + user_block_badge + user_identify_badge
         return body_content
-
-class viewer:
-    def load_petition(target_id):
-        body_content = ''
-
-        ### Index Data from Database ###
-        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(target_id))
-        react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(target_id))
-        ### Index End ###
-
-        ### Load Template ###
-        template = open('templates/a.html', encoding='utf-8').read()
-        ### Load End ###
-
-        ### Render React ###
-        template_react = """
-                <div class="container">
-                    <p>사용자: %_article_react_author_display_name_%</p>
-                    <p>%_article_react_body_content_%</p>
-                </div>
-                """
-        react_body_content = ''
-        for i in range(len(react_data)):
-            react_author_data = sqlite3_control.select('select author_connect.peti_author_id from author_connect, peti_react_tb where author_connect.peti_author_id = peti_react_tb.author_id and peti_react_tb.react_id = {}'.format(i+1))
-            react_render_object = template_react
-            react_render_object = react_render_object.replace('%_article_react_author_display_name_%', user_control.user_controller(react_author_data[0][0]))
-            react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
-            react_body_content += react_render_object
-        ### Render End ###
-
-        ### Get Author Data ###
-        author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
-        ### Get End ###
-
-        ### Render Template ###
-        if 'now_login' in session:
-            if user_control.identify_user(session['now_login']) == False:
-                template = template.replace('%_is_enabled_%', 'disabled')
-        else:
-            template = template.replace('%_is_enabled_%', 'disabled')
-        author_data_display = user_control.user_controller(author_data[0][0])
-        template = template.replace('%_article_display_name_%', peti_data[0][1])
-        template = template.replace('%_article_publish_date_%', peti_data[0][2])
-        template = template.replace('%_article_author_display_name_%', author_data_display)
-        template = template.replace('%_article_body_content_%', peti_data[0][5])
-        template = template.replace('%_article_react_count_%', str(len(react_data)))
-        template = template.replace('%_article_reacts_%', react_body_content)
-        body_content += template
-        ### Render End ###
-        
-        return body_content
-    
-
 
 ### Create Database Table ###
 try:
@@ -430,43 +373,58 @@ def flask_a_article_id(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    ### Load Petition Data ###
+    ### Index Data from Database ###
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+    react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
+    ### Index End ###
+    
+    ### Load Template ###
+    template = open('templates/a.html', encoding='utf-8').read()
+    ### Load End ###
 
     if peti_data[0][3] == 1 or peti_data[0][3] == 404:
         abort(404)
-    ### Load End ###
+    ### Render React ###
+    template_react = """
+            <div class="container">
+                <h5>%_article_react_author_display_name_%</h5>
+                <p>%_article_react_body_content_%</p>
+            </div>
+            """
+    react_body_content = ''
+    for i in range(len(react_data)):
+        react_render_object = template_react
+        react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][2]))
+        react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
+        react_body_content += react_render_object
+    ### Render End ###
 
-    ### Render Bodycontent ###
-    body_content += viewer.load_petition(article_id)
+    ### Get Author Data ###
+    author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
+    ### Get End ###
+
+    ### Render Template ###
+    author_data_display = user_control.user_controller(author_data[0][0])
+    template = template.replace('%_article_display_name_%', peti_data[0][1])
+    template = template.replace('%_article_publish_date_%', peti_data[0][2])
+    template = template.replace('%_article_author_display_name_%', author_data_display)
+    template = template.replace('%_article_body_content_%', peti_data[0][5])
+    template = template.replace('%_article_react_count_%', str(len(react_data)))
+    template = template.replace('%_article_reacts_%', react_body_content)
+    body_content += template
     ### Render End ###
 
     if request.method == 'POST':
-        account_user_id = session['now_login']
-
         ### Collect React Data ###
         peti_id = article_id
-        #author_id = 0 ##<< 이거 수정 (Todo List)
+        author_id = 0 ##<< 이거 수정 (Todo List)
         content = parser.anti_injection(request.form['react_content'])
-        author_display = parser.anti_injection(request.form['react_author_display_name'])
-        if author_display == '':
-            author_display = '익명 사용자'
         ### Collect End ###
-
-        ### Save React Author Data ###
-        author_list_len = len(sqlite3_control.select('select * from author_connect'))
-        sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id) values("{}", {})'.format(
-            author_display,
-            account_user_id
-        ))
-        react_author_id = author_list_len + 1
-        ### Save End ###
-
 
         ### Insert Data into Database ###
         sqlite3_query = 'insert into peti_react_tb (peti_id, author_id, content) values({}, {}, "{}")'.format(
             peti_id,
-            react_author_id,
+            author_id,
             content
         )
         sqlite3_control.commit(sqlite3_query)
@@ -549,16 +507,12 @@ def flask_a_article_id_delete(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    template = open('templates/confirm.html', encoding='utf-8').read()
+    template = open('templates/a_delete.html', encoding='utf-8').read()
     body_content += template
 
     ### Render Login Status ###
     user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
     body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
-    ### Render End ###
-    
-    ### Render Etc ###
-    body_content = body_content.replace('%_confirm_head_%', '청원 삭제')
     ### Render End ###
     
     if request.method == 'POST':
@@ -901,8 +855,8 @@ def flask_admin_acl():
         #### 2: acl priority ####
         acl_pri_user = sqlite3_control.select('select user_group_acl.group_priority from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(session['now_login']))
         acl_pri_target = sqlite3_control.select('select group_priority from user_group_acl where user_group = "{}"'.format(acl_group))
-        if acl_pri_user[0][0] <= acl_pri_target[0][0]:
-            return redirect('/error/acl/?error=acl_high')
+        if acl_pri_user[0][0] < acl_pri_target[0][0]:
+            return redirect('/error/acl/?error=high_acl')
         ### Check End ###
 
         ### Check group_priority Value ###
@@ -959,7 +913,31 @@ def flask_admin_verify_key():
 
     body_content += '<h1>verify_key 정보</h1>'
     verify_key = open('verify_key', encoding='utf-8').read()
-    body_content += '<input type="text" class="form-control" value="{}" disabled/>'.format(verify_key)
+    ###
+    verify_key_template = """
+<div class="form-group">
+  <div class="form-group">
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text"></span>
+      </div>
+      <input type="text" class="form-control" id="verify_key_value" value="%_verify_key_value_%" disabled>
+      <div class="input-group-append">
+        <span class="input-group-text" id="clipboard" onclick="clipboard()"><i class="fas fa-copy"></i></span>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+    document.getElementById("clipboard").onclick = function () {
+        var copyText = document.getElementById("verify_key_value");
+        copyText.select();
+        document.execCommand("copy");
+}
+</script>
+    """
+    ###
+    body_content += verify_key_template.replace('%_verify_key_value_%', verify_key)
     body_content += '<p>verify_key는 1회 사용시 갱신됩니다.</p>'
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
@@ -1001,8 +979,42 @@ def flask_admin_petition_article_id(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    ### Render Bodycontent ###
-    body_content += viewer.load_petition(article_id)
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+    template = open('templates/a.html', encoding='utf-8').read()
+
+    ### Index React Content ###
+    react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
+    ### Index End ###
+
+    ### Get Author Data ###
+    author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
+    author_display_name = author_data[0][1]
+    ### Get End ###
+
+    ### Render React ###
+    template_react = """
+            <div class="container">
+                <h5>%_article_react_author_display_name_%</h5>
+                <p>%_article_react_body_content_%</p>
+            </div>
+            """
+    react_body_content = ''
+    template = template.replace('%_is_enabled_%', 'disabled')
+    for i in range(len(react_data)):
+        react_render_object = template_react
+        react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][2]))
+        react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
+        react_body_content += react_render_object
+    ### Render End ###
+
+    ### Render Template ###
+    template = template.replace('%_article_display_name_%', peti_data[0][1])
+    template = template.replace('%_article_publish_date_%', peti_data[0][2])
+    template = template.replace('%_article_author_display_name_%', author_display_name)
+    template = template.replace('%_article_body_content_%', peti_data[0][5])
+    template = template.replace('%_article_react_count_%', str(len(react_data)))
+    template = template.replace('%_article_reacts_%', react_body_content)
+    body_content += template
     ### Render End ###
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1078,7 +1090,7 @@ def error_acl():
     if request.args.get('error') == 'no_write':
         body_content += '<p>당신의 acl은 쓰기 권한을 포함하고 있지 않습니다.<p><p>당신의 <i>%_block_cause_%<i>로 이 서비스 사용이 일시적으로 중지된 것 같습니다.</p>'
     elif request.args.get('error') == 'acl_high':
-        body_content += '<p>당신보다 높은 acl 레벨을 가지고 있는 사용자 그룹의 acl은 편집할 수 없습니다.</p>'
+        body_content += '<p>당신보다 낮은 acl 우선도를 가지고 있는 사용자 그룹의 acl만 편집할 수 있습니다.</p>'
     else:
         body_content += '<p>ACL이 만족되지 않아 접근할 수 없습니다.</p>'
     nav_bar = user_control.load_nav_bar()
