@@ -103,7 +103,7 @@ class user_control:
 
             ### Render Navbar ###
             template = template.replace('%_user_display_name_%', user_data[0][3])
-            if user_auth[0][2] == 1:
+            if user_auth[0][3] == 1:
                 user_profile_menu_content += """
                 <a class="dropdown-item" href="/admin/">관리자 메뉴</a>
                 """
@@ -902,8 +902,11 @@ def flask_admin_acl():
         acl_pri_user = sqlite3_control.select('select user_group_acl.group_priority from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(session['now_login']))
         acl_pri_target = sqlite3_control.select('select group_priority from user_group_acl where user_group = "{}"'.format(acl_group))
         if acl_pri_user[0][0] < acl_pri_target[0][0]:
-            return redirect('/error/acl/?error=high_acl')
+            return redirect('/error/acl/?error=acl_high')
         ### Check End ###
+
+        user_acl = sqlite3_control.select('select user_group_acl.group_priority from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(session['now_login']))
+        if acl_group == ###Edit
 
         ### Check group_priority Value ###
         group_priority = int(request.form['group_priority'])
