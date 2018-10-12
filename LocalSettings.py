@@ -10,6 +10,6 @@ flask_host_port = 2500
 # CRYPT_SECRET_KEY must be in string format.
 crypt_secret_key = 'SECRET_KEY'
 # ENTREE_APPNAME must be in string format.
-entree_appname = 'OFORM'
+entree_appname = 'Fe-tea'
 # entree_hostname
 entree_hostname = 'localhost:2500'
