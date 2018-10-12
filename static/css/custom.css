@@ -29,6 +29,10 @@ input{
     align-items: center;
 }
 
+.single-center {
+    width: 40%;
+}
+
 #footer{
     margin : 5em 0;
 }

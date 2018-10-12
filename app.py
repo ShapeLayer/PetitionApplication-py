@@ -147,6 +147,14 @@ class user_control:
         user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
         body_content = script + user_data[0][1] + user_id_badge + user_block_badge + user_identify_badge
         return body_content
+        
+    def user_register_init():
+        ###
+        acl_list_len = len(sqlite3_control.select('select * from site_user_tb'))
+        ###
+        
+        if acl_list_len != 1: # 이미 레지스터된 상태여야함.
+            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(acl_list_len))
 
 ### Create Database Table ###
 try:
@@ -349,7 +357,6 @@ def flask_register():
     
     body_content = body_content.replace('%_form_alerts_%', '')
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-
 
 ### Petition Route ###
 @app.route('/a/', methods=['GET', 'POST'])
@@ -923,7 +930,7 @@ def flask_admin_verify_key():
     verify_key_template = """
 <div class="form-group">
   <div class="form-group">
-    <div class="input-group mb-3">
+    <div class="input-group mb-3 single-center">
       <div class="input-group-prepend">
         <span class="input-group-text"></span>
       </div>
