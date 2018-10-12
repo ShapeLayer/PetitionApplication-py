@@ -132,20 +132,20 @@ class user_control:
     def user_controller(target_id):
 
         ## Index User Data ##
-        user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(target_id))
+        user_data = sqlite3_control.select('select * from author_connect')
         ## Index End ##
 
         if 'now_login' in session:
             if user_control.identify_user(session['now_login']) == False:
-                return user_data[0][3]
+                return user_data[0][1]
         else:
-            return user_data[0][3]
-
+            return user_data[0][1]
+        print(user_data)
         script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
         user_id_badge = ' <span class="badge badge-pill badge-success" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
         user_block_badge = ' <a href="/admin/member/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
         user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
-        body_content = script + user_data[0][3] + user_id_badge + user_block_badge + user_identify_badge
+        body_content = script + user_data[0][1] + user_id_badge + user_block_badge + user_identify_badge
         return body_content
 
 ### Create Database Table ###
@@ -702,10 +702,14 @@ def flask_admin_identify():
         <th>확인</th>
         </tr><tbody>%_tbody_content_%</tbody></thead></table>
         """
-        search_result = search_result_template.replace('%_tbody_content_%',
-        '<td scope="row">{}</td><td>{}</td><td>{}</td><td><form action="" accept-charset="utf-8" method="get"><input type="submit" value="확인" class="btn btn-link" style="margin: 0; padding: 0"><input type="hidden" name="target_id" value="{}"></form></td>'.format(
-            target_data[0][0], target_data[0][2], target_data[0][1], target
-        ))
+        if target_data == []:
+            search_result = '검색 결과 없음'
+        else:
+            search_result = search_result_template.replace('%_tbody_content_%',
+            '<td scope="row">{}</td><td>{}</td><td>{}</td><td><form action="" accept-charset="utf-8" method="get"><input type="submit" value="확인" class="btn btn-link" style="margin: 0; padding: 0"><input type="hidden" name="target_id" value="{}"></form></td>'.format(
+                target_data[0][0], target_data[0][2], target_data[0][1], target
+            ))
+
         body_content += search_result
     ### Render End ###
 
