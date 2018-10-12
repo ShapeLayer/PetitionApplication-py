@@ -209,6 +209,7 @@ def flask_login_entree():
     template = open('templates/account.html', encoding='utf-8').read()
     form_body_content = '<div class="form-group"><div class="form-group"><input type="text" class="form-control form-login-object" name="account_id" placeholder="계정명" required></div><div class="form-group"><input type="password" class="form-control form-login-object" name="account_password" placeholder="비밀번호" required></div></div>'
     form_button = '<button type="submit" class="btn btn-primary">로그인</button><a href="/register/">계정이 없으신가요?</a>'
+    template = template.replace('%_page_title_%', '로그인')
     template = template.replace('%_form_body_content_%', form_body_content)
     template = template.replace('%_form_button_%', form_button)
     ### Render End ###
@@ -277,6 +278,7 @@ def flask_register():
     ### Render Template ###
     template = open('templates/account.html', encoding='utf-8').read()
     form_body_content = '<div class="form-group"><div class="form-group"><input type="text" class="form-control form-login-object" name="account_id" placeholder="계정명" required></div><div class="form-group"><input type="password" class="form-control form-login-object" name="account_password" placeholder="비밀번호" required></div><div class="form-group"><input type="text" class="form-control form-login-object" name="user_display_name" placeholder="이름" required></div><div class="form-group"><input type="text" class="form-control form-login-object" name="verify_key" placeholder="Verify Key" required></div></div>'
+    template = template.replace('%_page_title_%', '회원가입')
     template = template.replace('%_form_body_content_%', form_body_content)
     template = template.replace('%_form_button_%', '<p>주의: 본 서비스는 이메일 주소를 수집하고 있지 않습니다. 비밀번호를 잃어버리게 되면 복잡한 절차를 밟아야 하니 꼭 기억하세요.</p><button type="submit" class="btn btn-primary">가입하기</button>')
     body_content += template
