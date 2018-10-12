@@ -929,17 +929,21 @@ def flask_admin_verify_key():
       </div>
       <input type="text" class="form-control" id="verify_key_value" value="%_verify_key_value_%" disabled>
       <div class="input-group-append">
-        <span class="input-group-text" id="clipboard" onclick="clipboard()"><i class="fas fa-copy"></i></span>
+        <span class="input-group-text" id="copy_target" onclick="copy_to_clipboard()" data-toggle="tooltip" title="복사" style="cursor: pointer;"><i class="fas fa-copy"></i></span>
       </div>
     </div>
   </div>
 </div>
 <script type="text/javascript">
-    document.getElementById("clipboard").onclick = function () {
-        var copyText = document.getElementById("verify_key_value");
-        copyText.select();
-        document.execCommand("copy");
+function copy_to_clipboard() {
+  var copyText = document.getElementById("copy_target");
+  copyText.select();
+  document.execCommand("Copy");
 }
+
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
 </script>
     """
     ###
