@@ -13,3 +13,6 @@ crypt_secret_key = 'SECRET_KEY'
 entree_appname = 'Fe-tea'
 # entree_hostname
 entree_hostname = 'localhost:2500'
+
+# must be included protocol
+publish_host_name = 'http://localhost:2500'

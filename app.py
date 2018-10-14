@@ -155,6 +155,12 @@ class user_control:
         if acl_list_len != 1: # 이미 레지스터된 상태여야함.
             sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(acl_list_len))
 
+class config:
+    def load_oauth_settings():
+        oauth_native = open('oauthsettings.json', encoding='utf-8').read()
+        oauth_json = json.loads(oauth_native)
+        return oauth_json
+
 ### Create Database Table ###
 try:
     sqlite3_control.select('select * from peti_data_tb limit 1')
@@ -203,9 +209,64 @@ def flask_login():
 
 @app.route('/login/facebook/', methods=['GET', 'POST'])
 def flask_login_facebook():
-    body_content = ''
     nav_bar = user_control.load_nav_bar()
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    oauth = config.load_oauth_settings()
+    if request.args.get('error') == 'no_get_values':
+        body_content = '요구 로그인 값을 충족시키지 못했습니다..'
+        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    if oauth['facebook_client_id'] == '' or oauth['facebook_client_secret'] == '':
+        body_content = '관리자가 이 기능을 비활성화 시켰습니다.'
+        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    data = {
+        'client_id' : facebook_client_id,
+        'redirect_uri' : LocalSettings.publish_host_name + '/login/facebook/callback/',
+        'state' : LocalSettings.crypt_secret_key
+    }
+    return flask.redirect('https://www.facebook.com/v3.1/dialog/oauth?client_id={}&redirect_uri={}&state={}'.format(
+        data['client_id'], data['redirect_uri'], data['state']
+    ))
+
+@app.route('/login/facebook/callback/', methods=['GET', 'POST'])
+def flask_login_facebook_callback():
+    oauth = config.load_oauth_settings()
+
+    ###  ###
+    try:
+        code = flask.request.args.get('code')
+        state = flask.request.args.get('state')
+    except:
+        return redirect('/login/facebook/?error=no_get_values')
+    ###
+    data = {
+        'client_id' : oauth['facebook_client_id'],
+        'redirect_uri' : LocalSettings.publish_host_name + '/login/facebook/callback/',
+        'client_secret' : oauth['facebook_client_secret'],
+        'code' : code
+    }
+    ###
+
+    ##
+    token_access = 'https://graph.facebook.com/v3.1/oauth/access_token?client_id={}&redirect_uri={}&client_secret={}&code={}'.format(
+        data['client_id'], data['redirect_uri'], data['client_secret'], data['code']
+    )
+    token_result = urllib.request.urlopen(token_access).read().decode('utf-8')
+    token_result_json = json.loads(token_result)
+    ###
+
+    ###
+    profile_access = 'https://graph.facebook.com/me?fields=id,name,picture&access_token={}'.format(token_result_json['access_token'])
+    profile_result = urllib.request.urlopen(profile_access).read().decode('utf-8')
+    profile_result_json = json.loads(profile_result)
+    ###
+
+    ### 아이디 유효성 검사 ###
+    result_id = sqlite3_control.select('select * from site_user_tb where sns_type = "facebook" and sns_id = {}'.format(profile_result_json['id']))
+    if len(result_id) = 0:
+        data_len = len(sqlite3_control.select('select account_id from site_user_tb'))
+        sqlite3_control.commit('insert into site_uer_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("facebook", "{}", "{}", "{}")'.format(
+            profile_result_json['id'], profile_result_json['name'], profile_result_json['picture']['data']['url']
+        ))
+        session['now_login'] = data_len + 1
 
 @app.route('/login/entree/', methods=['GET', 'POST'])
 def flask_login_entree():
