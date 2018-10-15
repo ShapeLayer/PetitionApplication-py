@@ -11,6 +11,7 @@ import base64
 import hashlib
 import random
 import bcrypt
+import urllib.request
 
 import LocalSettings
 
@@ -218,11 +219,11 @@ def flask_login_facebook():
         body_content = '관리자가 이 기능을 비활성화 시켰습니다.'
         return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
     data = {
-        'client_id' : facebook_client_id,
+        'client_id' : oauth['facebook_client_id'],
         'redirect_uri' : LocalSettings.publish_host_name + '/login/facebook/callback/',
         'state' : LocalSettings.crypt_secret_key
     }
-    return flask.redirect('https://www.facebook.com/v3.1/dialog/oauth?client_id={}&redirect_uri={}&state={}'.format(
+    return redirect('https://www.facebook.com/v3.1/dialog/oauth?client_id={}&redirect_uri={}&state={}'.format(
         data['client_id'], data['redirect_uri'], data['state']
     ))
 
@@ -232,8 +233,8 @@ def flask_login_facebook_callback():
 
     ###  ###
     try:
-        code = flask.request.args.get('code')
-        state = flask.request.args.get('state')
+        code = request.args.get('code')
+        state = request.args.get('state')
     except:
         return redirect('/login/facebook/?error=no_get_values')
     ###
@@ -249,6 +250,7 @@ def flask_login_facebook_callback():
     token_access = 'https://graph.facebook.com/v3.1/oauth/access_token?client_id={}&redirect_uri={}&client_secret={}&code={}'.format(
         data['client_id'], data['redirect_uri'], data['client_secret'], data['code']
     )
+    print(token_access)
     token_result = urllib.request.urlopen(token_access).read().decode('utf-8')
     token_result_json = json.loads(token_result)
     ###
@@ -261,12 +263,20 @@ def flask_login_facebook_callback():
 
     ### 아이디 유효성 검사 ###
     result_id = sqlite3_control.select('select * from site_user_tb where sns_type = "facebook" and sns_id = {}'.format(profile_result_json['id']))
-    if len(result_id) = 0:
+    if len(result_id) == 0:
         data_len = len(sqlite3_control.select('select account_id from site_user_tb'))
-        sqlite3_control.commit('insert into site_uer_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("facebook", "{}", "{}", "{}")'.format(
+        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("facebook", "{}", "{}", "{}")'.format(
             profile_result_json['id'], profile_result_json['name'], profile_result_json['picture']['data']['url']
         ))
-        session['now_login'] = data_len + 1
+        ### Insert User Account into Database ###
+        same_id_getter = sqlite3_control.select('select * from site_user_tb')
+        if len(same_id_getter) != 0:
+            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(same_id_getter[0][0]+1))
+        ### Insert End ###
+        session['now_login'] = str(data_len + 1)
+    else:
+        session['now_login'] = result_id[0][0]
+    return redirect('/')
 
 @app.route('/login/entree/', methods=['GET', 'POST'])
 def flask_login_entree():
@@ -683,7 +693,12 @@ def flask_admin_member():
     ### Render Template ###
     body_content += '<h1>사용자 목록</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">이름</th><th>내부 구분자, 아이디(구분자)</th><th>플랫폼</th></tr></thead><tbody>'
     for i in range(len(user_list)):
-        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td></tr>'.format(user_list[i][3], user_list[i][0], user_list[i][2], user_list[i][1])
+        if user_list[i][1] == 'facebook':
+            user_id_display = '<a href="https://facebook.com/{}" target="_blank">{}</a>'.format(user_list[i][2], user_list[i][2])
+        else:
+            user_id_display = user_list[i][2]
+        user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[i][4], user_list[i][3])
+        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td></tr>'.format(user_display_name, user_list[i][0], user_id_display, user_list[i][1])
     body_content += '</tbody></table>'
     ### Render End ###
 
