@@ -209,7 +209,7 @@ def flask_login():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/login/naver/', methods=['GET', 'POST'])
-def flask_login_facebook():
+def flask_login_naver():
     nav_bar = user_control.load_nav_bar()
     oauth = config.load_oauth_settings()
     if request.args.get('error') == 'no_get_values':
@@ -221,10 +221,10 @@ def flask_login_facebook():
 
     data = {
         'client_id' : oauth['naver_client_id'],
-        'redirect_uri' : 'http://localhost:2500/oauth',
+        'redirect_uri' : LocalSettings.publish_host_name + '/login/naver/callback/',
         'state' : LocalSettings.crypt_secret_key
     }
-    return flask.redirect('https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={}&redirect_uri={}&state={}'.format(
+    return redirect('https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={}&redirect_uri={}&state={}'.format(
         data['client_id'], data['redirect_uri'], data['state']
     ))
 
@@ -262,15 +262,16 @@ def flask_login_naver_callback():
     ###
 
     ### 아이디 유효성 검사 ###
-    result_id = sqlite3_control.select('select * from site_user_tb where sns_type = "naver" and sns_id = {}'.format(profile_result_json['id']))
+    result_id = sqlite3_control.select('select * from site_user_tb')
     if len(result_id) == 0:
         data_len = len(sqlite3_control.select('select account_id from site_user_tb'))
         sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("naver", "{}", "{}", "{}")'.format(
-            profile_result_json['id'], profile_result_json['name'], profile_result_json['picture']['data']['url']
+            profile_result_json['response']['id'], profile_result_json['response']['name'], profile_result_json['response']['profile_image']
         ))
         ### Insert User Account into Database ###
         same_id_getter = sqlite3_control.select('select * from site_user_tb')
         if len(same_id_getter) != 0:
+            print(same_id_getter[0][0]+1)
             sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(same_id_getter[0][0]+1))
         ### Insert End ###
         session['now_login'] = str(data_len + 1)
@@ -332,7 +333,7 @@ def flask_login_facebook_callback():
     ###
 
     ### 아이디 유효성 검사 ###
-    result_id = sqlite3_control.select('select * from site_user_tb where sns_type = "facebook" and sns_id = {}'.format(profile_result_json['id']))
+    result_id = sqlite3_control.select('select * from site_user_tb')
     if len(result_id) == 0:
         data_len = len(sqlite3_control.select('select account_id from site_user_tb'))
         sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("facebook", "{}", "{}", "{}")'.format(
