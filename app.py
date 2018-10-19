@@ -187,6 +187,8 @@ def flask_main():
 ### Account Route ###
 @app.route('/login/', methods=['GET', 'POST'])
 def flask_login():
+    if 'now_login' in session:
+        return redirect('/')
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
