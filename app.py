@@ -144,14 +144,6 @@ class user_control:
         body_content = script + user_data[0][1] + user_id_badge + user_block_badge + user_identify_badge
         return body_content
         
-    def user_register_init():
-        ### Index Users Len ###
-        acl_list_len = len(sqlite3_control.select('select * from site_user_tb'))
-        ### Index End ###
-        
-        if acl_list_len != 1: # 이미 레지스터된 상태여야함.
-            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(acl_list_len))
-
 class config:
     def load_oauth_settings():
         oauth_native = open('oauthsettings.json', encoding='utf-8').read()
