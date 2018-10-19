@@ -74,9 +74,6 @@ class sqlite3_control:
         conn.commit()
         conn.close()
 
-BS = 16
-pad = (lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS).encode())
-unpad = (lambda s: s[:-ord(s[len(s)-1:])])
 
 
 class user_control:
@@ -140,7 +137,6 @@ class user_control:
                 return user_data[0][1]
         else:
             return user_data[0][1]
-        print(user_data)
         script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
         user_id_badge = ' <span class="badge badge-pill badge-success" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
         user_block_badge = ' <a href="/admin/member/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
@@ -271,7 +267,6 @@ def flask_login_naver_callback():
         ### Insert User Account into Database ###
         same_id_getter = sqlite3_control.select('select * from site_user_tb')
         if len(same_id_getter) != 0:
-            print(same_id_getter[0][0]+1)
             sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(same_id_getter[0][0]+1))
         ### Insert End ###
         session['now_login'] = str(data_len + 1)
@@ -917,7 +912,7 @@ def flask_admin_admins():
     nav_bar = user_control.load_nav_bar()
 
     ### Index Administrator List form Database ###
-    admin_list = sqlite3_control.select('select * from user_acl_list_tb')
+    admin_list = sqlite3_control.select('select user_acl_list_tb.* from user_acl_list_tb, user_group_acl where user_group_acl.site_administrator = 1')
     ### Index End ###
 
     ### Render Template ###
