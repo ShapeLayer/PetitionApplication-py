@@ -208,6 +208,76 @@ def flask_login():
     body_content += login_button_display
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+@app.route('/login/naver/', methods=['GET', 'POST'])
+def flask_login_facebook():
+    nav_bar = user_control.load_nav_bar()
+    oauth = config.load_oauth_settings()
+    if request.args.get('error') == 'no_get_values':
+        body_content = '요구 로그인 값을 충족시키지 못했습니다..'
+        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    if oauth['facebook_client_id'] == '' or oauth['facebook_client_secret'] == '':
+        body_content = '관리자가 이 기능을 비활성화 시켰습니다.'
+        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+    data = {
+        'client_id' : oauth['naver_client_id'],
+        'redirect_uri' : 'http://localhost:2500/oauth',
+        'state' : LocalSettings.crypt_secret_key
+    }
+    return flask.redirect('https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={}&redirect_uri={}&state={}'.format(
+        data['client_id'], data['redirect_uri'], data['state']
+    ))
+
+@app.route('/login/naver/callback/', methods=['GET', 'POST'])
+def flask_login_naver_callback():
+    oauth = config.load_oauth_settings()
+
+    ###  ###
+    try:
+        code = request.args.get('code')
+        state = request.args.get('state')
+    except:
+        return redirect('/login/naver/?error=no_get_values')
+    ###
+    data = {
+        'client_id' : oauth['naver_client_id'],
+        'client_secret' : oauth['naver_client_secret'],
+        'code' : code
+    }
+    ###
+
+    ##
+    token_access = 'https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id={}&client_secret={}&code={}&state={}'.format(
+        data['client_id'], data['client_secret'], data['code'], state
+    )
+    token_result = urllib.request.urlopen(token_access).read().decode('utf-8')
+    token_result_json = json.loads(token_result)
+    ###
+
+    ###
+    headers = {'Authorization': 'Bearer {}'.format(token_result_json['access_token'])}
+    profile_access = urllib.request.Request('https://openapi.naver.com/v1/nid/me', headers = headers)
+    profile_result = urllib.request.urlopen(profile_access).read().decode('utf-8')
+    profile_result_json = json.loads(profile_result)
+    ###
+
+    ### 아이디 유효성 검사 ###
+    result_id = sqlite3_control.select('select * from site_user_tb where sns_type = "naver" and sns_id = {}'.format(profile_result_json['id']))
+    if len(result_id) == 0:
+        data_len = len(sqlite3_control.select('select account_id from site_user_tb'))
+        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("naver", "{}", "{}", "{}")'.format(
+            profile_result_json['id'], profile_result_json['name'], profile_result_json['picture']['data']['url']
+        ))
+        ### Insert User Account into Database ###
+        same_id_getter = sqlite3_control.select('select * from site_user_tb')
+        if len(same_id_getter) != 0:
+            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(same_id_getter[0][0]+1))
+        ### Insert End ###
+        session['now_login'] = str(data_len + 1)
+    else:
+        session['now_login'] = result_id[0][0]
+    return redirect('/')
+
 @app.route('/login/facebook/', methods=['GET', 'POST'])
 def flask_login_facebook():
     nav_bar = user_control.load_nav_bar()
@@ -218,6 +288,7 @@ def flask_login_facebook():
     if oauth['facebook_client_id'] == '' or oauth['facebook_client_secret'] == '':
         body_content = '관리자가 이 기능을 비활성화 시켰습니다.'
         return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
     data = {
         'client_id' : oauth['facebook_client_id'],
         'redirect_uri' : LocalSettings.publish_host_name + '/login/facebook/callback/',
@@ -250,7 +321,6 @@ def flask_login_facebook_callback():
     token_access = 'https://graph.facebook.com/v3.1/oauth/access_token?client_id={}&redirect_uri={}&client_secret={}&code={}'.format(
         data['client_id'], data['redirect_uri'], data['client_secret'], data['code']
     )
-    print(token_access)
     token_result = urllib.request.urlopen(token_access).read().decode('utf-8')
     token_result_json = json.loads(token_result)
     ###
