@@ -553,7 +553,6 @@ def flask_a():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/a/<article_id>/', methods=['GET', 'POST'])
-@app.route('/a/<article_id>/', methods=['GET', 'POST'])
 def flask_a_article_id(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
