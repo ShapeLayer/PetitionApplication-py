@@ -229,13 +229,17 @@ def flask_login():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
+    ### 오류 처리
+    if request.args.get('error') == 'null':
+        pass
+    ###
+
     ## Render OAuth Buttons ##
     login_button_display = """
     <ul>
         <li><a href="/login/naver/">네이버 로그인</a></li>
         <li><a href="/login/facebook/">Facebook 로그인</a></li>
-        <li><a href="/login/google/">Google 로그인</a></li>
-        <li><a href="/login/entree/">entree 로그인</a></li>
+        <li><a href="/login/entree/">fetea 엔진 로그인</a></li>
     </ul>
     """
     ## Render End ##
