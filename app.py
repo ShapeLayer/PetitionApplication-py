@@ -194,6 +194,40 @@ class viewer:
         ### Render End ###
         
         return body_content
+    
+    def load_search_var():
+        searchbar_template = """
+<div class="form-group">
+  <div class="form-group">
+    <div class="input-group mb-3">
+      <input type="number" class="form-control" id="search_target" aria-label="검색" value="%_searchbar_value_%">
+      <div class="input-group-append">
+        <span class="input-group-text" id="search"><i class="fas fa-search"></i></span>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+    document.getElementById("search").onclick = function () {
+        location.href = "?user=" + document.getElementById('search_target').value;
+    };
+    document.addEventListener("keydown", function(event) {
+        if(event.keyCode == 13) {
+            location.href = "?user=" + document.getElementById('search_target').value;
+        }
+    });
+</script>
+        """
+        return searchbar_template
+
+    def load_sns_login_status(content):
+        if 'now_login' in session:
+            user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+            content = content.replace('%_sns_login_status_%', '로그인 됨: {}'.format(user_profile_data[0][3]))
+        else:
+            content = content.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
+        return content
+
 
 ### Create Database Table ###
 try:
@@ -568,20 +602,43 @@ def flask_a_article_id(article_id):
         abort(404)
     ### Load End ###
 
+    if request.args.get('error') == 'no_login':
+        pass ## return error
+
+
+
     ### Render Bodycontent ###
     body_content += viewer.load_petition(article_id)
+    if 'now_login' in session:
+        body_content = body_content.replace('%_enabled_content_%', '')
+    else:
+        body_content = body_content.replace('%_is_enabled_%', 'disabled')
+        body_content = body_content.replace('%_enabled_content_%', '비로그인 상태에서는 청원 반응이 불가능합니다.')
     ### Render End ###
     if request.method == 'POST':
         ### Collect React Data ###
         peti_id = article_id
         author_id = 0 ##<< 이거 수정 (Todo List)
         content = parser.anti_injection(request.form['react_content'])
+        author_display = parser.anti_injection(request.form['react_author_display_name'])
+        if author_display == '':
+            author_display = '익명 사용자'
         ### Collect End ###
+
+        ### Save React Author Data ###
+        if 'now_login' in session:
+            author_list_len = len(sqlite3_control.select('select * from author_connect'))
+            sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id) values("{}", {})'.format(
+                author_display, session['now_login']))
+            react_author_id = author_list_len + 1
+        else:
+            return redirect('?error=no_login')
+        ### Save End ###
 
         ### Insert Data into Database ###
         sqlite3_query = 'insert into peti_react_tb (peti_id, author_id, content) values({}, {}, "{}")'.format(
             peti_id,
-            author_id,
+            react_author_id,
             content
         )
         sqlite3_control.commit(sqlite3_query)
@@ -664,7 +721,7 @@ def flask_a_article_id_delete(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    template = open('templates/a_delete.html', encoding='utf-8').read()
+    template = open('templates/confirm.html', encoding='utf-8').read()
     body_content += template
 
     ### Render Login Status ###
@@ -747,8 +804,14 @@ def flask_admin():
             return redirect('/error/acl')
     else:
         return redirect('/error/acl/')
-        
-    body_content = ''
+    body_content = ''        
+
+    ### Load From Database ###
+    static_data = sqlite3_control.select('select * from static_page_tb where page_name = "adminpage"')
+    ### Load End ###
+
+    body_content += static_data[0][1]
+
     nav_bar = user_control.load_nav_bar()
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -797,7 +860,7 @@ def flask_admin_identify():
     if request.args.get('error') == 'no_int':
         body_content += """<div class="alert alert-dismissible alert-danger">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <strong>으악!</strong>내부 오류.
+            <strong>으악!</strong><p>이건 검색할 수 있는 아이디가 아니잖아요.</p>
         </div>"""
     ### Render End ###
 
@@ -806,7 +869,7 @@ def flask_admin_identify():
         try:
             target_id = int(request.args.get('user'))
         except:
-            return redirect('/admin/member/identify/?error=no_int')
+            return redirect('?error=no_int')
     ### Review End ###
 
     ### Get Target User Data ###
@@ -821,35 +884,11 @@ def flask_admin_identify():
     ### Get End ###
 
     ### Template: Search Bar ###
-    searchbar_template = """
-<div class="form-group">
-  <div class="form-group">
-    <div class="input-group mb-3">
-      <div class="input-group-prepend">
-        <span class="input-group-text"></span>
-      </div>
-      <input type="number" class="form-control" id="search_target" aria-label="검색" value="%_searchbar_value_%">
-      <div class="input-group-append">
-        <span class="input-group-text" id="search"><i class="fas fa-search"></i></span>
-      </div>
-    </div>
-  </div>
-</div>
-<script type="text/javascript">
-    document.getElementById("search").onclick = function () {
-        location.href = "/admin/member/identify/?user=" + document.getElementById('search_target').value;
-    };
-    document.addEventListener("keydown", function(event) {
-        if(event.keyCode == 13) {
-            location.href = "/admin/member/identify/?user=" + document.getElementById('search_target').value;
-        }
-    });
-</script>
-    """
+    searchbar = viewer.load_search_var()
     ### Template End ###
 
     ### Render Template ###
-    body_content += searchbar_template.replace('%_searchbar_value_%', target)
+    body_content += searchbar.replace('%_searchbar_value_%', target)
     ### Render End ### 
 
     ### Render Search Result ###
@@ -906,9 +945,66 @@ def flask_admin_block():
         return redirect('/error/acl/')
         
     body_content = ''
-
-    sqlite3_control.select('select * from block_user_tb')
     nav_bar = user_control.load_nav_bar()
+
+    ### Render Errors ###
+    if request.args.get('error') == 'no_int':
+        body_content += """<div class="alert alert-dismissible alert-danger">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>으악!</strong><p>이건 검색할 수 있는 아이디가 아니잖아요.</p>
+        </div>"""
+    ### Render End ###
+
+    ### Review Errors ###
+    if request.args.get('user') != None:
+        try:
+            target_id = int(request.args.get('user'))
+        except:
+            return redirect('?error=no_int')
+    ### Review End ###
+
+    ### Get Target User Data ###
+    target = request.args.get('user')
+    if target == None:
+        target = ''
+    else:
+        try:
+            int(target)
+        except:
+            target =''
+    ### Get End ###
+
+    ### Template: Search Bar ###
+    searchbar = viewer.load_search_var()
+    ### Template End ###
+
+    ### Render Template ###
+    body_content += searchbar.replace('%_searchbar_value_%', target)
+    ### Render End ### 
+
+    ### Render Search Result ###
+    if target != '':
+        target_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(target))
+        search_result_template = """
+        <h2>검색결과</h2>
+        <table class="table table-hover"><thead><tr>
+        <th scope="col">ID</th>
+        <th>고유 식별자</th>
+        <th>사용 SNS</th>
+        <th>확인</th>
+        </tr><tbody>%_tbody_content_%</tbody></thead></table>
+        """
+        if target_data == []:
+            search_result = '검색 결과 없음'
+        else:
+            search_result = search_result_template.replace('%_tbody_content_%',
+            '<td scope="row">{}</td><td>{}</td><td>{}</td><td><form action="" accept-charset="utf-8" method="get"><input type="submit" value="확인" class="btn btn-link" style="margin: 0; padding: 0"><input type="hidden" name="target_id" value="{}"></form></td>'.format(
+                target_data[0][0], target_data[0][2], target_data[0][1], target
+            ))
+
+        body_content += search_result
+    ### Render End ###
+
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
@@ -923,19 +1019,142 @@ def flask_admin_admins():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    ### Index Administrator List form Database ###
-    admin_list = sqlite3_control.select('select user_acl_list_tb.* from user_acl_list_tb, user_group_acl where user_group_acl.site_administrator = 1')
+    ### Index User List form Database ###
+    user_list = sqlite3_control.select('select * from site_user_tb')
+    user_admin_list = []
+    for i in range(len(user_list)):
+        administrator_data = sqlite3_control.select('select user_group_acl.site_administrator from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(i+1))
+        if administrator_data[0][0] == 1:
+            user_admin_list += [i]
     ### Index End ###
 
     ### Render Template ###
-    body_content += '<h1>관리자 목록</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">이름</th><th>내부 구분자, 아이디(구분자)</th><th>플랫폼</th><th>권한 그룹</th></tr></thead><tbody>'
-    for i in range(len(admin_list)):
-        target_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(admin_list[i][0]))
-        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td><td>{}</td></tr>'.format(target_profile[0][3], target_profile[0][0], target_profile[0][2], target_profile[0][1], admin_list[i][1])
+    body_content += '<h1>관리자 목록</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">이름</th><th>내부 구분자, 아이디(구분자)</th><th>플랫폼</th></tr></thead><tbody>'
+    for i in range(len(user_admin_list)):
+        j = user_admin_list[i]
+        if user_list[j][1] == 'facebook':
+            user_id_display = '<a href="https://facebook.com/{}" target="_blank">{}</a>'.format(user_list[j][2], user_list[j][2])
+        else:
+            user_id_display = user_list[j][2]
+        user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[j][4], user_list[j][3])
+        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td></tr>'.format(user_display_name, user_list[j][0], user_id_display, user_list[j][1])
     body_content += '</tbody></table>'
+
+    body_content += '<a href="/admin/admins/add/" class="btn btn-primary">관리자 추가</a>'
     ### Render End ###
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+@app.route('/admin/admins/add/', methods=['GET', 'POST'])
+def flask_admin_admins_add():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+        
+    body_content = ''
+    nav_bar = user_control.load_nav_bar()
+
+    ### Render Errors ###
+    if request.args.get('error') == 'no_int':
+        body_content += """<div class="alert alert-dismissible alert-danger">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>으악!</strong><p>이건 검색할 수 있는 아이디가 아니잖아요.</p>
+        </div>"""
+    ### Render End ###
+
+    ### Review Errors ###
+    if request.args.get('user') != None:
+        try:
+            target_id = int(request.args.get('user'))
+        except:
+            return redirect('?error=no_int')
+    ### Review End ###
+
+    ### Get Target User Data ###
+    target = request.args.get('user')
+    if target == None:
+        target = ''
+    else:
+        try:
+            int(target)
+        except:
+            target =''
+    ### Get End ###
+
+    ### Template: Search Bar ###
+    searchbar = viewer.load_search_var()
+    ### Template End ###
+
+    ### Render Template ###
+    body_content += searchbar.replace('%_searchbar_value_%', target)
+    ### Render End ### 
+
+    ### Render Search Result ###
+    if target != '':
+        target_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(target))
+        search_result_template = """
+        <h2>검색결과</h2>
+        <table class="table table-hover"><thead><tr>
+        <th scope="col">ID</th>
+        <th>고유 식별자</th>
+        <th>사용 SNS</th>
+        <th>확인</th>
+        </tr><tbody>%_tbody_content_%</tbody></thead></table>
+        """
+        if target_data == []:
+            search_result = '검색 결과 없음'
+        else:
+            search_result = search_result_template.replace('%_tbody_content_%',
+            '<td scope="row">{}</td><td>{}</td><td>{}</td><td><form action="" accept-charset="utf-8" method="get"><input type="submit" value="추가" class="btn btn-link" style="margin: 0; padding: 0"><input type="hidden" name="target_id" value="{}"></form></td>'.format(
+                target_data[0][0], target_data[0][2], target_data[0][1], target
+            ))
+
+        body_content += search_result
+    ### Render End ###
+
+    ### Update User Data ### 작동 안한다!
+        if request.method == 'POST':
+            sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = {}'.format(request.args.get('target_id')))
+            activity_date = datetime.today()
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+                session['now_login'],
+                'activity_object',
+                '관리자로 등록',
+                'activity_description',
+                activity_date
+            ))
+            return redirect('/admin/admins/')
+    ### Update End ###
+
+    ### Lookup Target ###
+    if request.args.get('target_id') != None:
+        try:
+            target_id = int(request.args.get('target_id'))
+        except:
+            return redirect('/admin/member/identify/?error=no_int')
+
+
+    
+        ##### ==========
+
+        ### Load Confirm Page ###
+        static_template = open('templates/confirm.html', encoding='utf-8').read()
+        ### Load End ###
+
+        ### Render Confirm Page ###
+        static_page_rendered = static_template.replace('%_confirm_head_%', '관리자 추가')
+        static_page_rendered = static_page_rendered.replace('%_form_alerts_%', '')
+        static_page_rendered = viewer.load_sns_login_status(static_page_rendered)
+        ### Render End ###
+        body_content = static_page_rendered
+    ### Lookup End ###
+
+
+    
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
 
 @app.route('/admin/acl/', methods=['GET', 'POST'])
 def flask_admin_acl():
