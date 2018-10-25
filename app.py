@@ -277,7 +277,7 @@ def flask_login():
     </ul>
     """
     ## Render End ##
-
+    body_content += 'SNS 로그인 시 해당 SNS의 로그인 상태가 유지됩니다. 공용 컴퓨터에서 SNS 로그인을 사용하는 경우 시크릿 모드(Inprivate 모드)에서 로그인을 계속하십시오.'
     body_content += login_button_display
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
