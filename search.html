@@ -6,9 +6,30 @@
 <input type="number" id="search" onChange="revealResult()">
 <div id="result"></div>
 <script>
+    var li = [
+        {name : '1', alter : 'value'},
+        {name : 'value', alter : 'value'},
+        {name : 'value', alter : 'value'}
+
+    ]
+    document.getElementById('result').innerHTML = li[0].name
+
 function revealResult() {
     var target = document.getElementById('search').value
-    document.getElementById('result').innerHTML = target
+    switch(target) {
+        case 0:
+            document.getElementById('result').innerHTML = '영'
+            break;
+        case '2':
+            document.getElementById('result').innerHTML = '이'
+            break;
+
+        default:
+            document.getElementById('result').innerHTML = '으악' + typeof target
+            break;
+
+    }
+   // document.getElementById('result').innerHTML = target
 }
 </script>
 </body>
