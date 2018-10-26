@@ -14,20 +14,24 @@ Fe-tea는 숭덕고등학교 학생회의 요청으로 개발되고 있는 플�
 Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로, 파이썬 환경을 필요로 합니다. 
 
 ## 환경 구성
+### 파이썬 설치
 [파이썬 설치 가이드](https://github.com/404-sdok/how-to-python/blob/master/0.md)를 참고하여 파이썬을 설치합니다.
 
+### 릴리즈 다운로드
 [릴리즈](https://github.com/kpjhg0124/PetitionApplication-py/releases)에서 Fe-tea의 릴리즈 판을 다운로드 받고, 압축을 해제합니다.
 
 | 구분 | 릴리즈 | 안정된 릴리즈 |
 | :----: | :----: | :----: |
-| alpha | [![](https://img.shields.io/badge/alpha-0.1.1-orange.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1.1-alpha-180923-de634fc-remake) |  |
-| alpha | [![](https://img.shields.io/badge/alpha-0.1--2-orange.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1-Alpha-180817-02-98df461) |  |
-| alpha | [![](https://img.shields.io/badge/alpha-0.1--1-orange.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1-Alpha-180815-01-637212c) |  |
+| alpha | [![](https://img.shields.io/badge/alpha-0.1.1-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1.1-alpha-180923-de634fc-remake) |  |
+| alpha | [![](https://img.shields.io/badge/alpha-0.1--2-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1-Alpha-180817-02-98df461) |  |
+| alpha | [![](https://img.shields.io/badge/alpha-0.1--1-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1-Alpha-180815-01-637212c) |  |
 
+### 모듈 설치
 다음 명령어로 Fe-tea 구성 파일이 위치한 디렉토리로 이동합니다.
 ```
 cd [path]
 ```
+
 
 다음 명령어로 Fe-tea 실행에 필요한 모듈을 설치합니다.
 ```
@@ -38,6 +42,7 @@ pip install -r requirements.txt
 pip install -r requirements.txt
 ```
 
+### 애플리케이션 시작
 Fe-tea를 시작합니다.
 ```
 python app.py
@@ -47,11 +52,13 @@ python app.py
 python3 app.py
 ```
 
-Fe-tea의 첫 계정은 소유자 계정으로 설정됩니다. 소유자 계정은 SNS 계정이 아닌 내부계정(entree 엔진)으로 생성하는 것을 권장합니다.
 
-내부 계정은 관리자를 위해 추가한 기능으로, 사용시 verify_key값을 입력해야 합니다. 관리자 메뉴에서 확인하거나 [verify_key](/verify_key)파일에서 확인할 수 있습니다.
 
-SNS로그인 기능을 활성화하기 위해선 각 서비스 제공자로부터 APU 키 값을 받아와야합니다. [Facebook Developers](https://developers.facebook.com/) [네이버 개발자 센터](https://developers.naver.com/main/) API 키 값은 [oauthsettings.json](/oauthsettings.json)파일에 직접 추가하거나 소유자 권한으로 관리자 메뉴에서 추가할 수 있습니다.(아직 미구현됨)
+ * Fe-tea의 첫 계정은 소유자 계정으로 설정됩니다. 소유자 계정은 SNS 계정이 아닌 내부계정(entree 엔진)으로 생성하는 것을 권장합니다.
+
+ * 내부 계정은 관리자를 위해 추가한 기능으로, 사용시 verify_key값을 입력해야 합니다. 관리자 메뉴에서 확인하거나 [verify_key](/verify_key)파일에서 확인할 수 있습니다.
+
+ * SNS로그인 기능을 활성화하기 위해선 각 서비스 제공자로부터 APU 키 값을 받아와야합니다. [Facebook Developers](https://developers.facebook.com/) [네이버 개발자 센터](https://developers.naver.com/main/) API 키 값은 [oauthsettings.json](/oauthsettings.json)파일에 직접 추가하거나 소유자 권한으로 관리자 메뉴에서 추가할 수 있습니다.(아직 미구현됨)
 
 메인 페이지의 기본 문구는 ```정적 페이지 설정```에서 변경할 수 있으며 HTML코드를 그대로 페이지에 표시합니다.
 
