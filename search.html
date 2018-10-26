@@ -1,0 +1,14 @@
+<!DOCTYPE HTML>
+<head>
+<meta charset="utf-8">
+</head>
+<body>
+<input type="number" id="search" onChange="revealResult()">
+<div id="result"></div>
+<script>
+function revealResult() {
+    var target = document.getElementById('search').value
+    document.getElementById('result').innerHTML = target
+}
+</script>
+</body>
