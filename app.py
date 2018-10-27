@@ -194,31 +194,49 @@ class viewer:
         ### Render End ###
         
         return body_content
-    
-    def load_search_var():
-        searchbar_template = """
-<div class="form-group">
-  <div class="form-group">
-    <div class="input-group mb-3">
-      <input type="number" class="form-control" id="search_target" aria-label="검색" value="%_searchbar_value_%">
-      <div class="input-group-append">
-        <span class="input-group-text" id="search"><i class="fas fa-search"></i></span>
-      </div>
-    </div>
-  </div>
-</div>
-<script type="text/javascript">
-    document.getElementById("search").onclick = function () {
-        location.href = "?user=" + document.getElementById('search_target').value;
-    };
-    document.addEventListener("keydown", function(event) {
-        if(event.keyCode == 13) {
-            location.href = "?user=" + document.getElementById('search_target').value;
-        }
-    });
-</script>
+
+    def load_search():
+        ### Render Searchbar ###
+        searchbar = """
+        <div class="form-group">
+            <div class="form-group">
+                <div class="input-group mb-3">
+                    <input type="number" class="form-control" id="search" onChange="revealResult()" aria-label="검색">
+                    <div class="input-group-append">
+                        <span class="input-group-text" id="search"><i class="fas fa-search"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="result"></div>
         """
-        return searchbar_template
+
+        ### Render End ###
+
+
+        ### Javascript Code Render ###
+        user_data_sqlite = sqlite3_control.select('select account_id, sns_id, sns_type, user_display_profile_img from site_user_tb')
+        json_code = '['
+        for i in range(len(user_data_sqlite)):
+            json_code += '{{account_id : "{}", sns_id : "{}", sns_type : "{}", user_display_profile_img : "{}" }}'.format(
+                user_data_sqlite[i][0], user_data_sqlite[i][1], user_data_sqlite[i][2], user_data_sqlite[i][3])
+            if i != len(user_data_sqlite) - 1:
+                json_code += ','
+        json_code += ']'
+        js_code = """
+        <script>
+            var user_data = %_user_data_list_%
+            function revealResult() {
+                var target = parseInt(document.getElementById("search").value) - 1
+                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a href='' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
+            }
+        </script>
+        """
+        js_code = js_code.replace('%_user_data_list_%', json_code)
+        ### Render End ###
+        body_content = searchbar + js_code
+        return body_content
+
 
     def load_sns_login_status(content):
         if 'now_login' in session:
@@ -444,9 +462,6 @@ def flask_login_entree():
         user_data = sqlite3_control.select('select * from site_user_tb where sns_id = "{}"'.format(sns_id))
         ### Get End ###
 
-        ### Encrypt Password ###
-        account_password_hash = bcrypt.hashpw(account_password.encode(), user_data[0][5].encode())
-        ### Encrypt End ###
         if len(user_data) == 0:
             ### 아이디가 없습니다.
             alert_code = """
@@ -457,7 +472,7 @@ def flask_login_entree():
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
             return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-        elif account_password_hash == user_data[0][5].encode():
+        elif bcrypt.hashpw(account_password.encode(), user_data[0][5].encode()) == user_data[0][5].encode():
             session['now_login'] = user_data[0][0]
             alert_code = ''
             body_content = body_content.replace('%_form_alerts_%', alert_code)
@@ -883,35 +898,8 @@ def flask_admin_identify():
             target =''
     ### Get End ###
 
-    ### Template: Search Bar ###
-    searchbar = viewer.load_search_var()
-    ### Template End ###
-
-    ### Render Template ###
-    body_content += searchbar.replace('%_searchbar_value_%', target)
-    ### Render End ### 
-
-    ### Render Search Result ###
-    if target != '':
-        target_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(target))
-        search_result_template = """
-        <h2>검색결과</h2>
-        <table class="table table-hover"><thead><tr>
-        <th scope="col">ID</th>
-        <th>고유 식별자</th>
-        <th>사용 SNS</th>
-        <th>확인</th>
-        </tr><tbody>%_tbody_content_%</tbody></thead></table>
-        """
-        if target_data == []:
-            search_result = '검색 결과 없음'
-        else:
-            search_result = search_result_template.replace('%_tbody_content_%',
-            '<td scope="row">{}</td><td>{}</td><td>{}</td><td><form action="" accept-charset="utf-8" method="get"><input type="submit" value="확인" class="btn btn-link" style="margin: 0; padding: 0"><input type="hidden" name="target_id" value="{}"></form></td>'.format(
-                target_data[0][0], target_data[0][2], target_data[0][1], target
-            ))
-
-        body_content += search_result
+    ### Render Search Page ###
+    body_content += viewer.load_search()
     ### Render End ###
 
     ### Lookup Target ###
@@ -974,35 +962,8 @@ def flask_admin_block():
             target =''
     ### Get End ###
 
-    ### Template: Search Bar ###
-    searchbar = viewer.load_search_var()
-    ### Template End ###
-
-    ### Render Template ###
-    body_content += searchbar.replace('%_searchbar_value_%', target)
-    ### Render End ### 
-
-    ### Render Search Result ###
-    if target != '':
-        target_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(target))
-        search_result_template = """
-        <h2>검색결과</h2>
-        <table class="table table-hover"><thead><tr>
-        <th scope="col">ID</th>
-        <th>고유 식별자</th>
-        <th>사용 SNS</th>
-        <th>확인</th>
-        </tr><tbody>%_tbody_content_%</tbody></thead></table>
-        """
-        if target_data == []:
-            search_result = '검색 결과 없음'
-        else:
-            search_result = search_result_template.replace('%_tbody_content_%',
-            '<td scope="row">{}</td><td>{}</td><td>{}</td><td><form action="" accept-charset="utf-8" method="get"><input type="submit" value="확인" class="btn btn-link" style="margin: 0; padding: 0"><input type="hidden" name="target_id" value="{}"></form></td>'.format(
-                target_data[0][0], target_data[0][2], target_data[0][1], target
-            ))
-
-        body_content += search_result
+    ### Render Search Page ###
+    body_content += viewer.load_search()
     ### Render End ###
 
 
@@ -1083,49 +1044,22 @@ def flask_admin_admins_add():
             target =''
     ### Get End ###
 
-    ### Template: Search Bar ###
-    searchbar = viewer.load_search_var()
-    ### Template End ###
-
-    ### Render Template ###
-    body_content += searchbar.replace('%_searchbar_value_%', target)
-    ### Render End ### 
-
-    ### Render Search Result ###
-    if target != '':
-        target_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(target))
-        search_result_template = """
-        <h2>검색결과</h2>
-        <table class="table table-hover"><thead><tr>
-        <th scope="col">ID</th>
-        <th>고유 식별자</th>
-        <th>사용 SNS</th>
-        <th>확인</th>
-        </tr><tbody>%_tbody_content_%</tbody></thead></table>
-        """
-        if target_data == []:
-            search_result = '검색 결과 없음'
-        else:
-            search_result = search_result_template.replace('%_tbody_content_%',
-            '<td scope="row">{}</td><td>{}</td><td>{}</td><td><form action="" accept-charset="utf-8" method="get"><input type="submit" value="추가" class="btn btn-link" style="margin: 0; padding: 0"><input type="hidden" name="target_id" value="{}"></form></td>'.format(
-                target_data[0][0], target_data[0][2], target_data[0][1], target
-            ))
-
-        body_content += search_result
+    ### Render Search Page ###
+    body_content += viewer.load_search()
     ### Render End ###
 
     ### Update User Data ### 작동 안한다!
-        if request.method == 'POST':
-            sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = {}'.format(request.args.get('target_id')))
-            activity_date = datetime.today()
-            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
-                session['now_login'],
-                'activity_object',
-                '관리자로 등록',
-                'activity_description',
-                activity_date
-            ))
-            return redirect('/admin/admins/')
+    if request.method == 'POST':
+        sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = {}'.format(request.args.get('target_id')))
+        activity_date = datetime.today()
+        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            session['now_login'],
+            'activity_object',
+            '관리자로 등록',
+            'activity_description',
+            activity_date
+        ))
+        return redirect('/admin/admins/')
     ### Update End ###
 
     ### Lookup Target ###
