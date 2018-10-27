@@ -6,30 +6,14 @@
 <input type="number" id="search" onChange="revealResult()">
 <div id="result"></div>
 <script>
-    var li = [
-        {name : '1', alter : 'value'},
-        {name : 'value', alter : 'value'},
-        {name : 'value', alter : 'value'}
-
+    var user_data = [
+        {account_id : "1", sns_id : "root", sns_type : "entree", user_display_profile_img : ""}
     ]
-    document.getElementById('result').innerHTML = li[0].name
 
 function revealResult() {
-    var target = document.getElementById('search').value
-    switch(target) {
-        case 0:
-            document.getElementById('result').innerHTML = '영'
-            break;
-        case '2':
-            document.getElementById('result').innerHTML = '이'
-            break;
-
-        default:
-            document.getElementById('result').innerHTML = '으악' + typeof target
-            break;
-
-    }
-   // document.getElementById('result').innerHTML = target
+    var target = parseInt(document.getElementById('search').value) - 1
+    document.getElementById('result').innerHTML = '<h2>검색결과</h2><table class="table table-hover"><thead><tr><th scope="col">ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope="row">'+user_data[target]['account_id']+'</td><td>'+user_data[target]['sns_id']+'</td><td>'+user_data[target]['sns_type']+'</td><td><a href="" class="btn btn-link" style="margin: 0; padding: 0">확인</a></td></tbody></thead></table>'
 }
+//select account_id, sns_id, sns_type, user_display_profile_img from site_user_tb
 </script>
 </body>
