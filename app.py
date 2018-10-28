@@ -213,6 +213,40 @@ class viewer:
 
         ### Render End ###
 
+        ### CSS Code Render ###
+        css_code = """
+        <style>
+            #overlay {
+                position: fixed;
+                display: none;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 2;
+            }
+
+            #text{
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%,-50%);
+                -ms-transform: translate(-50%,-50%);
+            }
+
+            .bs-docs-section{
+                width: 70%;
+                background-color: white;
+                border-radius: 10px;
+                padding: 50px;
+            }
+        </style>
+        """
+        ## need to edit: .bs-docs-section. mediaquery
+        ### Render End ###
 
         ### Javascript Code Render ###
         user_data_sqlite = sqlite3_control.select('select account_id, sns_id, sns_type, user_display_profile_img from site_user_tb')
@@ -228,7 +262,15 @@ class viewer:
             var user_data = %_user_data_list_%
             function revealResult() {
                 var target = parseInt(document.getElementById("search").value) - 1
-                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a href='' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
+                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th><a href="" onClick="overlay_on(target)">확인</a></th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a href='' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
+            }
+            function overlay_on(target) {
+                document.getElementById("target_id").value = target;
+                document.getElementById("overlay").style.display = "block";
+            }
+
+            function overlay_off(target) {
+                document.getElementById("overlay").style.display = "none";
             }
         </script>
         """
@@ -236,7 +278,6 @@ class viewer:
         ### Render End ###
         body_content = searchbar + js_code
         return body_content
-
 
     def load_sns_login_status(content):
         if 'now_login' in session:
@@ -291,7 +332,7 @@ def flask_login():
     <ul>
         <li><a href="/login/naver/">네이버 로그인</a></li>
         <li><a href="/login/facebook/">Facebook 로그인</a></li>
-        <li><a href="/login/entree/">fetea 엔진 로그인</a></li>
+        <li><a href="/login/entree/">entree 엔진 로그인</a></li>
     </ul>
     """
     ## Render End ##
@@ -902,24 +943,10 @@ def flask_admin_identify():
     body_content += viewer.load_search()
     ### Render End ###
 
-    ### Lookup Target ###
-    if request.args.get('target_id') != None:
-        try:
-            target_id = int(request.args.get('target_id'))
-        except:
-            return redirect('/admin/member/identify/?error=no_int')
-        
-        ### Load Confirm Page ###
-        static_template = open('templates/confirm.html', encoding='utf-8').read()
-        ### Load End ###
-
-        ### Render Confirm Page ###
-        static_page_rendered = static_template.replace('%_confirm_head_%', '명의 확인')
-        static_page_rendered = static_page_rendered.replace('%_form_alerts_%', '')
-        #static_page_rendered = static_page_rendered.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
-        ### Render End ###
-        body_content = static_page_rendered
-    ### Lookup End ###
+    if request.method == 'POST':
+        account_id = session['now_login']
+        activity_object = '' ## need edit
+        activity_description = request.form['description']
 
     
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
