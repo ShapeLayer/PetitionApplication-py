@@ -195,6 +195,14 @@ class viewer:
         
         return body_content
 
+    def load_sns_login_status(content):
+        if 'now_login' in session:
+            user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+            content = content.replace('%_sns_login_status_%', '로그인 됨: {}'.format(user_profile_data[0][3]))
+        else:
+            content = content.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
+        return content
+
     def load_search():
         ### Render Searchbar ###
         searchbar = """
@@ -248,6 +256,46 @@ class viewer:
         ## need to edit: .bs-docs-section. mediaquery
         ### Render End ###
 
+        ### Overlay HTML Render ###
+        overlay_code = """
+<div id="overlay">
+    <div id="text">
+  
+        <div class="bs-docs-section">
+            <p class="close" onclick="overlay_off()">x</p>
+            <h1>작업 수행 확인</h1>
+            <div class="bs-component">
+                <form action="" accept-charset="utf-8" name="" method="post">
+                    <fieldset>
+                        <div class="form-group">
+                            <div class="form-group">
+                                %_sns_login_status_%
+                            </div>
+                            <div class="form-group">
+                                <label class="custom-control-label" for="verify_key">계속하려면 verify_key를 입력하십시오.</label>
+                                <input type="text" class="form-control" name="verify_key" id="verify_key" placeholder="" required>
+
+                                <label class="custom-control-label" for="description">처리 사유를 입력하십시오.</label>
+                                <input type="text" class="form-control" name="description" id="description" placeholder="" required>
+
+                                <input type="hidden" id="target_id" value="">
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="Check" required>
+                        <label class="custom-control-label" for="Check">해당 작업 처리 시 서버에 요청 기록이 남음을 확인하고 이 청원을 삭제합니다.</label>
+                    </div>
+                    <button type="submit" name="submit" class="btn btn-primary" value="publish">계속하기</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+        """
+        overlay_code = viewer.load_sns_login_status(overlay_code)
+        ### Render End ###
+
         ### Javascript Code Render ###
         user_data_sqlite = sqlite3_control.select('select account_id, sns_id, sns_type, user_display_profile_img from site_user_tb')
         json_code = '['
@@ -262,30 +310,22 @@ class viewer:
             var user_data = %_user_data_list_%
             function revealResult() {
                 var target = parseInt(document.getElementById("search").value) - 1
-                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th><a href="" onClick="overlay_on(target)">확인</a></th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a href='' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
+                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th><a onClick=\\"overlay_on(target)\\">확인</a></th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a href='' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
             }
             function overlay_on(target) {
                 document.getElementById("target_id").value = target;
                 document.getElementById("overlay").style.display = "block";
             }
 
-            function overlay_off(target) {
+            function overlay_off() {
                 document.getElementById("overlay").style.display = "none";
             }
         </script>
         """
         js_code = js_code.replace('%_user_data_list_%', json_code)
         ### Render End ###
-        body_content = searchbar + js_code
+        body_content = js_code + searchbar + overlay_code
         return body_content
-
-    def load_sns_login_status(content):
-        if 'now_login' in session:
-            user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
-            content = content.replace('%_sns_login_status_%', '로그인 됨: {}'.format(user_profile_data[0][3]))
-        else:
-            content = content.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
-        return content
 
 
 ### Create Database Table ###
