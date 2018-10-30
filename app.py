@@ -284,7 +284,7 @@ class viewer:
                     </fieldset>
                     <div class="custom-control custom-checkbox">
                         <input type="checkbox" class="custom-control-input" id="Check" required>
-                        <label class="custom-control-label" for="Check">해당 작업 처리 시 서버에 요청 기록이 남음을 확인하고 이 청원을 삭제합니다.</label>
+                        <label class="custom-control-label" for="Check">해당 작업 처리 시 서버에 요청 기록이 남음을 확인하고 이 작업을 계속합니다.</label>
                     </div>
                     <button type="submit" name="submit" class="btn btn-primary" value="publish">계속하기</button>
                 </form>
@@ -310,7 +310,7 @@ class viewer:
             var user_data = %_user_data_list_%
             function revealResult() {
                 var target = parseInt(document.getElementById("search").value) - 1
-                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th><a onClick=\\"overlay_on(target)\\">확인</a></th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a href='' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
+                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a <a onClick='overlay_on(target)' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
             }
             function overlay_on(target) {
                 document.getElementById("target_id").value = target;
@@ -324,7 +324,7 @@ class viewer:
         """
         js_code = js_code.replace('%_user_data_list_%', json_code)
         ### Render End ###
-        body_content = js_code + searchbar + overlay_code
+        body_content = js_code + css_code + searchbar + overlay_code
         return body_content
 
 
