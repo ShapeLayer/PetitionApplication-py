@@ -150,6 +150,31 @@ class config:
         oauth_json = json.loads(oauth_native)
         return oauth_json
 
+    def load_verify_key(target, user_id):
+        ### Check User Target's Authority ###
+        user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_group_acl.user_group = user_acl_list_tb.auth'.format(user_id))
+        if user_auth_owner == 1:
+            is_owner = True
+        else:
+            is_owner = False
+        ### Check End ###
+
+        ### Check Verify Key ###
+        verify_key = open('verify_key', encoding='utf-8').read()
+        if verify_key != target and verify_key+verify_key != target:
+            return [False, False]
+        ### Check End ###
+        elif verify_key+verify_key == target:
+            return [True, True] # is owner
+        else:
+            ### Verify Key Reset ###
+            string = 'abcdefghijklmfgqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!?@#$%_-'
+            verify_key = ''.join(random.choice(string) for x in range(10))
+            with open('verify_key', mode='w', encoding='utf-8') as f:
+                f.write(verify_key)
+            ### Reset End ###
+            return [True, False]
+
 class viewer:
     def load_petition(target_id):
         body_content = ''
@@ -278,7 +303,7 @@ class viewer:
                                 <label class="custom-control-label" for="description">처리 사유를 입력하십시오.</label>
                                 <input type="text" class="form-control" name="description" id="description" placeholder="" required>
 
-                                <input type="hidden" id="target_id" value="">
+                                <input type="hidden" id="target_id" name="target_id" value="">
                             </div>
                         </div>
                     </fieldset>
@@ -310,7 +335,7 @@ class viewer:
             var user_data = %_user_data_list_%
             function revealResult() {
                 var target = parseInt(document.getElementById("search").value) - 1
-                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a <a onClick='overlay_on(target)' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
+                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a onClick='overlay_on(target)' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
             }
             function overlay_on(target) {
                 document.getElementById("target_id").value = target;
@@ -327,6 +352,8 @@ class viewer:
         body_content = js_code + css_code + searchbar + overlay_code
         return body_content
 
+    def load_identify(target):
+        target_data = sqlite3_control.select('select ') ## 수정 필요
 
 ### Create Database Table ###
 try:
@@ -984,9 +1011,29 @@ def flask_admin_identify():
     ### Render End ###
 
     if request.method == 'POST':
-        account_id = session['now_login']
-        activity_object = '' ## need edit
-        activity_description = request.form['description']
+        try:
+            account_id = session['now_login']
+            activity_object = request.form['target_id']
+            activity_description = request.form['description']
+            verify_key = request.form['verify_key']
+        except:
+            pass ### 오류!
+        verify_key_result = config.load_verify_key(verify_key, session['now_login'])
+        
+        if verify_key_result[0] == True:
+            if verify_key_result[1] == True: ## 소유자
+            # 보이기, 로그에 남지 않음
+                pass
+            else:
+                activity_date = datetime.today()
+                sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+                session['now_login'],
+                target_id,
+                '명의 확인',
+                activity_description,
+                activity_date
+            ))
+            ##
 
     
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1117,42 +1164,31 @@ def flask_admin_admins_add():
 
     ### Update User Data ### 작동 안한다!
     if request.method == 'POST':
-        sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = {}'.format(request.args.get('target_id')))
-        activity_date = datetime.today()
-        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
-            session['now_login'],
-            'activity_object',
-            '관리자로 등록',
-            'activity_description',
-            activity_date
-        ))
-        return redirect('/admin/admins/')
-    ### Update End ###
-
-    ### Lookup Target ###
-    if request.args.get('target_id') != None:
         try:
-            target_id = int(request.args.get('target_id'))
+            account_id = session['now_login']
+            activity_object = request.form['target_id']
+            activity_description = request.form['description']
+            verify_key = request.form['verify_key']
         except:
-            return redirect('/admin/member/identify/?error=no_int')
-
-
-    
-        ##### ==========
-
-        ### Load Confirm Page ###
-        static_template = open('templates/confirm.html', encoding='utf-8').read()
-        ### Load End ###
-
-        ### Render Confirm Page ###
-        static_page_rendered = static_template.replace('%_confirm_head_%', '관리자 추가')
-        static_page_rendered = static_page_rendered.replace('%_form_alerts_%', '')
-        static_page_rendered = viewer.load_sns_login_status(static_page_rendered)
-        ### Render End ###
-        body_content = static_page_rendered
-    ### Lookup End ###
-
-
+            pass ### 오류!        
+        verify_key_result = config.load_verify_key(verify_key, session['now_login'])
+        
+        if verify_key_result[0] == True:
+            if verify_key_result[1] == True: ## 소유자
+                pass
+            else:
+                activity_date = datetime.today()
+                sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+                session['now_login'],
+                activity_object,
+                '명의 확인',
+                activity_description,
+                activity_date
+            ))
+            user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_group_acl.user_group = user_acl_list_tb.auth'.format(activity_object))
+            if user_auth_owner == 0:
+                sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = {}'.format(activity_object))
+        return redirect('/admin/admins/')
     
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
