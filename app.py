@@ -139,9 +139,8 @@ class user_control:
             return user_data[0][1]
         script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
         user_id_badge = ' <span class="badge badge-pill badge-success" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
-        user_block_badge = ' <a href="/admin/member/block?user={}"><span class="badge badge-pill badge-danger">차단</span></a>'.format(target_id)
         user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
-        body_content = script + user_data[0][1] + user_id_badge + user_block_badge + user_identify_badge
+        body_content = script + user_data[0][1] + user_id_badge + user_identify_badge
         return body_content
         
 class config:
@@ -1036,51 +1035,6 @@ def flask_admin_identify():
             ##
 
     
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-
-@app.route('/admin/member/block/')
-def flask_admin_block():
-    if 'now_login' in session:
-        if user_control.identify_user(session['now_login']) == False:
-            return redirect('/error/acl')
-    else:
-        return redirect('/error/acl/')
-        
-    body_content = ''
-    nav_bar = user_control.load_nav_bar()
-
-    ### Render Errors ###
-    if request.args.get('error') == 'no_int':
-        body_content += """<div class="alert alert-dismissible alert-danger">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <strong>으악!</strong><p>이건 검색할 수 있는 아이디가 아니잖아요.</p>
-        </div>"""
-    ### Render End ###
-
-    ### Review Errors ###
-    if request.args.get('user') != None:
-        try:
-            target_id = int(request.args.get('user'))
-        except:
-            return redirect('?error=no_int')
-    ### Review End ###
-
-    ### Get Target User Data ###
-    target = request.args.get('user')
-    if target == None:
-        target = ''
-    else:
-        try:
-            int(target)
-        except:
-            target =''
-    ### Get End ###
-
-    ### Render Search Page ###
-    body_content += viewer.load_search()
-    ### Render End ###
-
-
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/admin/admins/')
