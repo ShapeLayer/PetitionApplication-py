@@ -331,9 +331,10 @@ class viewer:
         json_code += ']'
         js_code = """
         <script>
+            var target
             var user_data = %_user_data_list_%
             function revealResult() {
-                var target = parseInt(document.getElementById("search").value) - 1
+                target = parseInt(document.getElementById("search").value) - 1
                 document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a onClick='overlay_on(target)' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
             }
             function overlay_on(target) {
