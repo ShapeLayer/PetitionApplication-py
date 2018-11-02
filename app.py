@@ -335,7 +335,7 @@ class viewer:
                 document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a onClick='overlay_on()' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
             }
             function overlay_on() {
-                document.getElementById("target_id").value = target;
+                document.getElementById("target_id").value = target + 1;
                 document.getElementById("overlay").style.display = "block";
             }
 
@@ -1017,14 +1017,16 @@ def flask_admin_admins():
     ### Index User List form Database ###
     user_list = sqlite3_control.select('select * from site_user_tb')
     user_admin_list = []
+    user_auth_list = []
     for i in range(len(user_list)):
-        administrator_data = sqlite3_control.select('select user_group_acl.site_administrator from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(i+1))
+        administrator_data = sqlite3_control.select('select user_group_acl.site_administrator, user_group_acl.user_group from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(i+1))
         if administrator_data[0][0] == 1:
             user_admin_list += [i]
+        user_auth_list += [administrator_data[0][1]]
     ### Index End ###
 
     ### Render Template ###
-    body_content += '<h1>관리자 목록</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">이름</th><th>내부 구분자, 아이디(구분자)</th><th>플랫폼</th></tr></thead><tbody>'
+    body_content += '<h1>관리자 목록</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">이름</th><th>내부 구분자, 아이디(구분자)</th><th>플랫폼</th><th>권한</th></tr></thead><tbody>'
     for i in range(len(user_admin_list)):
         j = user_admin_list[i]
         if user_list[j][1] == 'facebook':
@@ -1032,7 +1034,7 @@ def flask_admin_admins():
         else:
             user_id_display = user_list[j][2]
         user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[j][4], user_list[j][3])
-        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td></tr>'.format(user_display_name, user_list[j][0], user_id_display, user_list[j][1])
+        body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td><td>{}</td></tr>'.format(user_display_name, user_list[j][0], user_id_display, user_list[j][1], user_auth_list[j])
     body_content += '</tbody></table>'
 
     body_content += '<a href="/admin/admins/add/" class="btn btn-primary">관리자 추가</a>'
@@ -1094,12 +1096,12 @@ def flask_admin_admins_add():
         sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
         session['now_login'],
         activity_object,
-        '명의 확인',
+        '관리자로 등록',
         activity_description,
         activity_date
         ))
         user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_group_acl.user_group = user_acl_list_tb.auth'.format(activity_object))
-        if user_auth_owner == 0:
+        if user_auth_owner[0][0] == 0:
             sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = {}'.format(activity_object))
         return redirect('/admin/admins/')
     
