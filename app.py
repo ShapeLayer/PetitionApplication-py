@@ -296,9 +296,6 @@ class viewer:
                                 %_sns_login_status_%
                             </div>
                             <div class="form-group">
-                                <label class="custom-control-label" for="verify_key">계속하려면 verify_key를 입력하십시오.</label>
-                                <input type="text" class="form-control" name="verify_key" id="verify_key" placeholder="" required>
-
                                 <label class="custom-control-label" for="description">처리 사유를 입력하십시오.</label>
                                 <input type="text" class="form-control" name="description" id="description" placeholder="" required>
 
@@ -335,9 +332,9 @@ class viewer:
             var user_data = %_user_data_list_%
             function revealResult() {
                 target = parseInt(document.getElementById("search").value) - 1
-                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a onClick='overlay_on(target)' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
+                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a onClick='overlay_on()' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
             }
-            function overlay_on(target) {
+            function overlay_on() {
                 document.getElementById("target_id").value = target;
                 document.getElementById("overlay").style.display = "block";
             }
@@ -853,31 +850,6 @@ def flask_a_article_id_delete(article_id):
     ### Render End ###
     
     if request.method == 'POST':
-        ### Load Verify Key ###
-        verify_key = open('verify_key', encoding='utf-8').read()
-        ### Load End ###
-
-        ### Check Verify Key ###
-        if verify_key != request.form['verify_key']:
-            alert_code = """
-            <div class="alert alert-dismissible alert-danger">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                <strong>진심...인가요?</strong><br> verify_key 값이 틀렸습니다. 관리자 메뉴에서 확인하세요.
-            </div>
-            """
-            body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-        else:
-            body_content = body_content.replace('%_form_alerts_%', '')
-        ### Check End ###
-
-        ### Verify Key Reset ###
-        string = 'abcdefghijklmfgqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!?@#$%_-'
-        verify_key = ''.join(random.choice(string) for x in range(10))
-        with open('verify_key', mode='w', encoding='utf-8') as f:
-            f.write(verify_key)
-        ### Reset End ###
-
         ### Log Activity ###
         peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
         activity_date = datetime.today()
@@ -1015,25 +987,18 @@ def flask_admin_identify():
             account_id = session['now_login']
             activity_object = request.form['target_id']
             activity_description = request.form['description']
-            verify_key = request.form['verify_key']
         except:
             pass ### 오류!
-        verify_key_result = config.load_verify_key(verify_key, session['now_login'])
         
-        if verify_key_result[0] == True:
-            if verify_key_result[1] == True: ## 소유자
-            # 보이기, 로그에 남지 않음
-                pass
-            else:
-                activity_date = datetime.today()
-                sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
-                session['now_login'],
-                target_id,
-                '명의 확인',
-                activity_description,
-                activity_date
-            ))
-            ##
+        activity_date = datetime.today()
+        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            session['now_login'],
+            target_id,
+            '명의 확인',
+            activity_description,
+            activity_date
+        ))
+        ##
 
     
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1123,26 +1088,19 @@ def flask_admin_admins_add():
             account_id = session['now_login']
             activity_object = request.form['target_id']
             activity_description = request.form['description']
-            verify_key = request.form['verify_key']
         except:
-            pass ### 오류!        
-        verify_key_result = config.load_verify_key(verify_key, session['now_login'])
-        
-        if verify_key_result[0] == True:
-            if verify_key_result[1] == True: ## 소유자
-                pass
-            else:
-                activity_date = datetime.today()
-                sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
-                session['now_login'],
-                activity_object,
-                '명의 확인',
-                activity_description,
-                activity_date
-            ))
-            user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_group_acl.user_group = user_acl_list_tb.auth'.format(activity_object))
-            if user_auth_owner == 0:
-                sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = {}'.format(activity_object))
+            pass ### 오류!
+        activity_date = datetime.today()
+        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+        session['now_login'],
+        activity_object,
+        '명의 확인',
+        activity_description,
+        activity_date
+        ))
+        user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_group_acl.user_group = user_acl_list_tb.auth'.format(activity_object))
+        if user_auth_owner == 0:
+            sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = {}'.format(activity_object))
         return redirect('/admin/admins/')
     
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
