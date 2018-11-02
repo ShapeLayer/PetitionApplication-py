@@ -967,39 +967,13 @@ def flask_admin_identify():
             return redirect('?error=no_int')
     ### Review End ###
 
-    ### Get Target User Data ###
-    target = request.args.get('user')
-    if target == None:
-        target = ''
-    else:
-        try:
-            int(target)
-        except:
-            target =''
-    ### Get End ###
-
-    ### Render Search Page ###
-    body_content += viewer.load_search()
-    ### Render End ###
-
-    if request.method == 'POST':
-        try:
-            account_id = session['now_login']
-            activity_object = request.form['target_id']
-            activity_description = request.form['description']
-        except:
-            pass ### 오류!
-        
-        activity_date = datetime.today()
-        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
-            session['now_login'],
-            target_id,
-            '명의 확인',
-            activity_description,
-            activity_date
-        ))
-        ##
-
+    ### Render
+    form_template = open('templates/confirm.html', encoding="utf-8").read()
+    form_rendered = form_template.replace('%_confirm_head_%', '작업 확인')
+    form_rendered = form_rendered.replace('%_form_alerts_%', '')
+    form_rendered = viewer.load_sns_login_status(form_rendered)
+    body_content += form_rendered
+    ### Render End
     
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
