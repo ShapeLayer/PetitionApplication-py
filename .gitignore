@@ -6,4 +6,4 @@ __pycache__/*.*
 static/gen/*.*
 static/.webassets-cache
 
-OAuthSettings.py
+oauthsettings.1.json
