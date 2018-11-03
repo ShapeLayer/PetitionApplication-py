@@ -1,3 +1,4 @@
+# coding=utf-8
 ## Import Python Modules ##
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort
 from flask_assets import Bundle, Environment
@@ -318,11 +319,11 @@ class viewer:
         ### Render End ###
 
         ### Javascript Code Render ###
-        user_data_sqlite = sqlite3_control.select('select account_id, sns_id, sns_type, user_display_profile_img from site_user_tb')
+        user_data_sqlite = sqlite3_control.select('select account_id, sns_id, sns_type, user_display_name, user_display_profile_img from site_user_tb')
         json_code = '['
         for i in range(len(user_data_sqlite)):
-            json_code += '{{account_id : "{}", sns_id : "{}", sns_type : "{}", user_display_profile_img : "{}" }}'.format(
-                user_data_sqlite[i][0], user_data_sqlite[i][1], user_data_sqlite[i][2], user_data_sqlite[i][3])
+            json_code += '{{account_id : "{}", sns_id : "{}", sns_type : "{}", user_display_name: "{}", user_display_profile_img : "{}" }}'.format(
+                user_data_sqlite[i][0], user_data_sqlite[i][1], user_data_sqlite[i][2], user_data_sqlite[i][3], user_data_sqlite[i][4])
             if i != len(user_data_sqlite) - 1:
                 json_code += ','
         json_code += ']'
@@ -332,7 +333,7 @@ class viewer:
             var user_data = %_user_data_list_%
             function revealResult() {
                 target = parseInt(document.getElementById("search").value) - 1
-                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a onClick='overlay_on()' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
+                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>실명</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td><img src="+user_data[target]["user_display_profile_img"]+" width='20' height='20' />  "+user_data[target]["user_display_name"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a onClick='overlay_on()' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
             }
             function overlay_on() {
                 document.getElementById("target_id").value = target + 1;
@@ -349,8 +350,18 @@ class viewer:
         body_content = js_code + css_code + searchbar + overlay_code
         return body_content
 
-    def load_identify(target):
-        target_data = sqlite3_control.select('select ') ## 수정 필요
+def register(callback_json, sns_type):
+    account_data = sqlite3_control.select('select * from site_user_tb where sns_type = "{}" and sns_id = "{}"'.format(sns_type, callback_json['id']))
+    if len(account_data) == 0: # 회원가입 절차
+        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("{}", "{}", "{}", "{}")'.format(sns_type, callback_json['id'], callback_json['name'], callback_json['picture']))
+        account_ids = sqlite3_control.select('select account_id from site_user_tb')
+        if len(account_ids) == 1: # 소유자 권한 제공
+            sqlite3_control.commit('insert into user_acl_list_tb values({}, "owner")'.format(len(account_ids)))
+        else: # 유저 권한 제공
+            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(len(account_ids)))
+        session['now_login'] = len(account_ids)
+    else:
+        session['now_login'] = account_data[0][0]
 
 ### Create Database Table ###
 try:
@@ -455,23 +466,8 @@ def flask_login_naver_callback():
     profile_access = urllib.request.Request('https://openapi.naver.com/v1/nid/me', headers = headers)
     profile_result = urllib.request.urlopen(profile_access).read().decode('utf-8')
     profile_result_json = json.loads(profile_result)
-    ###
-
-    ### 아이디 유효성 검사 ###
-    result_id = sqlite3_control.select('select * from site_user_tb')
-    if len(result_id) == 0:
-        data_len = len(sqlite3_control.select('select account_id from site_user_tb'))
-        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("naver", "{}", "{}", "{}")'.format(
-            profile_result_json['response']['id'], profile_result_json['response']['name'], profile_result_json['response']['profile_image']
-        ))
-        ### Insert User Account into Database ###
-        same_id_getter = sqlite3_control.select('select * from site_user_tb')
-        if len(same_id_getter) != 0:
-            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(same_id_getter[0][0]+1))
-        ### Insert End ###
-        session['now_login'] = str(data_len + 1)
-    else:
-        session['now_login'] = result_id[0][0]
+    stand_json = {'id' : profile_result_json['response']['id'], 'name' : profile_result_json['response']['name'], 'picture' : profile_result_json['response']['profile_image']}
+    register(stand_json, 'naver')
     return redirect('/')
 
 @app.route('/login/facebook/', methods=['GET', 'POST'])
@@ -525,23 +521,9 @@ def flask_login_facebook_callback():
     profile_access = 'https://graph.facebook.com/me?fields=id,name,picture&access_token={}'.format(token_result_json['access_token'])
     profile_result = urllib.request.urlopen(profile_access).read().decode('utf-8')
     profile_result_json = json.loads(profile_result)
-    ###
 
-    ### 아이디 유효성 검사 ###
-    result_id = sqlite3_control.select('select * from site_user_tb')
-    if len(result_id) == 0:
-        data_len = len(sqlite3_control.select('select account_id from site_user_tb'))
-        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("facebook", "{}", "{}", "{}")'.format(
-            profile_result_json['id'], profile_result_json['name'], profile_result_json['picture']['data']['url']
-        ))
-        ### Insert User Account into Database ###
-        same_id_getter = sqlite3_control.select('select * from site_user_tb')
-        if len(same_id_getter) != 0:
-            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(same_id_getter[0][0]+1))
-        ### Insert End ###
-        session['now_login'] = str(data_len + 1)
-    else:
-        session['now_login'] = result_id[0][0]
+    stand_json = {'id': profile_result_json['id'], 'name': profile_result_json['name'], 'picture': profile_result_json['picture']['data']['url']}
+    register(stand_json, 'facebook')
     return redirect('/')
 
 @app.route('/login/entree/', methods=['GET', 'POST'])
