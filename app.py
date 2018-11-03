@@ -984,22 +984,24 @@ def flask_admin_identify():
             activity_description = request.form['description']
         except:
             pass
+        target_data_sqlite = sqlite3_control.select('select site_user_tb.account_id, site_user_tb.user_display_name, site_user_tb.sns_id, site_user_tb.sns_type, site_user_tb.user_display_profile_img, author_connect.peti_author_display_name from site_user_tb, author_connect where author_connect.peti_author_id = {} and author_connect.account_user_id = site_user_tb.account_id'.format(
+            target_id
+        ))
+
         activity_date = datetime.today()
         sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
         session['now_login'],
-        activity_object,
+        '닉네임 ' + target_data_sqlite[0][5],
         '명의를 확인',
         activity_description,
         activity_date
         ))
-        target_data_sqlite = sqlite3_control.select('select site_user_tb.account_id, site_user_tb.user_display_name, site_user_tb.sns_id, site_user_tb.sns_type, site_user_tb.user_display_profile_img, author_connect.peti_author_display_name from site_user_tb, author_connect where author_connect.peti_author_id = {} and author_connect.account_user_id = site_user_tb.account_id'.format(
-            target_id
-        ))
+
         table_template = """
         <h2>검색결과</h2>
         <table class='table table-hover'>
             <thead>
-            <tr><th scope='col'>ID</th><th>고유 식별자</th><th>실명</th><th>사용 SNS</th><th>사용한 닉네임</th></tr>
+            <tr><th scope='col'>ID</th><th>실명</th><th>고유 식별자</th><th>사용 SNS</th><th>사용한 닉네임</th></tr>
             <tbody>
             <td scope='row'>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tbody></thead></table>
         """.format(target_data_sqlite[0][0], target_data_sqlite[0][1], target_data_sqlite[0][2], target_data_sqlite[0][3], target_data_sqlite[0][5])
@@ -1097,10 +1099,11 @@ def flask_admin_admins_add():
             activity_description = request.form['description']
         except:
             pass ### 오류!
+        target_user_data = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(activity_object))
         activity_date = datetime.today()
         sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
         session['now_login'],
-        activity_object,
+        '사용자 ' + target_user_data[0][0],
         '관리자로 등록',
         activity_description,
         activity_date
