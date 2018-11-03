@@ -71,6 +71,8 @@ python3 app.py
 
 * 메인 페이지의 기본 문구는 ```정적 페이지 설정```에서 변경할 수 있으며 HTML코드를 그대로 페이지에 표시합니다.
 
+* 페이지 공개 시 페이지는 https 연결을 사용해야 합니다. [LocalSettings.py](./LocalSettings.py) 파일의 `publish_host_name` 값을 https 프로토콜을 포함한 도메인 주소로 설정하고, 실제로 https 연결을 지원해야합니다. 리버스 프록시를 사용해 실현하는 것을 권장합니다.
+
 # 포함된 외부 프로젝트
 * [Bootstrap](https://getbootstrap.com/) - Bootstrap - [MIT License](https://opensource.org/licenses/MIT) _CDN Uses_
 * [Minty](https://bootswatch.com/minty/) - [Thomas Park](https://thomaspark.co/) - [MIT License](https://opensource.org/licenses/MIT)
