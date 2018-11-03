@@ -984,6 +984,14 @@ def flask_admin_identify():
             activity_description = request.form['description']
         except:
             pass
+        activity_date = datetime.today()
+        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+        session['now_login'],
+        activity_object,
+        '명의를 확인',
+        activity_description,
+        activity_date
+        ))
         target_data_sqlite = sqlite3_control.select('select site_user_tb.account_id, site_user_tb.user_display_name, site_user_tb.sns_id, site_user_tb.sns_type, site_user_tb.user_display_profile_img, author_connect.peti_author_display_name from site_user_tb, author_connect where author_connect.peti_author_id = {} and author_connect.account_user_id = site_user_tb.account_id'.format(
             target_id
         ))
