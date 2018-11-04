@@ -32,7 +32,8 @@ CREATE TABLE user_acl_list_tb(
 CREATE TABLE author_connect(
     peti_author_id INTEGER primary key AUTOINCREMENT,
     peti_author_display_name TEXT NOT NULL,
-    account_user_id INTEGER NOT NULL
+    account_user_id INTEGER NOT NULL,
+    target_article INTEGER NOT NULL
 );
 CREATE TABLE block_user_tb(
     account_id INTEGER NOT NULL,

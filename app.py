@@ -181,7 +181,10 @@ class viewer:
 
         ### Index Data from Database ###
         peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(target_id))
-        react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(target_id))
+        react_data = sqlite3_control.select('select peti_react_tb.*, author_connect.account_user_id, author_connect.peti_author_display_name from peti_react_tb, author_connect where peti_id = {} and author_connect.peti_author_id = peti_react_tb.author_id'.format(target_id))
+        author_nickname = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(
+            peti_data[0][4]
+        ))
         ### Index End ###
 
         ### Load Template ###
@@ -198,7 +201,10 @@ class viewer:
         react_body_content = ''
         for i in range(len(react_data)):
             react_render_object = template_react
-            react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][2]))
+            if author_nickname[0][2] == react_data[i][4]:
+                react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][5])+'   <span class="badge badge-pill badge-warning">작성자</span>')
+            else:
+                react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][5]))
             react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
             react_body_content += react_render_object
         ### Render End ###
@@ -206,6 +212,15 @@ class viewer:
         ### Get Author Data ###
         author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
         ### Get End ###
+
+        ### 반응 중복 제거
+        now_login = sqlite3_control.select('select * from author_connect where account_user_id = {} and target_article = {}'.format(session['now_login'], target_id))
+        if len(now_login) != 0:
+            template = template.replace('%_react_author_display_name_%', now_login[0][1])
+            template = template.replace('%_react_display_name_is_enabled_%', 'readonly')
+        else:
+            template = template.replace('%_react_author_display_name_%', '')
+            template = template.replace('%_react_display_name_is_enabled_%', '')
 
         ### Render Template ###
         author_data_display = user_control.user_controller(author_data[0][0])
@@ -708,7 +723,6 @@ def flask_a_article_id(article_id):
         pass ## return error
 
 
-
     ### Render Bodycontent ###
     body_content += viewer.load_petition(article_id)
     if 'now_login' in session:
@@ -720,19 +734,28 @@ def flask_a_article_id(article_id):
     if request.method == 'POST':
         ### Collect React Data ###
         peti_id = article_id
-        author_id = 0 ##<< 이거 수정 (Todo List)
         content = parser.anti_injection(request.form['react_content'])
         author_display = parser.anti_injection(request.form['react_author_display_name'])
         if author_display == '':
             author_display = '익명 사용자'
         ### Collect End ###
+        
+        ### 반응 중복 제거
+        now_login = sqlite3_control.select('select * from author_connect where account_user_id = {} and target_article = {}'.format(session['now_login'], article_id))
+        if len(now_login) != 0:
+            author_display = now_login[0][1]
+            is_existed = True
+        else:
+            is_existed = False
 
         ### Save React Author Data ###
-        if 'now_login' in session:
+        if 'now_login' in session and is_existed == False:
             author_list_len = len(sqlite3_control.select('select * from author_connect'))
-            sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id) values("{}", {})'.format(
-                author_display, session['now_login']))
+            sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id, target_article) values("{}", {}, {})'.format(
+                author_display, session['now_login'], article_id))
             react_author_id = author_list_len + 1
+        elif 'now_login' in session and is_existed == True:
+            react_author_id = now_login[0][0]
         else:
             return redirect('?error=no_login')
         ### Save End ###
@@ -783,10 +806,12 @@ def flask_a_write():
             account_user_id = 0
         else:
             account_user_id = session['now_login']
+        petition_list_len = len(sqlite3_control.select('select * from peti_data_tb')) + 1
         author_list_len = len(sqlite3_control.select('select * from author_connect'))
-        sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id) values("{}", {})'.format(
+        sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id, target_article) values("{}", {}, {})'.format(
             peti_author_display_name,
-            account_user_id
+            account_user_id,
+            petition_list_len
         ))
         peti_author_id = author_list_len + 1
         ### Save End ###
