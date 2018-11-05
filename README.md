@@ -30,6 +30,7 @@ Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로
 
 | 구분 | 릴리즈 | 안정된 릴리즈 |
 | :----: | :----: | :----: |
+| beta | [![](https://img.shields.io/badge/beta-1.0--2-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-2) | | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
 | beta | [![](https://img.shields.io/badge/beta-1.0-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
 | alpha | [![](https://img.shields.io/badge/alpha-0.1.1-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1.1-alpha-180923-de634fc-remake) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
 | alpha | [![](https://img.shields.io/badge/alpha-0.1--2-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1-Alpha-180817-02-98df461) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
