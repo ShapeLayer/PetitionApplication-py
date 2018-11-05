@@ -128,9 +128,8 @@ class user_control:
             return True
 
     def user_controller(target_id):
-
         ## Index User Data ##
-        user_data = sqlite3_control.select('select * from author_connect')
+        user_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(target_id))
         ## Index End ##
 
         if 'now_login' in session:
@@ -214,7 +213,11 @@ class viewer:
         ### Get End ###
 
         ### 반응 중복 제거
-        now_login = sqlite3_control.select('select * from author_connect where account_user_id = {} and target_article = {}'.format(session['now_login'], target_id))
+        if 'now_login' in session:
+            query_target = session['now_login']
+        else:
+            query_target = 0
+        now_login = sqlite3_control.select('select * from author_connect where account_user_id = {} and target_article = {}'.format(query_target, target_id))
         if len(now_login) != 0:
             template = template.replace('%_react_author_display_name_%', now_login[0][1])
             template = template.replace('%_react_display_name_is_enabled_%', 'readonly')
