@@ -698,13 +698,18 @@ def flask_a():
     nav_bar = user_control.load_nav_bar()
     
     ### Index Database ###
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status != 1 and peti_status != 404 order by peti_id desc')
+    peti_data = sqlite3_control.select('select * from peti_data_tb order by peti_id desc')
     ### Index End ###
 
     ### Render Template ###
     body_content += '<h1>새로운 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">청원 제목</th></tr></thead><tbody>'
     for i in range(len(peti_data)):
-        body_content += '<tr><th scope="row">{}</th><td><a href="/a/{}/">{}</a></td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1])
+        if peti_data[i][3] == 1:
+            body_content += '<tr><th scope="row">{}</th><td><a>비공개 청원</a></td></tr>'.format(peti_data[i][0])
+        elif peti_data[i][3] == 404:
+            body_content += '<tr><th scope="row">{}</th><td><a>삭제된 청원</a></td></tr>'.format(peti_data[i][0])
+        else:
+            body_content += '<tr><th scope="row">{}</th><td><a href="/a/{}/">{}</a></td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1])
     body_content += '</tbody></table>'
     body_content += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
     ### Render End ###
