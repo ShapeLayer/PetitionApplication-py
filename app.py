@@ -101,7 +101,10 @@ class user_control:
 
             ### Render Navbar ###
             template = template.replace('%_user_display_name_%', user_data[0][3])
-            template = template.replace('%_user_display_profile_img_%', user_data[0][4])
+            if user_data[0][4] == None:
+                template = template.replace('%_user_display_profile_img_%', '')
+            else:
+                template = template.replace('%_user_display_profile_img_%', user_data[0][4])
             if user_auth[0][2] == 1:
                 user_profile_menu_content += """
                 <a class="dropdown-item" href="/admin/">관리자 메뉴</a>
@@ -294,6 +297,12 @@ class viewer:
                 background-color: white;
                 border-radius: 10px;
                 padding: 50px;
+            }
+
+            @media (max-width: 767px) {
+                .bs-docs-section{
+                width: 90%;
+                }
             }
         </style>
         """
