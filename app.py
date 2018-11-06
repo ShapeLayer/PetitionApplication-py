@@ -83,7 +83,7 @@ class user_control:
         template = """
         <ul class="nav navbar-nav ml-auto">
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download"><img src="%_user_display_profile_img_%" width="10px" height="10px"> %_user_display_name_% <span class="caret"></span></a>
+                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download"><img src="%_user_display_profile_img_%" width="17px" height="17px"> %_user_display_name_% <span class="caret"></span></a>
                 <div class="dropdown-menu" aria-labelledby="download">
                     %_user_profile_menu_content_%
                 </div>
@@ -101,6 +101,7 @@ class user_control:
 
             ### Render Navbar ###
             template = template.replace('%_user_display_name_%', user_data[0][3])
+            template = template.replace('%_user_display_profile_img_%', user_data[0][4])
             if user_auth[0][2] == 1:
                 user_profile_menu_content += """
                 <a class="dropdown-item" href="/admin/">관리자 메뉴</a>
