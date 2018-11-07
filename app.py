@@ -293,7 +293,7 @@ class viewer:
             }
 
             .bs-docs-section{
-                width: 70%;
+                width: 70vw;
                 background-color: white;
                 border-radius: 10px;
                 padding: 50px;
@@ -301,7 +301,7 @@ class viewer:
 
             @media (max-width: 767px) {
                 .bs-docs-section{
-                width: 90%;
+                width: 95vw;
                 }
             }
         </style>
@@ -367,7 +367,6 @@ class viewer:
                 document.getElementById("target_id").value = target + 1;
                 document.getElementById("overlay").style.display = "block";
             }
-
             function overlay_off() {
                 document.getElementById("overlay").style.display = "none";
             }
@@ -413,7 +412,7 @@ def flask_main():
     static_data = sqlite3_control.select('select * from static_page_tb where page_name = "frontpage"')
     ### Load End ###
 
-    body_content += static_data[0][1]
+    body_content += '<h1>'+static_data[0][1]+'</h1>'+static_data[0][2]
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
@@ -706,9 +705,13 @@ def flask_register():
 def flask_a():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
-    
+
     ### Index Database ###
-    peti_data = sqlite3_control.select('select * from peti_data_tb order by peti_id desc')
+    if request.args.get('type') == 'done':
+        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 2 order by peti_id desc')
+    else:
+    
+        peti_data = sqlite3_control.select('select * from peti_data_tb order by peti_id desc')
     ### Index End ###
 
     ### Render Template ###
@@ -719,8 +722,14 @@ def flask_a():
         elif peti_data[i][3] == 404:
             body_content += '<tr><th scope="row">{}</th><td><a>삭제된 청원</a></td></tr>'.format(peti_data[i][0])
         else:
-            body_content += '<tr><th scope="row">{}</th><td><a href="/a/{}/">{}</a></td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1])
+            if peti_data[i][3] == 2:
+                peti_title = peti_data[i][1] + '  <span class="badge badge-pill badge-success">처리 완료</span>'
+            else:
+                peti_title = peti_data[i][1]
+            body_content += '<tr><th scope="row">{}</th><td><a href="/a/{}/">{}</a></td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_title)
     body_content += '</tbody></table>'
+    if len(peti_data) == 0:
+        body_content += '<p style="margin-left: 20px;">청원이 없습니다.</p>'
     body_content += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
     ### Render End ###
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -894,6 +903,45 @@ def flask_a_article_id_delete(article_id):
     body_content = body_content.replace('%_form_alerts_%', '')
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+@app.route('/a/<article_id>/complete/', methods=['GET', 'POST'])
+def flask_a_article_id_complete(article_id):
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    body_content = ''
+    nav_bar = user_control.load_nav_bar()
+
+    template = open('templates/confirm.html', encoding='utf-8').read()
+    body_content += template
+
+    ### Render Login Status ###
+    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+    body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
+    ### Render End ###
+    
+    if request.method == 'POST':
+        ### Log Activity ###
+        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+        activity_date = datetime.today()
+        activity_object = '청원(<i>{}</i>)'.format(peti_data[0][1])
+        activity_description = request.form['description']
+        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            session['now_login'],
+            activity_object,
+            '완료',
+            activity_description,
+            activity_date
+        ))
+        ### Log End ###
+
+        sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = {}'.format(article_id))
+        return redirect('/a/')
+    body_content = body_content.replace('%_form_alerts_%', '')
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
 
 ### Log Route ###
 @app.route('/log/')
@@ -915,6 +963,21 @@ def flask_log():
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+### Static Page Route ###
+@app.route('/static/<title>')
+def flask_static(title):    
+    body_content = ''
+    nav_bar = user_control.load_nav_bar()
+    
+    ### Load From Database ###
+    static_data = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(title))
+    if len(static_data) == 0:
+        abort(404)
+    ### Load End ###
+
+    body_content += '<h1>'+static_data[0][1]+'</h1>'+static_data[0][2]
+
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 ### Administrator Menu Route ###
 @app.route('/admin/')
@@ -930,7 +993,7 @@ def flask_admin():
     static_data = sqlite3_control.select('select * from static_page_tb where page_name = "adminpage"')
     ### Load End ###
 
-    body_content += static_data[0][1]
+    body_content += '<h1>'+static_data[0][1]+'</h1>'+static_data[0][2]
 
     nav_bar = user_control.load_nav_bar()
 
@@ -1421,6 +1484,7 @@ def flask_admin_static():
             if request.args.get('page') == static_page[i][0]:
                 pill_body_object = pill_body_object.replace('%_is_active_%', 'active')
         pill_body_content += pill_body_object
+    pill_body_content += '<li class="nav-item"><a class="nav-link" href="/admin/static/add/">(추가)</a></li>'
     template = template.replace('%_pill_body_content_%', pill_body_content)
     body_content += template
     ### End Render ###
@@ -1429,6 +1493,8 @@ def flask_admin_static():
     if request.args.get('page') != None:
         target = request.args.get('page')
         target_content = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(target))
+        if len(target_content) == 0:
+            abort(404)
         textarea = """
         <div class="bs-docs-section">
             <form action="" accept-charset="utf-8" method="post">
@@ -1450,6 +1516,68 @@ def flask_admin_static():
 
     nav_bar = user_control.load_nav_bar()
 
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+@app.route('/admin/static/add/', methods=['GET', 'POST'])
+def flask_admin_static_add():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+        
+    body_content = ''
+
+    template = """
+<div class="bs-docs-section">
+    <h1>정적 페이지 추가</h1>
+    <div class="bs-component">
+        <form action="" accept-charset="utf-8" name="" method="post">
+            <fieldset>
+                <div class="form-group">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="title_slug" name="title_slug" placeholder="설정할 링크(슬러그)" onChange="changeAlert()" style="width: 70vw;" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="title_display_name" placeholder="표시할 이름" style="width: 70vw;" required>
+                    </div>
+                    <p id="slug_result">이 페이지의 링크가 설정되지 않았습니다.</p>
+                    <textarea class="form-control" name="body_content" rows="20" placeholder="html 코드로 작성합니다." required></textarea>
+                </div>
+            </fieldset>
+            <button type="submit" name="submit" class="btn btn-primary" value="publish">추가</button>
+        </form>
+    </div>
+</div>
+    """
+    js_code ="""
+    <script>
+        function changeAlert() {
+            var slug = document.getElementById("title_slug").value
+            document.getElementById("slug_result").innerHTML = "이 페이지의 링크는 <a href='"+slug+"'>"+slug+"</a>가 될 것입니다.";
+        }
+    </script>
+    """
+
+    body_content += js_code + template
+
+    nav_bar = user_control.load_nav_bar()
+
+    if request.method == 'POST':
+        ### Get POST Data ###
+        static_slug =  parser.anti_injection(request.form['title_slug'])
+        static_display_name =  parser.anti_injection(request.form['title_display_name'])
+        static_body_content = request.form['body_content'].replace('"', '""')
+        ### Get End ###
+
+        search = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(static_slug))
+        if len(search) != 0:
+            return redirect('/admin/static/add?error=already_existed')
+        sqlite3_control.commit('insert into static_page_tb (page_name, title, content) values("{}", "{}", "{}")'.format(
+            static_slug, static_display_name, static_body_content
+        ))
+
+        return redirect('/admin/static?page={}'.format(static_slug))
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 ### Assets Route ###
