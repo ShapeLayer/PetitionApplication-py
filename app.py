@@ -412,7 +412,7 @@ def flask_main():
     static_data = sqlite3_control.select('select * from static_page_tb where page_name = "frontpage"')
     ### Load End ###
 
-    body_content += '<h1>'+static_data[0][1]+'</h1>'+static_data[0][2]
+    body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
@@ -975,7 +975,21 @@ def flask_static(title):
         abort(404)
     ### Load End ###
 
-    body_content += '<h1>'+static_data[0][1]+'</h1>'+static_data[0][2]
+    body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
+
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+@app.route('/notice/')
+def flask_notice():    
+    body_content = ''
+    nav_bar = user_control.load_nav_bar()
+    
+    ### Load From Database ###
+    static_data = sqlite3_control.select('select * from static_page_tb where page_name = "notice"')
+    print(static_data)
+    ### Load End ###
+
+    body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
@@ -993,7 +1007,7 @@ def flask_admin():
     static_data = sqlite3_control.select('select * from static_page_tb where page_name = "adminpage"')
     ### Load End ###
 
-    body_content += '<h1>'+static_data[0][1]+'</h1>'+static_data[0][2]
+    body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
 
     nav_bar = user_control.load_nav_bar()
 
