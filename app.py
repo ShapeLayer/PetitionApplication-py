@@ -1479,7 +1479,7 @@ def flask_admin_static():
     ### Render Pill Object ###
     pill_body_content = ''
     for i in range(len(static_page)):
-        pill_body_object = '<li class="nav-item"><a class="nav-link %_is_active_%" href="?page={}">{}</a></li>'.format(static_page[i][0], static_page[i][0])
+        pill_body_object = '<li class="nav-item"><a class="nav-link %_is_active_%" href="?page={}">{}({})</a></li>'.format(static_page[i][0], static_page[i][1], static_page[i][0])
         if request.method == 'GET':
             if request.args.get('page') == static_page[i][0]:
                 pill_body_object = pill_body_object.replace('%_is_active_%', 'active')
@@ -1503,7 +1503,7 @@ def flask_admin_static():
             </form>
         </div>
         """
-        textarea = textarea.replace('%_textarea_content_%', target_content[0][1])
+        textarea = textarea.replace('%_textarea_content_%', target_content[0][2])
         body_content += textarea
     ### End Render ###
 
