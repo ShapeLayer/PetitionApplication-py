@@ -7,8 +7,6 @@ Fe-tea, PetitionApplication based on Flask
 [![Latest Stable Release](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases)
 
 ![](./fe.png)
-> _이과의 승리! 헌신적인 디자이너가 로고에 기여해주길 바랄 뿐입니다..._
-
 
 Fe-tea는 숭덕고등학교 학생회의 요청으로 개발되고 있는 플라스크 기반의 청원 수집 웹 애플리케이션입니다. Fe-tea는 학교 내에서 발생하는 문제점에 대해 구성원이 직접 의견을 공개적으로 올릴 수 있게 합니다.
 
