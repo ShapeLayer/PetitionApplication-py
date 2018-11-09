@@ -68,7 +68,7 @@ python3 app.py
 
 * 내부 계정은 관리자를 위해 추가한 기능으로, 사용시 verify_key값을 입력해야 합니다. 관리자 메뉴에서 확인하거나 [verify_key](/verify_key)파일에서 확인할 수 있습니다.
 
-* SNS로그인 기능을 활성화하기 위해선 각 서비스 제공자로부터 API 키 값을 받아와야합니다. [Facebook Developers](https://developers.facebook.com/) [네이버 개발자 센터](https://developers.naver.com/main/) API 키 값은 [oauthsettings.json](/oauthsettings.json)파일에 직접 추가하거나 소유자 권한으로 관리자 메뉴에서 추가할 수 있습니다.(아직 미구현됨)
+* SNS로그인 기능을 활성화하기 위해선 각 서비스 제공자로부터 API 키 값을 받아와야합니다. [Facebook Developers](https://developers.facebook.com/) [네이버 개발자 센터](https://developers.naver.com/main/) API 키 값은 [oauthsettings.json](/oauthsettings.json)파일에 직접 API 키 값을 추가할 수 있습니다.
 
 * 메인 페이지의 기본 문구는 ```정적 페이지 설정```에서 변경할 수 있으며 HTML코드를 그대로 페이지에 표시합니다.
 
@@ -77,6 +77,7 @@ python3 app.py
 # 포함된 외부 프로젝트
 * [Bootstrap](https://getbootstrap.com/) - Bootstrap - [MIT License](https://opensource.org/licenses/MIT) _CDN Uses_
 * [Minty](https://bootswatch.com/minty/) - [Thomas Park](https://thomaspark.co/) - [MIT License](https://opensource.org/licenses/MIT)
+* [oAuth-Buttons](https://github.com/oAuth-Buttons/oAuth-Buttons) - [oAuth-Buttons](https://github.com/oAuth-Buttons) - [MIT License](https://github.com/oAuth-Buttons/oAuth-Buttons/blob/master/LICENSE) _일부 포함 및 수정됨_
 
 # 저자
 * [kpjhg0124](https://github.com/kpjhg0124) - _첫 삽_ - [me@ho9.me](mailto:me@ho9.me)
