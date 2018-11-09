@@ -388,6 +388,7 @@ def register(callback_json, sns_type):
             sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(len(account_ids)))
         session['now_login'] = len(account_ids)
     else:
+        sqlite3_control.commit('update site_user_tb set user_display_name = "{}", user_display_profile_img = "{}" where sns_id = "{}"'.format(callback_json['name'], callback_json['picture'], callback_json['id']))
         session['now_login'] = account_data[0][0]
 
 ### Create Database Table ###
