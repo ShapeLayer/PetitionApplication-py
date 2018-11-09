@@ -38,6 +38,7 @@ bundles = {
     'main_css' : Bundle(
         'css/minty.css',
         'css/custom.css',
+        'css/oauth-buttons.min.css',
         output = 'gen/main.css'
     )
 }
@@ -433,8 +434,8 @@ def flask_login():
     ## Render OAuth Buttons ##
     login_button_display = """
     <ul>
-        <li><a href="/login/naver/">네이버 로그인</a></li>
-        <li><a href="/login/facebook/">Facebook 로그인</a></li>
+        <li><a href="/login/naver/"><div class="lbtn lbtn-naver"><i class="logo"></i><p class="label">네이버 로그인</p></div></a></li>
+        <li><a href="/login/facebook/"><div class="lbtn lbtn-facebook"><i class="logo"></i><p class="label">Facebook 로그인</p></div></a></li>
         <li><a href="/login/entree/">entree 엔진 로그인</a></li>
     </ul>
     """
