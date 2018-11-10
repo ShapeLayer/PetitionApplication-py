@@ -48,3 +48,8 @@ input{
 #gravatar {
     margin-right : 0.5em;
 }
+
+.lli {
+    list-style: none;
+    margin: 5px;
+}

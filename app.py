@@ -1,6 +1,6 @@
 # coding=utf-8
 ## Import Python Modules ##
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_from_directory
 from flask_assets import Bundle, Environment
 from datetime import datetime
 import sqlite3
@@ -433,14 +433,14 @@ def flask_login():
 
     ## Render OAuth Buttons ##
     login_button_display = """
-    <ul>
+    <ul class="lli">
         <li><a href="/login/naver/"><div class="lbtn lbtn-naver"><i class="logo"></i><p class="label">네이버 로그인</p></div></a></li>
         <li><a href="/login/facebook/"><div class="lbtn lbtn-facebook"><i class="logo"></i><p class="label">Facebook 로그인</p></div></a></li>
         <li><a href="/login/entree/">entree 엔진 로그인</a></li>
     </ul>
     """
     ## Render End ##
-    body_content += 'SNS 로그인 시 해당 SNS의 로그인 상태가 유지됩니다. 공용 컴퓨터에서 SNS 로그인을 사용하는 경우 시크릿 모드(Inprivate 모드)에서 로그인을 계속하십시오.'
+    body_content += '<p style="margin:0;">SNS 로그인 시 해당 SNS 서비스의 로그인 상태가 유지됩니다.</p><p>공용 컴퓨터에서 SNS 로그인을 사용하는 경우 시크릿 모드(Inprivate 모드)에서 로그인을 계속하십시오.</p>'
     body_content += login_button_display
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
@@ -1597,9 +1597,9 @@ def flask_admin_static_add():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 ### Assets Route ###
-@app.route('/img/<assets>/')
+@app.route('/assets/<assets>/')
 def serve_pictures(assets):
-    return static_file(assets, root='views/img')
+    return send_from_directory('assets', assets)
 
 ### Error Handler ###
 @app.route('/error/acl/', methods=['GET'])
