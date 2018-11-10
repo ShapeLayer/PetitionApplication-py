@@ -51,7 +51,7 @@ pip install -r requirements.txt
 ```
 리눅스 환경의 경우 다음 명령으로 실행해야 합니다.
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ### 애플리케이션 시작
