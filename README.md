@@ -86,6 +86,7 @@ python3 app.py
 # 도움을 주신 분들
 * [페이스북 그룹 생활코딩](https://www.facebook.com/groups/codingeverybody/) 멤버분들
 * [2DU](https://github.com/2du)
+* 숭덕고등학교 학생회 및 IT 동아리 `\n`
 
 # 라이선스
 This project is licensed under the BSD 3-Clause License. See the [LICENSE](/LICENSE) file for details.
