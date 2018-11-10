@@ -31,6 +31,7 @@ Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로
 
 | 구분 | 릴리즈 | 안정된 릴리즈 |
 | :----: | :----: | :----: |
+| beta | [![](https://img.shields.io/badge/beta-1.0--3-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-3) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
 | beta | [![](https://img.shields.io/badge/beta-1.0--2-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-2) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
 | beta | [![](https://img.shields.io/badge/beta-1.0-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
 | alpha | [![](https://img.shields.io/badge/alpha-0.1.1-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1.1-alpha-180923-de634fc-remake) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
@@ -89,4 +90,5 @@ python3 app.py
 * 숭덕고등학교 학생회 및 IT 동아리 `\n`
 
 # 라이선스
+이 프로젝트는 BSD 3-Clause 라이선스에 의거 보호되고 있습니다. 더 많은 정보는 [LICENSE](/LICENSE) 문서를 참고하세요.
 This project is licensed under the BSD 3-Clause License. See the [LICENSE](/LICENSE) file for details.
