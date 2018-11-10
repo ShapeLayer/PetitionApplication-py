@@ -178,16 +178,6 @@ class config:
                 f.write(verify_key)
             ### Reset End ###
             return [True, False]
-    def checkRecaptcha(response, secretkey):
-        url = 'https://www.google.com/recaptcha/api/siteverify?'
-        url = url + 'secret=' + str(secretkey)
-        url = url + '&response=' +str(response)
-
-        jsonobj = json.loads(urllib2.urlopen(url).read())
-        if jsonobj['success']:
-            return True
-        else:
-            return False
 
 class viewer:
     def load_petition(target_id):
@@ -838,12 +828,6 @@ def flask_a_write():
         peti_publish_date = datetime.today()
         peti_author_display_name = parser.anti_injection(request.form['peti_author_display_name'])
         peti_body_content = parser.anti_injection(request.form['peti_body_content'])
-        recaptcha = request.form.get('g-recaptcha-response')
-        ### Get End ###
-        if checkRecaptcha(response, RECAPTCHA_PRIVATE_KEY): ## 수정필요
-            pass
-        else:
-            return '다시 시도하세요.'
 
         ### Save Author Data ###
         if peti_status == 1:
