@@ -3,7 +3,7 @@ Fe-tea, PetitionApplication based on Flask
 
 ![Python Required](https://img.shields.io/badge/python-3.5%20or%20higher-blue.svg?longCache=true&style=flat-square)
 ![BSD-3 License](https://img.shields.io/badge/license-BSD--3-lightgrey.svg?longCache=true&style=flat-square)
-[![Latest Release](https://img.shields.io/badge/latest%20release-0.1.1--alpha--180923--de634fc--remake-yellow.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1.1-alpha-180923-de634fc-remake)
+[![Latest Release](https://img.shields.io/badge/latest%20release-1.0--beta--3-yellow.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-3)
 [![Latest Stable Release](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases)
 [![Bootstrap-License](https://img.shields.io/badge/bootstrap-MIT-brightgreen.svg?longCache=true&style=flat-square)](https://github.com/twbs/bootstrap/blob/master/LICENSE)
 [![Minty-License](https://img.shields.io/badge/minty-MIT-brightgreen.svg?longCache=true&style=flat-square)](https://github.com/thomaspark/bootswatch/blob/master/LICENSE)
