@@ -29,14 +29,14 @@ Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로
 ### 릴리즈 다운로드
 [릴리즈](https://github.com/kpjhg0124/PetitionApplication-py/releases)에서 Fe-tea의 릴리즈 판을 다운로드 받고, 압축을 해제합니다.
 
-| 구분 | 릴리즈 | 안정된 릴리즈 |
-| :----: | :----: | :----: |
-| beta | [![](https://img.shields.io/badge/beta-1.0--3-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-3) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
-| beta | [![](https://img.shields.io/badge/beta-1.0--2-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-2) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
-| beta | [![](https://img.shields.io/badge/beta-1.0-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
-| alpha | [![](https://img.shields.io/badge/alpha-0.1.1-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1.1-alpha-180923-de634fc-remake) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
-| alpha | [![](https://img.shields.io/badge/alpha-0.1--2-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1-Alpha-180817-02-98df461) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
-| alpha | [![](https://img.shields.io/badge/alpha-0.1--1-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1-Alpha-180815-01-637212c) | [![](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](#) |
+| 구분 | 릴리즈 |
+| :----: | :----: |
+| beta | [![](https://img.shields.io/badge/beta-1.0--3-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-3) |
+| beta | [![](https://img.shields.io/badge/beta-1.0--2-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-2) |
+| beta | [![](https://img.shields.io/badge/beta-1.0-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta) |
+| alpha | [![](https://img.shields.io/badge/alpha-0.1.1-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1.1-alpha-180923-de634fc-remake) |
+| alpha | [![](https://img.shields.io/badge/alpha-0.1--2-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1-Alpha-180817-02-98df461) |
+| alpha | [![](https://img.shields.io/badge/alpha-0.1--1-orange.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/0.1-Alpha-180815-01-637212c) |
 
 ### 모듈 설치
 다음 명령어로 Fe-tea 구성 파일이 위치한 디렉토리로 이동합니다.
