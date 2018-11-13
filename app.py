@@ -378,6 +378,11 @@ class viewer:
         body_content = js_code + css_code + searchbar + overlay_code
         return body_content
 
+    def render_var(content):
+        content = content.replace('%_appname_%', LocalSettings.entree_appname)
+        content = content.replace('%_now_%', str(datetime.today()))
+        return content
+
 def register(callback_json, sns_type):
     account_data = sqlite3_control.select('select * from site_user_tb where sns_type = "{}" and sns_id = "{}"'.format(sns_type, callback_json['id']))
     if len(account_data) == 0: # 회원가입 절차
@@ -415,6 +420,7 @@ def flask_main():
     ### Load End ###
 
     body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
+    body_content = viewer.render_var(body_content)
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
@@ -431,14 +437,34 @@ def flask_login():
         pass
     ###
 
+    oauth = config.load_oauth_settings()
+    if oauth['naver_client_id'] == '' or oauth['naver_client_secret'] == '':
+        naver_comment = '관리자가 이 기능을 비활성화 시켰습니다.'
+    else:
+        naver_comment = ''
+
+    if oauth['facebook_client_id'] == '' or oauth['facebook_client_secret'] == '':
+        facebook_comment = '관리자가 이 기능을 비활성화 시켰습니다.'
+    else:
+        facebook_comment = ''
+
     ## Render OAuth Buttons ##
+    tooltip_script = """
+<script>
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip(); 
+});
+</script>
+    """
     login_button_display = """
     <ul class="lli">
-        <li><a href="/login/naver/"><div class="lbtn lbtn-naver"><i class="logo"></i><p class="label">네이버 로그인</p></div></a></li>
-        <li><a href="/login/facebook/"><div class="lbtn lbtn-facebook"><i class="logo"></i><p class="label">Facebook 로그인</p></div></a></li>
+        <li><a href="/login/naver/" data-toggle="tooltip" title="%_naver_is_enabled_%"><div class="lbtn lbtn-naver"><i class="logo"></i><p class="label">네이버 로그인</p></div></a></li>
+        <li><a href="/login/facebook/" data-toggle="tooltip" title="%_fb_is_enabled_%"><div class="lbtn lbtn-facebook"><i class="logo"></i><p class="label">Facebook 로그인</p></div></a></li>
         <li><a href="/login/entree/">entree 엔진 로그인</a></li>
     </ul>
     """
+    login_button_display = login_button_display.replace('%_naver_is_enabled_%', naver_comment)
+    login_button_display = login_button_display.replace('%_fb_is_enabled_%', facebook_comment)
     ## Render End ##
     body_content += '<p style="margin:0;">SNS 로그인 시 해당 SNS 서비스의 로그인 상태가 유지됩니다.</p><p>공용 컴퓨터에서 SNS 로그인을 사용하는 경우 시크릿 모드(Inprivate 모드)에서 로그인을 계속하십시오.</p>'
     body_content += login_button_display
@@ -977,6 +1003,7 @@ def flask_static(title):
     ### Load End ###
 
     body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
+    body_content = viewer.render_var(body_content)
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
@@ -991,6 +1018,7 @@ def flask_notice():
     ### Load End ###
 
     body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
+    body_content = viewer.render_var(body_content)
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
@@ -1009,6 +1037,7 @@ def flask_admin():
     ### Load End ###
 
     body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
+    body_content = viewer.render_var(body_content)
 
     nav_bar = user_control.load_nav_bar()
 
