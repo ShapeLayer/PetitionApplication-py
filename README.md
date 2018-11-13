@@ -26,6 +26,7 @@ Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로
 
 ### 릴리즈 다운로드
 [릴리즈](https://github.com/kpjhg0124/PetitionApplication-py/releases)에서 Fe-tea의 릴리즈 판을 다운로드 받고, 압축을 해제합니다.
+* stable 이 아닌 릴리즈는 업데이트 간 데이터 마이그레이션을 지원하지 않습니다.
 
 | 구분 | 릴리즈 |
 | :----: | :----: |
