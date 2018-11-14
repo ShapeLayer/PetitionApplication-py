@@ -79,5 +79,7 @@ CREATE TABLE articles_indexing_tb(
 CREATE TABLE static_page_tb(
     page_name TEXT NOT NULL,
     title TEXT NOT NULL,
+    editor TEXT NOT NULL,
+    editdate TEXT NOT NULL,
     content TEXT NOT NULL
 )

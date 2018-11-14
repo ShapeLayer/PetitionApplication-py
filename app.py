@@ -419,7 +419,7 @@ def flask_main():
     static_data = sqlite3_control.select('select * from static_page_tb where page_name = "frontpage"')
     ### Load End ###
 
-    body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
+    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' 마지막으로 수정 | '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1002,7 +1002,7 @@ def flask_static(title):
         abort(404)
     ### Load End ###
 
-    body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
+    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' 마지막으로 수정 | '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1017,7 +1017,7 @@ def flask_notice():
     print(static_data)
     ### Load End ###
 
-    body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
+    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' 마지막으로 수정 | '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1036,7 +1036,7 @@ def flask_admin():
     static_data = sqlite3_control.select('select * from static_page_tb where page_name = "adminpage"')
     ### Load End ###
 
-    body_content += '<h2>'+static_data[0][1]+'</h2>'+static_data[0][2]
+    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' 마지막으로 수정 | '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
     nav_bar = user_control.load_nav_bar()
@@ -1547,14 +1547,20 @@ def flask_admin_static():
             </form>
         </div>
         """
-        textarea = textarea.replace('%_textarea_content_%', target_content[0][2])
+        textarea = textarea.replace('%_textarea_content_%', target_content[0][4])
         body_content += textarea
     ### End Render ###
 
     if request.method == 'POST':
         ### Update Static Page Data ###
+        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(session['now_login']))
         received_content = request.form['content'].replace('"', '""')
-        sqlite3_control.commit('update static_page_tb set content = "{}" where page_name = "{}"'.format(received_content, request.args.get('page')))
+        sqlite3_control.commit('update static_page_tb set editor = "{}", editdate = "{}", content = "{}" where page_name = "{}"'.format(
+            parser.anti_injection(user_name[0][0]), 
+            parser.anti_injection(str(datetime.today())), 
+            parser.anti_injection(received_content), 
+            parser.anti_injection(request.args.get('page'))
+            ))
         ### End Update ###
         return redirect('/admin/static/?page={}'.format(request.args.get('page')))
 
@@ -1615,10 +1621,11 @@ def flask_admin_static_add():
         ### Get End ###
 
         search = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(static_slug))
+        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(session['now_login']))
         if len(search) != 0:
             return redirect('/admin/static/add?error=already_existed')
-        sqlite3_control.commit('insert into static_page_tb (page_name, title, content) values("{}", "{}", "{}")'.format(
-            static_slug, static_display_name, static_body_content
+        sqlite3_control.commit('insert into static_page_tb (page_name, title, editor, editdate, content) values("{}", "{}", "{}", "{}", "{}")'.format(
+            parser.anti_injection(static_slug), parser.anti_injection(static_display_name), parser.anti_injection(user_name[0][0]), parser.anti_injection(str(datetime.today())), parser.anti_injection(static_body_content)
         ))
 
         return redirect('/admin/static?page={}'.format(static_slug))
