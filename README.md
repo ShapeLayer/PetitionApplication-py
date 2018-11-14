@@ -92,4 +92,3 @@ python3 app.py
 
 # 라이선스
 이 프로젝트는 BSD 3-Clause 라이선스에 의거 보호되고 있습니다. 더 많은 정보는 [LICENSE](/LICENSE) 문서를 참고하세요.
-This project is licensed under the BSD 3-Clause License. See the [LICENSE](/LICENSE) file for details.
