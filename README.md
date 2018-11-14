@@ -66,12 +66,13 @@ python3 app.py
 ```
 
 
-
+### 기타 사용 정보 
 * Fe-tea의 첫 계정은 소유자 계정으로 설정됩니다. 소유자 계정은 SNS 계정이 아닌 내부계정(entree 엔진)으로 생성하는 것을 권장합니다.
 
 * 내부 계정은 관리자를 위해 추가한 기능으로, 사용시 verify_key값을 입력해야 합니다. 관리자 메뉴에서 확인하거나 [verify_key](/verify_key)파일에서 확인할 수 있습니다.
 
-* SNS로그인 기능을 활성화하기 위해선 각 서비스 제공자로부터 API 키 값을 받아와야합니다. [Facebook Developers](https://developers.facebook.com/) [네이버 개발자 센터](https://developers.naver.com/main/) API 키 값은 [oauthsettings.json](/oauthsettings.json)파일에 직접 API 키 값을 추가할 수 있습니다.
+* SNS로그인 기능을 활성화하기 위해선 각 서비스 제공자로부터 API 키 값을 받아와야합니다. ([Facebook Developers](https://developers.facebook.com/), [네이버 개발자 센터](https://developers.naver.com/main/)) API 키 값은 [oauthsettings.json](/oauthsettings.json)파일에 직접 API 키 값을 추가할 수 있습니다.
+  * 네이버 API의 경우 별도의 검수 절차가 필요하며, 페이스북 API의 경우 설정 패널에서 라이브 상태 설정만 해주면 로그인 기능 사용이 가능합니다.
 
 * 메인 페이지의 기본 문구는 ```정적 페이지 설정```에서 변경할 수 있으며 HTML코드를 그대로 페이지에 표시합니다.
 
