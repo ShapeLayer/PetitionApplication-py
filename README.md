@@ -78,7 +78,7 @@ python3 app.py
 * 페이지 공개 시 페이지는 https 연결을 사용해야 합니다. [LocalSettings.py](./LocalSettings.py) 파일의 `publish_host_name` 값을 https 프로토콜을 포함한 도메인 주소로 설정하고, 실제로 https 연결을 지원해야합니다. 리버스 프록시를 사용해 실현하는 것을 권장합니다. ([nginx 설정 파일](./conf/nginx.conf))
 
 # 포함된 외부 프로젝트
-* [Bootstrap](https://getbootstrap.com/) - Bootstrap - [MIT License](https://github.com/twbs/bootstrap/blob/master/LICENSE)
+* [Bootstrap](https://getbootstrap.com/) - [Bootstrap](https://github.com/twbs) - [MIT License](https://github.com/twbs/bootstrap/blob/master/LICENSE)
 * [Minty](https://bootswatch.com/minty/) - [Thomas Park](https://thomaspark.co/) - [MIT License](https://github.com/thomaspark/bootswatch/blob/master/LICENSE)
 * [oAuth-Buttons](https://github.com/oAuth-Buttons/oAuth-Buttons) - [oAuth-Buttons](https://github.com/oAuth-Buttons) - [MIT License](https://github.com/oAuth-Buttons/oAuth-Buttons/blob/master/LICENSE) _일부 포함 및 수정됨_
 
