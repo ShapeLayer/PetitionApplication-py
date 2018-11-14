@@ -4,7 +4,9 @@ fetea Opensource License Information
 [![Minty-License](https://img.shields.io/badge/minty-MIT-brightgreen.svg?longCache=true&style=flat-square)](#minty)
 [![oAuth-Buttons-License](https://img.shields.io/badge/oauth--buttons-MIT-brightgreen.svg?longCache=true&style=flat-square)](#oauth-buttons)
 
-fetea includes some open source licensing projects. Below is the content.
+fetea is licensed under the BSD 3-Clause License. See the [LICENSE](/LICENSE) file for details.
+
+fetea includes some open source licensing projects. Below is the detail. (Last Update: 2018-11-14 KST 19:08)
 
 ## Bootstrap
 ### License Document
