@@ -1636,6 +1636,17 @@ def flask_admin_static_add():
 def serve_pictures(assets):
     return send_from_directory('assets', assets)
 
+@app.route('/robots.txt')
+def robots():
+    robots = """
+User-agent: *
+Disallow: /admin
+Disallow: /login
+Disallow: /logout
+Disallow: /register
+    """
+    return robots
+
 ### Error Handler ###
 @app.route('/error/acl/', methods=['GET'])
 def error_acl():
