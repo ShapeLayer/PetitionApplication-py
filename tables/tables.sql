@@ -13,6 +13,7 @@ CREATE TABLE peti_react_tb(
     react_id INTEGER primary key AUTOINCREMENT,
     peti_id INTEGER NOT NULL,
     author_id INTEGER NOT NULL,
+    react_type TEXT NOT NULL, /* default, offical */
     content TEXT NOT NULL
 );
 

@@ -205,11 +205,11 @@ class viewer:
         react_body_content = ''
         for i in range(len(react_data)):
             react_render_object = template_react
-            if author_nickname[0][2] == react_data[i][4]:
-                react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][5])+'   <span class="badge badge-pill badge-warning">작성자</span>')
+            if author_nickname[0][2] == react_data[i][5]:
+                react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][6])+'   <span class="badge badge-pill badge-warning">작성자</span>')
             else:
-                react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][5]))
-            react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
+                react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][6]))
+            react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][4])
             react_body_content += react_render_object
         ### Render End ###
 
@@ -816,7 +816,7 @@ def flask_a_article_id(article_id):
         ### Save End ###
 
         ### Insert Data into Database ###
-        sqlite3_query = 'insert into peti_react_tb (peti_id, author_id, content) values({}, {}, "{}")'.format(
+        sqlite3_query = 'insert into peti_react_tb (peti_id, author_id, react_type, content) values({}, {}, "default", "{}")'.format(
             peti_id,
             react_author_id,
             content
@@ -1483,8 +1483,8 @@ def flask_admin_petition_article_id(article_id):
     template = template.replace('%_is_enabled_%', 'disabled')
     for i in range(len(react_data)):
         react_render_object = template_react
-        react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][2]))
-        react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][3])
+        react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][3]))
+        react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][4])
         react_body_content += react_render_object
     ### Render End ###
 
