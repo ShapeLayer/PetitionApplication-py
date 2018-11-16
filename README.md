@@ -3,8 +3,8 @@ Fe-tea, PetitionApplication based on Flask
 
 ![Python Required](https://img.shields.io/badge/python-3.5%20or%20higher-blue.svg?longCache=true&style=flat-square)
 ![BSD-3 License](https://img.shields.io/badge/license-BSD--3-lightgrey.svg?longCache=true&style=flat-square)
-[![Latest Release](https://img.shields.io/badge/latest%20release-1.0--beta--3-yellow.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-3)
-[![Latest Stable Release](https://img.shields.io/badge/stable-none-red.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases)
+[![Latest Release](https://img.shields.io/badge/latest%20release-1.0-brightgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0)
+[![Latest Stable Release](https://img.shields.io/badge/stable-1.0-brightgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0)
 [![Bootstrap-License](https://img.shields.io/badge/bootstrap-MIT-brightgreen.svg?longCache=true&style=flat-square)](https://github.com/twbs/bootstrap/blob/master/LICENSE)
 [![Minty-License](https://img.shields.io/badge/minty-MIT-brightgreen.svg?longCache=true&style=flat-square)](https://github.com/thomaspark/bootswatch/blob/master/LICENSE)
 [![oAuth-Buttons-License](https://img.shields.io/badge/oauth--buttons-MIT-brightgreen.svg?longCache=true&style=flat-square)](https://github.com/oAuth-Buttons/oAuth-Buttons/blob/master/LICENSE)
@@ -28,6 +28,7 @@ Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로
 
 | 구분 | 릴리즈 |
 | :----: | :----: |
+| stable | [![](https://img.shields.io/badge/stable-1.0-brightgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0) |
 | beta | [![](https://img.shields.io/badge/beta-1.0--3-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-3) |
 | beta | [![](https://img.shields.io/badge/beta-1.0--2-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta-2) |
 | beta | [![](https://img.shields.io/badge/beta-1.0-yellowgreen.svg?longCache=true&style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0-beta) |
