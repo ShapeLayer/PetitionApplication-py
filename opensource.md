@@ -1,8 +1,8 @@
 fetea Opensource License Information
 ====
-[![Bootstrap-License](https://img.shields.io/badge/bootstrap-MIT-brightgreen.svg?longCache=true&style=flat-square)](#bootstrap)
-[![Minty-License](https://img.shields.io/badge/minty-MIT-brightgreen.svg?longCache=true&style=flat-square)](#minty)
-[![oAuth-Buttons-License](https://img.shields.io/badge/oauth--buttons-MIT-brightgreen.svg?longCache=true&style=flat-square)](#oauth-buttons)
+[![Bootstrap-License](https://img.shields.io/badge/bootstrap-MIT-cef19e.svg?longCache=true&style=flat-square)](#bootstrap)
+[![Minty-License](https://img.shields.io/badge/minty-MIT-cef19e.svg?longCache=true&style=flat-square)](#minty)
+[![oAuth-Buttons-License](https://img.shields.io/badge/oauth--buttons-MIT-cef19e.svg?longCache=true&style=flat-square)](#oauth-buttons)
 
 fetea is licensed under the BSD 3-Clause License. See the [LICENSE](/LICENSE) file for details.
 
