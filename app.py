@@ -832,6 +832,9 @@ def flask_a_write():
     nav_bar = user_control.load_nav_bar()
 
     template = open('templates/a_write.html', encoding='utf-8').read()
+    
+    recaptcha_site_key = config.load_oauth_settings()['recaptcha_site_key']
+    template = template.replace('%_recaptcha_site_key_%', recaptcha_site_key)
 
     ### Template Rendering ###
     if 'now_login' in session:
@@ -854,6 +857,16 @@ def flask_a_write():
         peti_publish_date = datetime.today()
         peti_author_display_name = parser.anti_injection(request.form['peti_author_display_name'])
         peti_body_content = parser.anti_injection(request.form['peti_body_content'])
+        recaptcha_response = request.form['g-recaptcha-response']
+
+        ### reCaptcha Check ###
+        recaptcha_secret_key = config.load_oauth_settings()['recaptcha_secret_key']
+        url = 'https://www.google.com/recaptcha/api/siteverify?secret={}&response={}'.format(
+            recaptcha_secret_key, recaptcha_response
+        )
+        recaptcha_check_json = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
+        if recaptcha_check_json['success'] == False:
+            return '오류! reCaptcha를 제대로 수행하세요.'
 
         ### Save Author Data ###
         if peti_status == 1:

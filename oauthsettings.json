@@ -2,5 +2,7 @@
     "facebook_client_id" : "",
     "facebook_client_secret" : "",
     "naver_client_id" : "",
-    "naver_client_secret" : ""
+    "naver_client_secret" : "",
+    "recaptcha_site_key" : "",
+    "recaptcha_secret_key" : ""
 }
