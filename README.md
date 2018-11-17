@@ -54,6 +54,20 @@ pip install -r requirements.txt
 pip3 install -r requirements.txt
 ```
 
+### API 키 설정
+`oauthsettings.json`파일을 수정하여 각 API 키 값을 추가해야합니다.
+
+| 속성 | 값 |
+| :----: | :----: | 
+| `facebook_client_id` | facebook 로그인 API 클라이언트 ID |
+| `facebook_client_secret` | facebook 로그인 API 비밀키 |
+| `naver_client_id` | 네이버 로그인 API 클라이언트 ID |
+| `naver_client_secret` | 네이버 로그인 API 비밀키 |
+| \*`recaptcha_site_key` | reCaptcha 사이트 키 |
+| \*`recaptcha_secret_key` | reCaptcha 사이트 비밀키|
+* \*는 필수값 
+
+
 ### 애플리케이션 시작
 Fe-tea를 시작합니다.
 ```
