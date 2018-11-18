@@ -183,12 +183,31 @@ class viewer:
     def load_petition(target_id):
         body_content = ''
 
+        ### Load User Auth Data ###
+        if 'now_login' in session:
+            now_login = session['now_login']
+            user_auth = sqlite3_control.select('select user_group_acl.site_administrator from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(now_login))
+            if user_auth[0][0] == 1:
+                control_delete = ' <a href="/a/{}/delete/"><span class="badge badge-pill badge-danger">삭제</span></a>'.format(target_id)
+                control_official_reply = ' <a href="/a/{}/official/"><span class="badge badge-pill badge-primary">답변</span></a>'.format(target_id)
+                petition_control = '<p> 이 청원을... ' + control_delete + control_official_reply + '</p>'
+            else:
+                petition_control = ''
+        else:
+            petition_control = ''
+        ### Load End ###
+
         ### Index Data from Database ###
         peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(target_id))
-        react_data = sqlite3_control.select('select peti_react_tb.*, author_connect.account_user_id, author_connect.peti_author_display_name from peti_react_tb, author_connect where peti_id = {} and author_connect.peti_author_id = peti_react_tb.author_id'.format(target_id))
+        react_data = sqlite3_control.select('select peti_react_tb.*, author_connect.account_user_id, author_connect.peti_author_display_name from peti_react_tb, author_connect where peti_react_tb.peti_id = {} and author_connect.peti_author_id = peti_react_tb.author_id and peti_react_tb.react_type = "default"'.format(target_id))
         author_nickname = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(
             peti_data[0][4]
         ))
+        if peti_data[0][3] == 2:
+            reply_official_data = sqlite3_control.select('select content from peti_react_tb where peti_id = {} and react_type = "official"'.format(target_id))
+            reply_official_content = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(
+                reply_official_data[0][0]
+            ))
         ### Index End ###
 
         ### Load Template ###
@@ -233,11 +252,20 @@ class viewer:
         ### Render Template ###
         author_data_display = user_control.user_controller(author_data[0][0])
         template = template.replace('%_article_display_name_%', peti_data[0][1])
+        template = template.replace('%_article_control_panel_%', petition_control)
         template = template.replace('%_article_publish_date_%', peti_data[0][2])
         template = template.replace('%_article_author_display_name_%', author_data_display)
         template = template.replace('%_article_body_content_%', peti_data[0][5])
         template = template.replace('%_article_react_count_%', str(len(react_data)))
         template = template.replace('%_article_reacts_%', react_body_content)
+
+        #### Render Official Reply ####
+        if peti_data[0][3] == 2:
+            official_reply_content = '<p style="text-align: right; padding-bottom: 0; margin-bottom:0;">청원 답변</p><h4><a href="/static/'+reply_official_data[0][0]+'" data-toggle="tooltip" title="새 창으로 원문 보기" target="_blank">'+reply_official_content[0][1]+'</a></h4><b>사용자: '+reply_official_content[0][2]+' 마지막으로 수정 | '+reply_official_content[0][3]+'</b><hr>'+reply_official_content[0][4]
+            template = template.replace('%_article_official_reply_%', official_reply_content)
+        else:
+            template = template.replace('%_article_official_reply_%', '')
+
         body_content += template
         ### Render End ###
         
@@ -737,13 +765,14 @@ def flask_a():
     ### Index Database ###
     if request.args.get('type') == 'done':
         peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 2 order by peti_id desc')
+        title_comment = '완료된 청원들'
     else:
-    
         peti_data = sqlite3_control.select('select * from peti_data_tb order by peti_id desc')
+        title_comment = '새로운 청원들'
     ### Index End ###
 
     ### Render Template ###
-    body_content += '<h1>새로운 청원들</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">청원 제목</th></tr></thead><tbody>'
+    body_content += '<h1>{}</h1><table class="table table-hover"><thead><tr><th scope="col">N</th><th scope="col">청원 제목</th></tr></thead><tbody>'.format(title_comment)
     for i in range(len(peti_data)):
         if peti_data[i][3] == 1:
             body_content += '<tr><th scope="row">{}</th><td><a>비공개 청원</a></td></tr>'.format(peti_data[i][0])
@@ -921,6 +950,7 @@ def flask_a_article_id_delete(article_id):
     ### Render Login Status ###
     user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
     body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
+    body_content = body_content.replace('%_confirm_head_%', '청원 삭제')
     ### Render End ###
     
     if request.method == 'POST':
@@ -941,6 +971,50 @@ def flask_a_article_id_delete(article_id):
         sqlite3_control.commit('update peti_data_tb set peti_status = 404 where peti_id = {}'.format(article_id))
         return redirect('/a/')
     body_content = body_content.replace('%_form_alerts_%', '')
+    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
+@app.route('/a/<article_id>/official/', methods=['GET', 'POST'])
+def flask_a_article_id_official(article_id):
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    body_content = ''
+    nav_bar = user_control.load_nav_bar()
+
+    reply_template = """
+<div class="bs-docs-section">
+    <h1>청원 공식 답변</h1>
+    <div class="bs-component">
+        <form action="" accept-charset="utf-8" name="" method="post">
+            <fieldset>
+                <div class="form-group">
+                    <div class="form-group">
+                        %_sns_login_status_%
+                    </div>
+                </div>
+            </fieldset>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="Check" required>
+                <label class="custom-control-label" name="from_official_reply" for="Check">이 작업은 %_appname_%의 공식적인 입장입니다. <br>이후 수정하더라도 <a href="https://archive.is">archive.is</a>와 같은 웹사이트 기록 사이트에 아카이브되어 이전 답변을 확인할 수 있다는 것을 확인했습니다.</label>
+            </div>
+            <button type="submit" name="submit" class="btn btn-primary" value="publish">계속하기</button>
+        </form>
+    </div>
+</div>
+    """
+    ### Render Login Status ###
+    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+    reply_template = reply_template.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
+    ### Render End ###
+
+    reply_template = viewer.render_var(reply_template)
+    body_content += reply_template
+
+    if request.method == 'POST':
+        return redirect('http://localhost:2500/admin/static/add?type=reply&target={}'.format(article_id))
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/a/<article_id>/complete/', methods=['GET', 'POST'])
@@ -1590,21 +1664,23 @@ def flask_admin_static_add():
         return redirect('/error/acl/')
         
     body_content = ''
+    nav_bar = user_control.load_nav_bar()
 
     template = """
 <div class="bs-docs-section">
-    <h1>정적 페이지 추가</h1>
+    <h1>정적 페이지 추가 %_additional_%</h1>
     <div class="bs-component">
         <form action="" accept-charset="utf-8" name="" method="post">
             <fieldset>
+                %_form_alerts_%
                 <div class="form-group">
                     <div class="form-group">
-                        <input type="text" class="form-control" id="title_slug" name="title_slug" placeholder="설정할 링크(슬러그)" onChange="changeAlert()" style="width: 70vw;" required>
+                        <input type="text" class="form-control" id="title_slug" name="title_slug" placeholder="설정할 링크(슬러그)" onChange="changeAlert()" style="width: 70vw;" value="%_slug_value_%" required %_canwrite_%>
                     </div>
                     <div class="form-group">
                         <input type="text" class="form-control" name="title_display_name" placeholder="표시할 이름" style="width: 70vw;" required>
                     </div>
-                    <p id="slug_result">이 페이지의 링크가 설정되지 않았습니다.</p>
+                    <p id="slug_result">%_slug_result_%</p>
                     <textarea class="form-control" name="body_content" rows="20" placeholder="html 코드로 작성합니다." required></textarea>
                 </div>
             </fieldset>
@@ -1617,29 +1693,84 @@ def flask_admin_static_add():
     <script>
         function changeAlert() {
             var slug = document.getElementById("title_slug").value
-            document.getElementById("slug_result").innerHTML = "이 페이지의 링크는 <a href='"+slug+"'>"+slug+"</a>가 될 것입니다.";
+            document.getElementById("slug_result").innerHTML = "이 페이지의 링크는 <a href='/static/"+slug+"'>%_publish_host_name_%/static/"+slug+"</a>가 될 것입니다.";
         }
     </script>
     """
 
     body_content += js_code + template
+    ### Petition Official Reply ###
+    if request.args.get('type') == 'reply':
+        try:
+            target = int(request.args.get('target'))
+            body_content = body_content.replace('%_additional_%', '( <a href="/a/{}">{}번 청원</a> 답변 )'.format(target, target))
+            body_content = body_content.replace('%_slug_value_%', 'a-reply-{}'.format(target))
+            body_content = body_content.replace('%_canwrite_%', 'readonly')
+            body_content = body_content.replace('%_slug_result_%', '이 페이지의 링크는 <a href="/static/a-reply-{}">%_publish_host_name_%/static/a-reply-{}</a>가 될 것입니다.'.format(target, target))
+        except:
+            return redirect('/admin/static/add?error=reply_target_not_int')
+    else:
+        body_content = body_content.replace('%_additional_%', '')
+        body_content = body_content.replace('%_slug_value_%', '')
+        body_content = body_content.replace('%_canwrite_%', '')
+        body_content = body_content.replace('%_slug_result_%', '이 페이지의 링크가 설정되지 않았습니다.')
 
-    nav_bar = user_control.load_nav_bar()
+    ### error handler ###
+    if request.args.get('error') != None:
+        if request.args.get('error') == 'reply_target_not_int':
+            error_msg = """
+            <div class="alert alert-dismissible alert-warning">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <h4 class="alert-heading">오류!</h4>
+                <p class="mb-0">청원 답변 기능 사용에 필요한 모든 정보가 수집되지 않았습니다.</p>
+                <p class="mb-0">이전으로 되돌아가 다시 시도해 보세요. 만약 이 현상이 계속된다면 <a href="https://github.com/kpjhg0124/PetitionApplication-py/issues"><i class="fas fa-link"></i>   이곳</a>에 문제를 신고할 수 있습니다.</p>
+            </div>
+            """
+            body_content = body_content.replace('%_form_alerts_%', error_msg)
+        if request.args.get('error') == 'already_existed':
+            error_msg = """
+            <div class="alert alert-dismissible alert-warning">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <h4 class="alert-heading">오류!</h4>
+                <p class="mb-0">이미 해당 슬러그는 다른 정적 페이지가 사용하고 있습니다..</p>
+                <p class="mb-0">이전으로 되돌아가 슬러그를 수정해 다시 시도해 보세요.</p>
+            </div>
+            """
+            body_content = body_content.replace('%_form_alerts_%', error_msg)
+    else:
+        body_content = body_content.replace('%_form_alerts_%', '')
+    
+    body_content = body_content.replace('%_publish_host_name_%', LocalSettings.publish_host_name)
 
     if request.method == 'POST':
         ### Get POST Data ###
         static_slug =  parser.anti_injection(request.form['title_slug'])
         static_display_name =  parser.anti_injection(request.form['title_display_name'])
         static_body_content = request.form['body_content'].replace('"', '""')
-        ### Get End ###
+        
+        target = 0
+        if request.args.get('type') == 'reply':
+            try:
+                target = int(request.args.get('target'))
+                static_slug = 'a-reply-{}'.format(target)
+            except:
+                return redirect('/admin/static/add?error=reply_target_not_int')
 
+        ### Get End ###
         search = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(static_slug))
         user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(session['now_login']))
         if len(search) != 0:
             return redirect('/admin/static/add?error=already_existed')
         sqlite3_control.commit('insert into static_page_tb (page_name, title, editor, editdate, content) values("{}", "{}", "{}", "{}", "{}")'.format(
-            parser.anti_injection(static_slug), parser.anti_injection(static_display_name), parser.anti_injection(user_name[0][0]), parser.anti_injection(str(datetime.today())), parser.anti_injection(static_body_content)
+            static_slug, static_display_name, parser.anti_injection(user_name[0][0]), parser.anti_injection(str(datetime.today())), parser.anti_injection(static_body_content)
         ))
+        print(target)
+        if target > 0:
+            print('안녕')
+            sqlite3_control.commit('insert into peti_react_tb (peti_id, author_id, react_type, content) values({}, 0, "official", "{}")'.format(
+                target, static_slug
+            ))
+            sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = {}'.format(target))
 
         return redirect('/admin/static?page={}'.format(static_slug))
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1659,6 +1790,31 @@ Disallow: /logout
 Disallow: /register
     """
     return robots
+
+### Ajax ###
+@app.route('/ajax/a/', methods=['GET', 'POST'])
+def flask_ajax_a():
+    request_lower_num = request.args.get('request-s')
+    request_higher_num = request.args.get('request-e')
+    request_type = request.args.get('type') # done / all
+    if request_lower_num == None or request_higher_num == None or request_type == None:
+        return 'unexpected request.'
+    if request_type == 'done':
+        additional_query = 'peti_status = 2 and'
+    else:
+        additional_query = ''
+    peti_data = sqlite3_control.select('select * from peti_data_tb where {} peti_id >= {} and peti_id <= {} order by peti_id desc'.format(
+        additional_query, request_lower_num, request_higher_num
+    ))
+    return_json = []
+    for i in range(len(peti_data)):
+        if peti_data[i][3] == 1:
+            return_json += [{"peti_id" : peti_data[i][0], "peti_display" : "비공개 청원", "peti_status" : peti_data[i][3]}]
+        elif peti_data[i][3] == 404:
+            return_json += [{"peti_id" : peti_data[i][0], "peti_display" : "삭제된 청원", "peti_status" : peti_data[i][3]}]
+        else:
+            return_json += [{"peti_id" : peti_data[i][0], "peti_display" : peti_data[i][1], "peti_status" : peti_data[i][3]}]
+    return str(return_json)
 
 ### Error Handler ###
 @app.route('/error/acl/', methods=['GET'])
