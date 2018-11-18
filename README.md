@@ -126,7 +126,7 @@ server {
 # 도움을 주신 분들
 * [페이스북 그룹 생활코딩](https://www.facebook.com/groups/codingeverybody/) 멤버분들
 * [2DU](https://github.com/2du)
-* 숭덕고등학교 학생회 및 IT 동아리 `\n`
+* [숭덕고등학교 학생회](https://www.facebook.com/sungdeokcouncil/) 및 [IT 동아리 \n](https://github.com/404-sdok)
 
 # 라이선스
 이 프로젝트는 BSD 3-Clause 라이선스에 의거 보호되고 있습니다. 더 많은 정보는 [LICENSE](/LICENSE) 문서를 참고하세요.
