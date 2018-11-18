@@ -113,7 +113,7 @@ server {
 
 * 내부 계정은 관리자를 위해 추가한 기능으로, 사용시 verify_key값을 입력해야 합니다. 관리자 메뉴에서 확인하거나 [verify_key](/verify_key)파일에서 확인할 수 있습니다.
 
-* 메인 페이지의 기본 문구는 ```정적 페이지 설정```에서 변경할 수 있으며 HTML코드를 그대로 페이지에 표시합니다.
+* 메인 페이지의 기본 문구는 ```정적 페이지 설정```에서 변경할 수 있으며 정적 페이지 기능은 HTML코드를 그대로 페이지에 표시합니다.
 
 # 포함된 외부 프로젝트
 * [Bootstrap](https://getbootstrap.com/) - [Bootstrap](https://github.com/twbs) - [MIT License](https://github.com/twbs/bootstrap/blob/master/LICENSE)
