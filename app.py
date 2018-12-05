@@ -1,5 +1,6 @@
 # coding=utf-8
-## Import Python Modules ##
+
+### === Import Python Modules === ###
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_from_directory
 from flask_assets import Bundle, Environment
 from datetime import datetime
@@ -15,7 +16,9 @@ import bcrypt
 import urllib.request
 
 import LocalSettings
+### === Import End === ###
 
+### === Initialize Application === ###
 app = Flask(__name__)
 app.secret_key = LocalSettings.crypt_secret_key
 
@@ -28,7 +31,7 @@ except:
 conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
 curs = conn.cursor()
 
-## Assets Bundling ##
+    #### == Assets Building == ####
 bundles = {
     'main_js' : Bundle(
         'js/bootstrap.min.js',
@@ -45,7 +48,10 @@ bundles = {
 
 assets = Environment(app)
 assets.register(bundles)
+### === Initialize End === ###
 
+
+### === Define Functions === ###
 class parser:
     def anti_injection(content):
         content = content.replace('"', '""')
@@ -424,20 +430,22 @@ def register(callback_json, sns_type):
     else:
         sqlite3_control.commit('update site_user_tb set user_display_name = "{}", user_display_profile_img = "{}" where sns_id = "{}"'.format(callback_json['name'], callback_json['picture'], callback_json['id']))
         session['now_login'] = account_data[0][0]
+### === Define End === ###
 
-### Create Database Table ###
+
+### === Initialize Database === ###
 try:
     sqlite3_control.select('select * from peti_data_tb limit 1')
 except:
     database_query = open('tables/tables.sql', encoding='utf-8').read()
     sqlite3_control.executescript(database_query)
-    ### Initialize Database ###
     database_query = open('tables/initialize.sql', encoding='utf-8').read()
     sqlite3_control.executescript(database_query)
-    ### Initialize End ###
-### Create End ###
+### === Initialize End === ###
 
-### Main Route ###
+
+### === Flask Routes === ###
+# ## flask: MainPage
 @app.route('/', methods=['GET', 'POST'])
 def flask_main():
     body_content = ''
@@ -452,7 +460,7 @@ def flask_main():
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-### Account Route ###
+# ## flask: login
 @app.route('/login/', methods=['GET', 'POST'])
 def flask_login():
     if 'now_login' in session:
@@ -656,17 +664,11 @@ def flask_login_entree():
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
             return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-            ### 로그인 실패 #
 
-    ### Render Alerts ###
     body_content = body_content.replace('%_form_alerts_%', '')
-    ### Render End ###
-
-### To-Do ###
-# SNS 로그인 기능 재추가
-### To-Do End ###
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Logout
 @app.route('/logout/')
 def flask_logout():
     body_content = ''
@@ -676,6 +678,7 @@ def flask_logout():
     body_content += '<h1>로그아웃 완료</h1><p>{}에서 로그아웃되었습니다.</p><p>브라우저 캐시를 삭제하지 않으면 로그인한 것처럼 보일 수도 있음에 유의하세요.</p>'.format(LocalSettings.entree_appname)
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: register
 @app.route('/register/', methods=['GET', 'POST'])
 def flask_register():
     body_content = ''
@@ -756,7 +759,7 @@ def flask_register():
     body_content = body_content.replace('%_form_alerts_%', '')
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-### Petition Route ###
+# ## flask: Petition List
 @app.route('/a/', methods=['GET', 'POST'])
 def flask_a():
     body_content = ''
@@ -791,6 +794,7 @@ def flask_a():
     ### Render End ###
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Petition Article
 @app.route('/a/<article_id>/', methods=['GET', 'POST'])
 def flask_a_article_id(article_id):
     body_content = ''
@@ -855,6 +859,7 @@ def flask_a_article_id(article_id):
         return redirect('/a/{}'.format(article_id))
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Petition Write
 @app.route('/a/write/', methods=['GET', 'POST'])
 def flask_a_write():
     body_content = ''
@@ -926,13 +931,8 @@ def flask_a_write():
         return redirect('/a/')
     body_content += template
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-#### To-Do ####
-"""
- * author_id에 고유 코드 기록 (현재: 그냥 유저가 입력한 정보 그대로 insert)
-"""
-#### To-Do End ####
 
-
+# ## flask: Petition Delete
 @app.route('/a/<article_id>/delete/', methods=['GET', 'POST'])
 def flask_a_article_id_delete(article_id):
     if 'now_login' in session:
@@ -973,6 +973,7 @@ def flask_a_article_id_delete(article_id):
     body_content = body_content.replace('%_form_alerts_%', '')
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Petition Official React
 @app.route('/a/<article_id>/official/', methods=['GET', 'POST'])
 def flask_a_article_id_official(article_id):
     if 'now_login' in session:
@@ -1057,7 +1058,7 @@ def flask_a_article_id_complete(article_id):
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 
-### Log Route ###
+# ## flask: Activity Log
 @app.route('/log/')
 def flask_log():        
     body_content = ''
@@ -1077,7 +1078,7 @@ def flask_log():
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-### Static Page Route ###
+# ## flask: Static Page Viewer
 @app.route('/static/<title>')
 def flask_static(title):    
     body_content = ''
@@ -1094,6 +1095,7 @@ def flask_static(title):
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Notice Static Page
 @app.route('/notice/')
 def flask_notice():    
     body_content = ''
@@ -1109,7 +1111,8 @@ def flask_notice():
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-### Administrator Menu Route ###
+
+# ## flask: Admin Page
 @app.route('/admin/')
 def flask_admin():
     if 'now_login' in session:
@@ -1130,6 +1133,7 @@ def flask_admin():
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Admin-member
 @app.route('/admin/member/')
 def flask_admin_member():
     if 'now_login' in session:
@@ -1159,6 +1163,7 @@ def flask_admin_member():
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Admin-member-idnetify
 @app.route('/admin/member/identify/', methods=['GET', 'POST'])
 def flask_admin_identify():
     if 'now_login' in session:
@@ -1229,6 +1234,7 @@ def flask_admin_identify():
     
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Admin-admins
 @app.route('/admin/admins/')
 def flask_admin_admins():
     if 'now_login' in session:
@@ -1268,6 +1274,7 @@ def flask_admin_admins():
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Admin-(add admins)
 @app.route('/admin/admins/add/', methods=['GET', 'POST'])
 def flask_admin_admins_add():
     if 'now_login' in session:
@@ -1334,7 +1341,7 @@ def flask_admin_admins_add():
     
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-
+# ## flask: Admin-ACL Settings
 @app.route('/admin/acl/', methods=['GET', 'POST'])
 def flask_admin_acl():
     if 'now_login' in session:
@@ -1464,6 +1471,7 @@ def flask_admin_acl():
     body_content += table_container
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Admin-verify_key
 @app.route('/admin/verify_key/')
 def flask_admin_verify_key():
     if 'now_login' in session:
@@ -1509,6 +1517,7 @@ $(function () {
     body_content += '<p>verify_key는 1회 사용시 갱신됩니다.</p>'
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Admin-Petition Manage
 @app.route('/admin/petition/')
 def flask_admin_petition():
     if 'now_login' in session:
@@ -1587,6 +1596,7 @@ def flask_admin_petition_article_id(article_id):
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Admin-Manage Static Page
 @app.route('/admin/static/', methods=['GET', 'POST'])
 def flask_admin_static():
     if 'now_login' in session:
@@ -1775,7 +1785,7 @@ def flask_admin_static_add():
         return redirect('/admin/static?page={}'.format(static_slug))
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-### Assets Route ###
+# ## flask: Assets Route
 @app.route('/assets/<assets>/')
 def serve_pictures(assets):
     return send_from_directory('assets', assets)
@@ -1791,7 +1801,7 @@ Disallow: /register
     """
     return robots
 
-### Ajax ###
+# ## flask: Ajax Route
 @app.route('/ajax/a/', methods=['GET', 'POST'])
 def flask_ajax_a():
     request_lower_num = request.args.get('request-s')
@@ -1816,7 +1826,7 @@ def flask_ajax_a():
             return_json += [{"peti_id" : peti_data[i][0], "peti_display" : peti_data[i][1], "peti_status" : peti_data[i][3]}]
     return str(return_json)
 
-### Error Handler ###
+# ## flask: Error Handler
 @app.route('/error/acl/', methods=['GET'])
 def error_acl():
     body_content = '<h1>Oops!</h1><h2>ACL NOT SATISFIED</h2>'
@@ -1829,14 +1839,12 @@ def error_acl():
     nav_bar = user_control.load_nav_bar()
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-
 @app.errorhandler(404)
 def error_404(self):
     body_content = '<h1>Oops!</h1><h2>404 NOT FOUND</h2><p>존재하지 않는 페이지입니다.</p>'
     nav_bar = user_control.load_nav_bar()
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
-
 @app.errorhandler(500)
 def error_500(self):
     body_content = '<h1>Oops!</h1><h2>500 Internal Server Error</h2><p>서버 내부에 오류가 발생했습니다.</p><p><a href="https://github.com/kpjhg0124/PetitionApplication-py/issues">Github의 fetea 이슈 트래커</a>에 버그 상황을 자세히 남겨주시면 바로 조치하겠습니다.</p>'
@@ -1844,4 +1852,5 @@ def error_500(self):
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+### === Application Run === ###
 app.run(LocalSettings.flask_host, flask_port_set, debug = True)
