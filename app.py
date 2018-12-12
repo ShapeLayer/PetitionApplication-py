@@ -153,6 +153,13 @@ class user_control:
         user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
         body_content = script + user_data[0][1] + user_id_badge + user_identify_badge
         return body_content
+    
+    def super_secret_settings(target_id):
+        user_auth = sqlite3_control.select('select user_group_acl.site_owner from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(target_id))[0][0]
+        if user_auth == 1:
+            return True
+        else:
+            return False
         
 class config:
     def load_oauth_settings():
@@ -430,6 +437,8 @@ def register(callback_json, sns_type):
     else:
         sqlite3_control.commit('update site_user_tb set user_display_name = "{}", user_display_profile_img = "{}" where sns_id = "{}"'.format(callback_json['name'], callback_json['picture'], callback_json['id']))
         session['now_login'] = account_data[0][0]
+
+super_secret_button = '<button type="submit" name="submit" class="btn btn-link" value="super_secret_button">Super Secret Button...</button>'
 ### === Define End === ###
 
 
@@ -951,6 +960,10 @@ def flask_a_article_id_delete(article_id):
     user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
     body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
     body_content = body_content.replace('%_confirm_head_%', '청원 삭제')
+    if user_control.super_secret_settings(session['now_login']) == True:
+        body_content = body_content.replace('%_super_secret_button_%', super_secret_button)
+    else:
+        body_content = body_content.replace('%_super_secret_button_%', '')
     ### Render End ###
     
     if request.method == 'POST':
@@ -959,13 +972,16 @@ def flask_a_article_id_delete(article_id):
         activity_date = datetime.today()
         activity_object = '청원(<i>{}</i>)'.format(peti_data[0][1])
         activity_description = request.form['description']
-        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
-            session['now_login'],
-            activity_object,
-            '삭제',
-            activity_description,
-            activity_date
-        ))
+        if user_control.super_secret_settings(session['now_login']) == True and request.form['submit'] == 'super_secret_button':
+            pass
+        else:
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+                session['now_login'],
+                activity_object,
+                '삭제',
+                activity_description,
+                activity_date
+            ))
         ### Log End ###
 
         sqlite3_control.commit('update peti_data_tb set peti_status = 404 where peti_id = {}'.format(article_id))
@@ -1032,6 +1048,12 @@ def flask_a_article_id_complete(article_id):
     template = open('templates/confirm.html', encoding='utf-8').read()
     body_content += template
 
+    if user_control.super_secret_settings(session['now_login']) == True:
+        body_content = body_content.replace('%_super_secret_button_%', super_secret_button)
+    else:
+        body_content = body_content.replace('%_super_secret_button_%', '')
+
+
     ### Render Login Status ###
     user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
     body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
@@ -1043,13 +1065,16 @@ def flask_a_article_id_complete(article_id):
         activity_date = datetime.today()
         activity_object = '청원(<i>{}</i>)'.format(peti_data[0][1])
         activity_description = request.form['description']
-        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
-            session['now_login'],
-            activity_object,
-            '완료',
-            activity_description,
-            activity_date
-        ))
+        if user_control.super_secret_settings(session['now_login']) == True and request.form['submit'] == 'super_secret_button':
+            pass
+        else:
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+                session['now_login'],
+                activity_object,
+                '완료',
+                activity_description,
+                activity_date
+            ))
         ### Log End ###
 
         sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = {}'.format(article_id))
@@ -1197,6 +1222,10 @@ def flask_admin_identify():
     form_template = open('templates/confirm.html', encoding="utf-8").read()
     form_rendered = form_template.replace('%_confirm_head_%', '작업 확인')
     form_rendered = form_rendered.replace('%_form_alerts_%', '<input type="hidden" id="target_id" name="target_id" value="{}">'.format(target_id))
+    if user_control.super_secret_settings(session['now_login']):
+        form_rendered = form_rendered.replace('%_super_secret_button_%', super_secret_button)
+    else:
+        form_rendered = form_rendered.replace('%_super_secret_button_%', '')
     form_rendered = viewer.load_sns_login_status(form_rendered)
     body_content += form_rendered
     ### Render End
@@ -1213,13 +1242,16 @@ def flask_admin_identify():
         ))
 
         activity_date = datetime.today()
-        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
-        session['now_login'],
-        '닉네임 ' + target_data_sqlite[0][5],
-        '명의를 확인',
-        activity_description,
-        activity_date
-        ))
+        if user_control.super_secret_settings(session['now_login']) == True and request.form['submit'] == 'super_secret_button':
+            pass
+        else:
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            session['now_login'],
+            '닉네임 ' + target_data_sqlite[0][5],
+            '명의를 확인',
+            activity_description,
+            activity_date
+            ))
 
         table_template = """
         <h2>검색결과</h2>
