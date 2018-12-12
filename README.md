@@ -87,28 +87,7 @@ python3 app.py
 ### 애플리케이션 공개
 SNS 로그인 기능으로 인해 페이지 공개 시 페이지는 https 연결을 사용해야 합니다. [LocalSettings.py](./LocalSettings.py) 파일의 `publish_host_name` 값을 https 프로토콜을 포함한 도메인 주소로 설정하고, 실제로 https 연결을 지원해야합니다. 리버스 프록시를 사용해 실현하는 것을 권장합니다. 
 
-([nginx 설정 파일](./conf/nginx.conf))
-
-```
-server {
- listen 80;
- listen [::]:80;
-
- listen 443 ssl;
- listen [::]:443 ssl;
-
- server_name write_your_domain;
-
- location / {
- proxy_redirect off;
- proxy_pass_header Server;
- proxy_set_header Host $http_host;
- proxy_set_header X-Real-IP $remote_addr;
- proxy_set_header X-Scheme $scheme;
- proxy_pass http://localhost:2500;
- }
-}
-```
+ * ([apache 설정 파일](./conf/apache/), [nginx 설정 파일](./conf/nginx.conf))
 
 ### 기타 사용 정보 
 
