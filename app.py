@@ -293,6 +293,22 @@ class viewer:
             content = content.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
         return content
 
+    def load_metatag():
+        meta_basic = """
+        <meta name="description" content="%_basic_desc_%>
+        <meta name="keyword" content="%_basic_keyword_%">
+        <meta name="distribution" content="%_basic_dist_%">(배포자)
+        """
+        meta_og = """
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="url">
+        <meta property="og:title" content="%_og_title_%">
+        <meta property="og:description" content="%_og_desc_%">
+
+        """
+        meta_basic = meta_basic.replace(LocalSettings.appname + ', 청원페이지입니다.')
+        return meta_basic + meta_og
+
     def load_search():
         ### Render Searchbar ###
         searchbar = """
@@ -466,7 +482,6 @@ def flask_main():
     static_data = sqlite3_control.select('select * from static_page_tb where page_name = "frontpage"')
     ### Load End ###
 
-    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' 마지막으로 수정 | '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
