@@ -1,4 +1,5 @@
 # coding=utf-8
+fetea_ver = 1.2
 
 ### === Import Python Modules === ###
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_from_directory
@@ -422,6 +423,7 @@ class viewer:
     def render_var(content):
         content = content.replace('%_appname_%', LocalSettings.entree_appname)
         content = content.replace('%_now_%', str(datetime.today()))
+        content = content.replace('%_fetea_ver_%', str(fetea_ver))
         return content
 
 def register(callback_json, sns_type):
