@@ -294,20 +294,20 @@ class viewer:
         return content
 
     def load_metatag():
-        meta_basic = """
-        <meta name="description" content="%_basic_desc_%>
-        <meta name="keyword" content="%_basic_keyword_%">
-        <meta name="distribution" content="%_basic_dist_%">(배포자)
-        """
-        meta_og = """
+        meta = """
+        <meta name="description" content="%_desc_%>
+        <meta name="keyword" content="%_keyword_%">
+        <meta name="distribution" content="%_dist_%">
         <meta property="og:type" content="website">
         <meta property="og:url" content="url">
-        <meta property="og:title" content="%_og_title_%">
-        <meta property="og:description" content="%_og_desc_%">
-
+        <meta property="og:title" content="%_title_%">
+        <meta property="og:description" content="%_desc_%">
         """
-        meta_basic = meta_basic.replace(LocalSettings.appname + ', 청원페이지입니다.')
-        return meta_basic + meta_og
+        meta = meta.replace('%_desc_%', LocalSettings.entree_appname + ', 청원페이지입니다.')
+        meta = meta.replace('%_dist_%', LocalSettings.entree_appname)
+        meta = meta.replace('%_title_%', LocalSettings.entree_appname)
+        meta = meta.replace('%_keyword_%', LocalSettings.entree_appname + ' ' + '청원페이지 청원')
+        return meta
 
     def load_search():
         ### Render Searchbar ###
@@ -481,7 +481,8 @@ def flask_main():
     ### Load From Database ###
     static_data = sqlite3_control.select('select * from static_page_tb where page_name = "frontpage"')
     ### Load End ###
-
+    
+    body_content = static_data[0][4]
     body_content = viewer.render_var(body_content)
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -858,6 +859,7 @@ def flask_a_article_id(article_id):
 
 
     ### Render Bodycontent ###
+    body_content += viewer.load_metatag()
     body_content += viewer.load_petition(article_id)
     if 'now_login' in session:
         body_content = body_content.replace('%_enabled_content_%', '')
@@ -1152,6 +1154,7 @@ def flask_static(title):
         abort(404)
     ### Load End ###
 
+    body_content += viewer.load_metatag()
     body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' 마지막으로 수정 | '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
@@ -1724,7 +1727,7 @@ def flask_admin_static():
         sqlite3_control.commit('update static_page_tb set editor = "{}", editdate = "{}", content = "{}" where page_name = "{}"'.format(
             parser.anti_injection(user_name[0][0]), 
             parser.anti_injection(str(datetime.today())), 
-            parser.anti_injection(received_content), 
+            received_content, 
             parser.anti_injection(request.args.get('page'))
             ))
         ### End Update ###
