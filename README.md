@@ -7,7 +7,6 @@ Fe-tea, PetitionApplication based on Flask
 [![Latest Stable Release](https://img.shields.io/badge/stable-1.0-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0)
 [![Bootstrap-License](https://img.shields.io/badge/bootstrap-MIT-cef19e.svg?style=flat-square)](https://github.com/twbs/bootstrap/blob/master/LICENSE)
 [![Minty-License](https://img.shields.io/badge/minty-MIT-cef19e.svg?style=flat-square)](https://github.com/thomaspark/bootswatch/blob/master/LICENSE)
-[![oAuth-Buttons-License](https://img.shields.io/badge/oauth--buttons-MIT-cef19e.svg?style=flat-square)](https://github.com/oAuth-Buttons/oAuth-Buttons/blob/master/LICENSE)
 
 ![](./fe.png)
 
@@ -98,7 +97,6 @@ SNS 로그인 기능으로 인해 페이지 공개 시 페이지는 https 연결
 # 포함된 외부 프로젝트
 * [Bootstrap](https://getbootstrap.com/) - [Bootstrap](https://github.com/twbs) - [MIT License](https://github.com/twbs/bootstrap/blob/master/LICENSE)
 * [Minty](https://bootswatch.com/minty/) - [Thomas Park](https://thomaspark.co/) - [MIT License](https://github.com/thomaspark/bootswatch/blob/master/LICENSE)
-* [oAuth-Buttons](https://github.com/oAuth-Buttons/oAuth-Buttons) - [oAuth-Buttons](https://github.com/oAuth-Buttons) - [MIT License](https://github.com/oAuth-Buttons/oAuth-Buttons/blob/master/LICENSE) _일부 포함 및 수정됨_
 
 # 저자
 * [kpjhg0124](https://github.com/kpjhg0124) - _첫 삽_ - [me@ho9.me](mailto:me@ho9.me)

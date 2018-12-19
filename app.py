@@ -42,7 +42,7 @@ bundles = {
     'main_css' : Bundle(
         'css/minty.css',
         'css/custom.css',
-        'css/oauth-buttons.min.css',
+        'css/oauth.css',
         output = 'gen/main.css'
     )
 }
@@ -518,18 +518,38 @@ $(document).ready(function(){
 });
 </script>
     """
-    login_button_display = """
-    <ul class="lli">
-        <li><a href="/login/naver/" data-toggle="tooltip" title="%_naver_is_enabled_%"><div class="lbtn lbtn-naver"><i class="logo"></i><p class="label">네이버 로그인</p></div></a></li>
-        <li><a href="/login/facebook/" data-toggle="tooltip" title="%_fb_is_enabled_%"><div class="lbtn lbtn-facebook"><i class="logo"></i><p class="label">Facebook 로그인</p></div></a></li>
-        <li><a href="/login/entree/">entree 엔진 로그인</a></li>
-    </ul>
-    """
-    login_button_display = login_button_display.replace('%_naver_is_enabled_%', naver_comment)
-    login_button_display = login_button_display.replace('%_fb_is_enabled_%', facebook_comment)
+    oauth_supported = []
+    oauth_content = '<div class="oauth-wrapper"><ul class="oauth-list">'
+    oauth_settings = config.load_oauth_settings()
+    if oauth_settings['facebook_client_id'] != '' or oauth_settings['facebook_client_secret'] != '':
+        oauth_supported += ['facebook']
+    if oauth_settings['naver_client_id'] != '' or oauth_settings['naver_client_secret'] != '':
+        oauth_supported += ['naver']
+
+    for i in range(len(oauth_supported)):
+        if oauth_supported[i] == 'facebook':
+            oauth_comment = 'Facebook으로 로그인'
+        else:
+            oauth_comment = '네이버 아이디로 로그인'
+        oauth_content +=    '''
+            <li>
+                <a href="/login/{}/">
+                    <div class="oauth-btn oauth-btn-{}">
+                        <div class="oauth-btn-logo oauth-btn-{}"></div>
+                        {}
+                    </div>
+                </a>
+            </li>
+            '''.format(
+                oauth_supported[i], 
+                oauth_supported[i], 
+                oauth_supported[i], 
+                oauth_comment
+            )
+    oauth_content += '</ul></div><hr><a href="/login/entree/">entree 계정으로 로그인</a>'    
     ## Render End ##
     body_content += '<p style="margin:0;">SNS 로그인 시 해당 SNS 서비스의 로그인 상태가 유지됩니다.</p><p>공용 컴퓨터에서 SNS 로그인을 사용하는 경우 시크릿 모드(Inprivate 모드)에서 로그인을 계속하십시오.</p>'
-    body_content += login_button_display
+    body_content += oauth_content
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 @app.route('/login/naver/', methods=['GET', 'POST'])
