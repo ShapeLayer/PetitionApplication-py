@@ -1,4 +1,4 @@
-Fe-tea, PetitionApplication based on Flask
+Fe-tea, Flask 기반 청원 수집 웹 
 ====
 
 ![Python Required](https://img.shields.io/badge/python-3.5%20or%20higher-blue.svg?style=flat-square)
