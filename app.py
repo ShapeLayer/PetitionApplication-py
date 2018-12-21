@@ -485,7 +485,7 @@ def flask_main():
     body_content = static_data[0][4]
     body_content = viewer.render_var(body_content)
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('frontpage.html', appname = LocalSettings.entree_appname)
 
 # ## flask: login
 @app.route('/login/', methods=['GET', 'POST'])
