@@ -36,26 +36,25 @@ a {
 /* ===== */
 
 /* Contents */
-.comment {
+h1 {
     margin-top: 0;
     margin-bottom: 10px;
     font-family: 'Noto Sans KR', sans-serif;
 }
-.container { 
+h2 { 
     margin-top: 0;
     margin-bottom: 0;
     font-size: 24px;
     
 }
 @media (min-width: 768px) {
-    .comment {
+    h1 {
         font-size: 2em;
         letter-spacing: 0.3em;
         margin-left: 0.3em;
     }
-    .reference {
+    h2 {
         font-size: 20px;
-        text-align: right;
         margin-right: 10px;
     }
     .counter {
@@ -64,14 +63,13 @@ a {
 
 }
 @media (max-width: 768px) {
-    .comment {
+    h1 {
         font-size: 1em;
         letter-spacing: 0.1em;
         margin-left: 0.1em;
     }
-    .reference {
+    h2 {
         font-size: 15px;
-        text-align: right;
         margin-right: 20px;
     }
     .counter {
@@ -178,93 +176,28 @@ a {
     list-style: none;
     padding: 0;
 }
-.site-link .phone {
+.site-link {
     width: 40vw;
-    text-align: left;
+    text-align: center;
     padding: 20px;
     transition: .5s ease;
 }
-.site-link .phone li {
-    padding: 2.5px;
-    padding-left: 30px;
+.site-link li {
+    padding: 4px;
+    border-radius: 5px;
 }
-.site-link .phone li:hover {
+.site-link li:hover {
     background-color: rgba(256, 256, 256, 0.5);
     transition: .5s ease;
 }
 @media (min-width: 768px) {
-    .site-link li { 
+    .site-link li {
         display: inline-block;
-    }    
-    .site-link .desktop li {
-        position: relative;
-        width: 10vh;
-        height: 10vh;
-        border-radius: 50%;
-        background-color: #fff;
-        margin: 0.5em;
-        background-size: cover;
-        background-position: center center;
-        cursor: pointer;
-        font-size: 16px;
-    }
-    .desktop .google {
-        background: url("img/google.png");
-    }
-    .desktop .naver {
-        background: url("img/naver.png");
-    }
-    .desktop .ebsi {
-        background: url("img/ebsi.png");
-    }
-    .desktop .daesung {
-        background: url("img/daesung.png");
-    }
-    .desktop .megastudy {
-        background: url("img/megastudy.png");
-    }
-    .desktop .skyedu {
-        background: url("img/skyedu.png");
-    }
-    .desktop .etoos {
-        background: url("img/etoos.png");
-    }
-    .site-link .desktop span {
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        border-radius: 50%;
-        opacity: 0;
-        transition: .5s ease;
-        background-color: rgba(0, 0, 0, 0.5);
-        text-align: center;
-        padding-top: 3.5vh;
-    }
-    .site-link .desktop span:hover {
-        opacity: 1;
-        transition: .5s ease;
-    }
-    .site-link .phone {
-        display: none;
     }
 }
 @media (max-width: 768px) {
-    .site-link li { 
+    .site-link li {
         display: block;
-        font-size: 18px;
-        background-color: rgba(256, 256, 256, 0);
-        transition: .5s ease;    
-    }    
-    .site-link .desktop {
-        display: none;
-    }
-    .link-icon {
-        width: 13px;
-        height: 13px;
-        margin: 0;
-        margin-right: 4px;
     }
 }
 /* ===== */

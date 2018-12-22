@@ -1,6 +1,4 @@
 # coding=utf-8
-fetea_ver = 1.2
-
 ### === Import Python Modules === ###
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_from_directory
 from flask_assets import Bundle, Environment
@@ -17,6 +15,7 @@ import bcrypt
 import urllib.request
 
 import LocalSettings
+from ver import *
 ### === Import End === ###
 
 ### === Initialize Application === ###
