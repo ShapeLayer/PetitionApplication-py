@@ -15,6 +15,9 @@ a {
     text-decoration: none;
     color: inherit;
 }
+a:hover {
+    color: #fff;
+}
 /* ===== */
 
 /* Main Page*/
@@ -26,7 +29,7 @@ a {
     justify-content: center;
     height: 100vh;
     min-height: 450px;
-    background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.5)), url(img/background1.jpg);
+    background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.5)), url(/assets/background.jpg);
     background-position: center;
     background-size: cover;
     color: #ffffff;

@@ -7,10 +7,22 @@
     <link href="https://fonts.googleapis.com/css?family=Righteous" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR" rel="stylesheet">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+    <!--Bootstrap CDN-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>    
     <link rel="stylesheet" href="assets/style.css">
 </head>
-<body>
+<body style="padding: 0;">
 <section class="main">
+        <div class="navbar navbar-expand-lg fixed-top navbar-dark">
+            <div class="container">
+                    <a href="/" class="navbar-brand">{{ appname }}</a>
+                {{ nav_bar|safe }}
+            </div>
+        </div>
+    </div>        
     <div class="container">
         <h1>BLEND IT<br>WITH<br>YOUR VOICE</h1>
         <h2>{{ appname }} 청원페이지</h2>
@@ -27,7 +39,7 @@
     <div class="footer">
         <ul class="">
             <li>© 박종현(@kpjhg0124, hoparkgo9ma)  |</li>
-            <li><a href="">See more in <i style="margin: 3px;"><i class="fab fa-github"></i></i>Github</a>  |</li>
+            <li><a href="https://github.com/kpjhg0124/PetitionApplication-py">See more in <i style="margin: 3px;"><i class="fab fa-github"></i></i>Github</a>  |</li>
             <li>
                 <i class="support">
                     <i class="support-content"><b>여기를 통해 개발자 돕기</b></i>
