@@ -13,6 +13,7 @@ CREATE TABLE peti_react_tb(
     react_id INTEGER primary key AUTOINCREMENT,
     peti_id INTEGER NOT NULL,
     author_id INTEGER NOT NULL,
+    react_type TEXT NOT NULL, /* default, offical */
     content TEXT NOT NULL
 );
 
@@ -42,8 +43,8 @@ CREATE TABLE block_user_tb(
 CREATE TABLE user_group_acl(
     user_group TEXT NOT NULL,
     group_priority INTEGER NOT NULL,
-    site_owner INTEGER NOT NULL,
-    site_administrator INTEGER NOT NULL, /* Limited */
+    site_owner INTEGER NOT NULL, /* Limited */
+    site_administrator INTEGER NOT NULL, 
     peti_read INTEGER NOT NULL,
     peti_write INTEGER NOT NULL,
     peti_react INTEGER NOT NULL,
