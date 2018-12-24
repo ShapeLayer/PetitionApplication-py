@@ -12,9 +12,11 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>    
-    <link rel="stylesheet" href="assets/style.css">
+    {% assets "main_css" %}
+    <link rel="stylesheet" href="{{ ASSET_URL }}">
+    {% endassets %}
 </head>
-<body style="padding: 0;">
+<body style="padding: 0;" class="frontpage">
 <section class="main">
         <div class="navbar navbar-expand-lg fixed-top navbar-dark">
             <div class="container">
@@ -54,6 +56,5 @@
         </ul>
     </div>
 </section>
-<script src="assets/index.js"></script>
 </body>
 </html>

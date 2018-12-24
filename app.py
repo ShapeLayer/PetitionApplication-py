@@ -42,6 +42,7 @@ bundles = {
         'css/minty.css',
         'css/custom.css',
         'css/oauth.css',
+        'css/frontpage.css',
         output = 'gen/main.css'
     )
 }
