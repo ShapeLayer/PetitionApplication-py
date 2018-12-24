@@ -149,9 +149,13 @@ class user_control:
                 return user_data[0][1]
         else:
             return user_data[0][1]
+
+        if user_data[0][2] == 0:
+            user_identify_badge = ' <span class="badge badge-pill badge-dark" data-toggle="tooltip" title="비로그인 청원 작성자는 명의를 확인할 수 없습니다.">명의</span>'.format(target_id)
+        else:
+            user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
         script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
         user_id_badge = ' <span class="badge badge-pill badge-success" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
-        user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
         body_content = script + user_data[0][1] + user_id_badge + user_identify_badge
         return body_content
     
@@ -192,6 +196,13 @@ class config:
                 f.write(verify_key)
             ### Reset End ###
             return [True, False]
+
+    def recaptcha_existed():
+        oauthsettings = json.loads(open('oauthsettings.json', encoding='utf-8').read())
+        if oauthsettings['recaptcha_site_key'] == '' or oauthsettings['recaptcha_secret_key']:
+            return False
+        else:
+            return True
 
 class viewer:
     def load_petition(target_id):
@@ -939,16 +950,17 @@ def flask_a_write():
         peti_publish_date = datetime.today()
         peti_author_display_name = parser.anti_injection(request.form['peti_author_display_name'])
         peti_body_content = parser.anti_injection(request.form['peti_body_content'])
-        recaptcha_response = request.form['g-recaptcha-response']
 
         ### reCaptcha Check ###
-        recaptcha_secret_key = config.load_oauth_settings()['recaptcha_secret_key']
-        url = 'https://www.google.com/recaptcha/api/siteverify?secret={}&response={}'.format(
-            recaptcha_secret_key, recaptcha_response
-        )
-        recaptcha_check_json = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
-        if recaptcha_check_json['success'] == False:
-            return '오류! reCaptcha를 제대로 수행하세요.'
+        if config.recaptcha_existed():
+            recaptcha_response = request.form['g-recaptcha-response']
+            recaptcha_secret_key = config.load_oauth_settings()['recaptcha_secret_key']
+            url = 'https://www.google.com/recaptcha/api/siteverify?secret={}&response={}'.format(
+                recaptcha_secret_key, recaptcha_response
+            )
+            recaptcha_check_json = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
+            if recaptcha_check_json['success'] == False:
+                return '오류! reCaptcha를 제대로 수행하세요.'
 
         ### Save Author Data ###
         if peti_status == 1:
@@ -1562,27 +1574,10 @@ def flask_admin_verify_key():
 <div class="form-group">
   <div class="form-group">
     <div class="input-group mb-3 single-center">
-      <div class="input-group-prepend">
-        <span class="input-group-text"></span>
-      </div>
       <input type="text" class="form-control" id="verify_key_value" value="%_verify_key_value_%" disabled>
-      <div class="input-group-append">
-        <span class="input-group-text" id="copy_target" onclick="copy_to_clipboard()" data-toggle="tooltip" title="복사" style="cursor: pointer;"><i class="fas fa-copy"></i></span>
-      </div>
     </div>
   </div>
 </div>
-<script type="text/javascript">
-function copy_to_clipboard() {
-  var copyText = document.getElementById("copy_target");
-  copyText.select();
-  document.execCommand("Copy");
-}
-
-$(function () {
-  $('[data-toggle="tooltip"]').tooltip()
-})
-</script>
     """
     ###
     body_content += verify_key_template.replace('%_verify_key_value_%', verify_key)
@@ -1631,40 +1626,14 @@ def flask_admin_petition_article_id(article_id):
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
     template = open('templates/a.html', encoding='utf-8').read()
 
-    ### Index React Content ###
-    react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
-    ### Index End ###
-
-    ### Get Author Data ###
-    author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
-    author_display_name = author_data[0][1]
-    ### Get End ###
-
-    ### Render React ###
-    template_react = """
-            <div class="container">
-                <h5>%_article_react_author_display_name_%</h5>
-                <p>%_article_react_body_content_%</p>
-            </div>
-            """
-    react_body_content = ''
-    template = template.replace('%_is_enabled_%', 'disabled')
-    for i in range(len(react_data)):
-        react_render_object = template_react
-        react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][3]))
-        react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][4])
-        react_body_content += react_render_object
-    ### Render End ###
-
-    ### Render Template ###
-    template = template.replace('%_article_display_name_%', peti_data[0][1])
-    template = template.replace('%_article_publish_date_%', peti_data[0][2])
-    template = template.replace('%_article_author_display_name_%', author_display_name)
-    template = template.replace('%_article_body_content_%', peti_data[0][5])
-    template = template.replace('%_article_react_count_%', str(len(react_data)))
-    template = template.replace('%_article_reacts_%', react_body_content)
-    body_content += template
-    ### Render End ###
+    ### Render Bodycontent ###
+    body_content += viewer.load_metatag()
+    body_content += viewer.load_petition(article_id)
+    if 'now_login' in session:
+        body_content = body_content.replace('%_enabled_content_%', '')
+    else:
+        body_content = body_content.replace('%_is_enabled_%', 'disabled')
+        body_content = body_content.replace('%_enabled_content_%', '비로그인 상태에서는 청원 반응이 불가능합니다.')
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
