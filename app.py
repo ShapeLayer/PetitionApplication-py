@@ -15,7 +15,6 @@ import bcrypt
 import urllib.request
 
 import LocalSettings
-from ver import *
 ### === Import End === ###
 
 ### === Initialize Application === ###
@@ -49,6 +48,9 @@ bundles = {
 
 assets = Environment(app)
 assets.register(bundles)
+
+version = json.loads(open('version.json', encoding='utf-8').read())
+fetea_ver = str(version['ver']) + '.' + str(version['rel'])
 ### === Initialize End === ###
 
 
@@ -450,7 +452,7 @@ class viewer:
     def render_var(content):
         content = content.replace('%_appname_%', LocalSettings.entree_appname)
         content = content.replace('%_now_%', str(datetime.today()))
-        content = content.replace('%_fetea_ver_%', str(fetea_ver))
+        content = content.replace('%_fetea_ver_%', fetea_ver)
         return content
 
 def register(callback_json, sns_type):
