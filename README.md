@@ -3,8 +3,8 @@ Fe-tea, Flask 기반 청원 수집 웹 애플리케이션
 
 ![Python Required](https://img.shields.io/badge/python-3.5%20or%20higher-blue.svg?style=flat-square)
 ![BSD-3 License](https://img.shields.io/badge/license-BSD--3-lightgrey.svg?style=flat-square)
-[![Latest Release](https://img.shields.io/badge/latest%20release-1.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2)
-[![Latest Stable Release](https://img.shields.io/badge/stable-1.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2)
+[![Latest Release](https://img.shields.io/badge/latest%20release-1.2.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.1-stable-fix)
+[![Latest Stable Release](https://img.shields.io/badge/stable-1.2.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.1-stable-fix)
 [![Bootstrap-License](https://img.shields.io/badge/bootstrap-MIT-cef19e.svg?style=flat-square)](https://github.com/twbs/bootstrap/blob/master/LICENSE)
 [![Minty-License](https://img.shields.io/badge/minty-MIT-cef19e.svg?style=flat-square)](https://github.com/thomaspark/bootswatch/blob/master/LICENSE)
 
@@ -25,10 +25,11 @@ Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로
 
 ### 릴리즈 다운로드
 [릴리즈](https://github.com/kpjhg0124/PetitionApplication-py/releases)에서 Fe-tea의 릴리즈 판을 다운로드 받고, 압축을 해제합니다.
-* stable 이 아닌 릴리즈는 업데이트 간 데이터 마이그레이션을 지원하지 않습니다.
+* stable 1.2 이하는 데이터 마이그레이션을 지원하지 않습니다.
 
 | 구분 | 릴리즈 |
 | :----: | :----: |
+| stable | [![](https://img.shields.io/badge/stable-1.2.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.1-stable-fix) |
 | stable | [![](https://img.shields.io/badge/stable-1.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2) |
 | stable | [![](https://img.shields.io/badge/stable-1.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.1-stable) |
 | stable | [![](https://img.shields.io/badge/stable-1.0-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0) |
