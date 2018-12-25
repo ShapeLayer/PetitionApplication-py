@@ -1268,8 +1268,6 @@ def flask_admin_identify():
             target_id = int(request.args.get('user'))
         except:
             return redirect('/?error=need_enough_data')
-    #else:
-    #    return redirect('/?error=need_enough_data')
     ### Review End ###
 
     ### Render
@@ -1410,7 +1408,7 @@ def flask_admin_admins_add():
             activity_object = request.form['target_id']
             activity_description = request.form['description']
         except:
-            pass ### 오류!
+            return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = '<h1>!!</h1><h2>이 작업을 수행하기 위해 필요한 데이터가 충족되지 않았습니다.</h2><p>이전으로 돌아가 다시 시도하세요.</p>', nav_bar = nav_bar)
         target_user_data = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(activity_object))
         activity_date = datetime.today()
         sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
@@ -1896,4 +1894,4 @@ def error_500(self):
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 ### === Application Run === ###
-app.run(LocalSettings.flask_host, flask_port_set, debug = True)
+app.run(LocalSettings.flask_host, flask_port_set, debug = LocalSettings.flask_debug_mode)

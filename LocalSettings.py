@@ -16,3 +16,6 @@ entree_hostname = 'localhost:2500'
 
 # must be included protocol
 publish_host_name = 'http://localhost:2500'
+
+# If you publish application, You must turn off the debug mode.
+flask_debug_mode = True
