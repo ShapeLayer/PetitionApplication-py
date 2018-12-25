@@ -86,7 +86,7 @@ python3 app.py
 * Fe-tea의 첫 계정은 소유자 계정으로 설정됩니다. 소유자 계정은 SNS 계정이 아닌 내부계정(entree 엔진)으로 생성하는 것을 권장합니다.
 
 ### 애플리케이션 공개
-SNS 로그인 기능으로 인해 페이지 공개 시 페이지는 https 연결을 사용해야 합니다. [LocalSettings.py](./LocalSettings.py) 파일의 `publish_host_name` 값을 https 프로토콜을 포함한 도메인 주소로 설정하고, 실제로 https 연결을 지원해야합니다. 리버스 프록시를 사용해 실현하는 것을 권장합니다. 
+SNS 로그인 기능으로 인해 페이지 공개 시 페이지는 https 연결을 사용해야 합니다. [LocalSettings.py](./LocalSettings.py) 파일의 `publish_host_name` 값을 https 프로토콜을 포함한 도메인 주소로 설정하고, 실제로 https 연결을 지원해야합니다. `flask_debug_mode`를 `False`로 설정하는 것을 권장하며, 도메인과의 연결은 리버스 프록시를 사용해 실현하는 것을 권장합니다. 
 
  * ([apache 설정 파일](./conf/apache/), [nginx 설정 파일](./conf/nginx.conf))
 
