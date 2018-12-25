@@ -86,7 +86,7 @@ python3 app.py
 * Fe-tea의 첫 계정은 소유자 계정으로 설정됩니다. 소유자 계정은 SNS 계정이 아닌 내부계정(entree 엔진)으로 생성하는 것을 권장합니다.
 
 ### 애플리케이션 공개
-SNS 로그인 기능으로 인해 페이지 공개 시 페이지는 https 연결을 사용해야 합니다. [LocalSettings.py](./LocalSettings.py) 파일의 `publish_host_name` 값을 https 프로토콜을 포함한 도메인 주소로 설정하고, 실제로 https 연결을 지원해야합니다. `flask_debug_mode`를 `False`로 설정하는 것을 권장하며, 도메인과의 연결은 리버스 프록시를 사용해 실현하는 것을 권장합니다. 
+SNS 로그인 기능으로 인해 페이지 공개 시 페이지는 https 연결을 사용해야 합니다. [LocalSettings.py](./LocalSettings.py) 파일의 `publish_host_name` 값을 https 프로토콜을 포함한 도메인 주소로 설정하고, 실제로 https 연결을 지원해야합니다. `flask_debug_mode`를 `False`로 설정하는 것을 권장하며, 도메인과의 연결은 리버스 프록시를 사용해 실현하십시오.
 
  * ([apache 설정 파일](./conf/apache/), [nginx 설정 파일](./conf/nginx.conf))
 
@@ -109,4 +109,4 @@ SNS 로그인 기능으로 인해 페이지 공개 시 페이지는 https 연결
 * [숭덕고등학교 학생회](https://www.facebook.com/sungdeokcouncil/) 및 [IT 동아리 \n](https://github.com/404-sdok)
 
 # 라이선스
-이 프로젝트는 BSD 3-Clause 라이선스에 의거 보호되고 있습니다. 더 많은 정보는 [LICENSE](/LICENSE) 문서를 참고하세요.
+fetea 프로젝트는 [BSD 3-Clause License](/LICENSE)(이하 BSD-3 라이선스)의 보호를 받고 있으며, fetea 프로젝트를 사용하고자 한다면 BSD-3 라이선스를 준수해야 합니다. 본 라이선스를 위반할 경우 개발자는 DMCA Takedown 등 관련 제재를 관계자에게 요청할 권리가 있으며, 그 책임은 모두 라이선스 위반 사용자에게 있습니다. 자세한 내용은 문서를 참고하세요.
