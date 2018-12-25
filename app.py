@@ -501,7 +501,7 @@ def flask_main():
     return render_template('frontpage.html', appname = LocalSettings.entree_appname, nav_bar = nav_bar)
 
 # ## flask: login
-@app.route('/login/', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def flask_login():
     if 'now_login' in session:
         return redirect('/')
@@ -566,7 +566,7 @@ $(document).ready(function(){
     body_content += oauth_content
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-@app.route('/login/naver/', methods=['GET', 'POST'])
+@app.route('/login/naver', methods=['GET', 'POST'])
 def flask_login_naver():
     nav_bar = user_control.load_nav_bar()
     oauth = config.load_oauth_settings()
@@ -586,7 +586,7 @@ def flask_login_naver():
         data['client_id'], data['redirect_uri'], data['state']
     ))
 
-@app.route('/login/naver/callback/', methods=['GET', 'POST'])
+@app.route('/login/naver/callback', methods=['GET', 'POST'])
 def flask_login_naver_callback():
     oauth = config.load_oauth_settings()
 
@@ -621,7 +621,7 @@ def flask_login_naver_callback():
     register(stand_json, 'naver')
     return redirect('/')
 
-@app.route('/login/facebook/', methods=['GET', 'POST'])
+@app.route('/login/facebook', methods=['GET', 'POST'])
 def flask_login_facebook():
     nav_bar = user_control.load_nav_bar()
     oauth = config.load_oauth_settings()
@@ -641,7 +641,7 @@ def flask_login_facebook():
         data['client_id'], data['redirect_uri'], data['state']
     ))
 
-@app.route('/login/facebook/callback/', methods=['GET', 'POST'])
+@app.route('/login/facebook/callback', methods=['GET', 'POST'])
 def flask_login_facebook_callback():
     oauth = config.load_oauth_settings()
 
@@ -677,7 +677,7 @@ def flask_login_facebook_callback():
     register(stand_json, 'facebook')
     return redirect('/')
 
-@app.route('/login/entree/', methods=['GET', 'POST'])
+@app.route('/login/entree', methods=['GET', 'POST'])
 def flask_login_entree():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
@@ -729,7 +729,7 @@ def flask_login_entree():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: Logout
-@app.route('/logout/')
+@app.route('/logout')
 def flask_logout():
     body_content = ''
     session.pop('now_login', None)
@@ -739,7 +739,7 @@ def flask_logout():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: register
-@app.route('/register/', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def flask_register():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
@@ -820,7 +820,7 @@ def flask_register():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: Petition List
-@app.route('/a/', methods=['GET', 'POST'])
+@app.route('/a', methods=['GET', 'POST'])
 def flask_a():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
@@ -855,7 +855,7 @@ def flask_a():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: Petition Article
-@app.route('/a/<article_id>/', methods=['GET', 'POST'])
+@app.route('/a/<article_id>', methods=['GET', 'POST'])
 def flask_a_article_id(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
@@ -921,7 +921,7 @@ def flask_a_article_id(article_id):
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: Petition Write
-@app.route('/a/write/', methods=['GET', 'POST'])
+@app.route('/a/write', methods=['GET', 'POST'])
 def flask_a_write():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
@@ -995,7 +995,7 @@ def flask_a_write():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: Petition Delete
-@app.route('/a/<article_id>/delete/', methods=['GET', 'POST'])
+@app.route('/a/<article_id>/delete', methods=['GET', 'POST'])
 def flask_a_article_id_delete(article_id):
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -1043,7 +1043,7 @@ def flask_a_article_id_delete(article_id):
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: Petition Official React
-@app.route('/a/<article_id>/official/', methods=['GET', 'POST'])
+@app.route('/a/<article_id>/official', methods=['GET', 'POST'])
 def flask_a_article_id_official(article_id):
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -1087,7 +1087,7 @@ def flask_a_article_id_official(article_id):
         return redirect('http://localhost:2500/admin/static/add?type=reply&target={}'.format(article_id))
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
-@app.route('/a/<article_id>/complete/', methods=['GET', 'POST'])
+@app.route('/a/<article_id>/complete', methods=['GET', 'POST'])
 def flask_a_article_id_complete(article_id):
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -1137,7 +1137,7 @@ def flask_a_article_id_complete(article_id):
 
 
 # ## flask: Activity Log
-@app.route('/log/')
+@app.route('/log')
 def flask_log():        
     body_content = ''
     body_content += '<h1>투명성 보고서</h1>'
@@ -1175,7 +1175,7 @@ def flask_static(title):
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: Notice Static Page
-@app.route('/notice/')
+@app.route('/notice')
 def flask_notice():    
     body_content = ''
     nav_bar = user_control.load_nav_bar()
@@ -1192,7 +1192,7 @@ def flask_notice():
 
 
 # ## flask: Admin Page
-@app.route('/admin/')
+@app.route('/admin')
 def flask_admin():
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -1213,7 +1213,7 @@ def flask_admin():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: Admin-member
-@app.route('/admin/member/')
+@app.route('/admin/member')
 def flask_admin_member():
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -1243,7 +1243,7 @@ def flask_admin_member():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: Admin-member-idnetify
-@app.route('/admin/member/identify/', methods=['GET', 'POST'])
+@app.route('/admin/member/identify', methods=['GET', 'POST'])
 def flask_admin_identify():
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -1827,7 +1827,7 @@ def flask_admin_static_add():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
 # ## flask: Assets Route
-@app.route('/assets/<assets>/')
+@app.route('/assets/<assets>')
 def serve_pictures(assets):
     return send_from_directory('assets', assets)
 
@@ -1843,7 +1843,7 @@ Disallow: /register
     return robots
 
 # ## flask: Ajax Route
-@app.route('/ajax/a/', methods=['GET', 'POST'])
+@app.route('/ajax/a', methods=['GET', 'POST'])
 def flask_ajax_a():
     request_lower_num = request.args.get('request-s')
     request_higher_num = request.args.get('request-e')
