@@ -1584,6 +1584,36 @@ def flask_admin_verify_key():
     body_content += '<p>verify_key는 1회 사용시 갱신됩니다.</p>'
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
 
+# ## flask: Admin-Update
+@app.route('/admin/update/')
+def flask_admin_update():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    nav_bar = user_control.load_nav_bar()
+
+    body_content = '<h1>업데이트 확인</h1><p>fetea의 업데이트 파일을 확인합니다.</p><hr>'
+
+    local_stable = json.loads(open('version.json', encoding='utf-8').read())
+    
+    github_stable = json.loads(urllib.request.urlopen('https://raw.githubusercontent.com/kpjhg0124/PetitionApplication-py/master/version.json').read().decode('utf-8'))
+    
+    latest = '<i class="fas fa-check"></i> fetea가 최신버전입니다. 업데이트가 필요하지 않습니다.'
+    old = '<i class="fas fa-download"></i> fetea의 최신버전이 발견되었습니다. <a href="https://github.com/kpjhg0124/PetitionApplication-py/releases">Github 릴리즈 페이지</a>에서 최신 릴리즈를 받아 업데이트하세요.'
+
+    if local_stable['ver'] < github_stable['ver']:
+        body_content += old
+    elif local_stable['rel'] < github_stable['rel']:
+        body_content += old
+    else:
+        body_content += latest
+
+    body_content += '<hr><h4>fetea 버전</h4><p>현재: {}. {}번째 추가 릴리즈<br>최신: {}. {}번째 추가 릴리즈</p>'.format(local_stable['ver'], local_stable['rel'], github_stable['ver'], github_stable['rel'])
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+
 # ## flask: Admin-Petition Manage
 @app.route('/admin/petition/')
 def flask_admin_petition():
