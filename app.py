@@ -471,7 +471,7 @@ super_secret_button = '<button type="submit" name="submit" class="btn btn-link" 
 
 ### === Initialize Database === ###
 try:
-    sqlite3_control.select('select * from peti_data_tb limit 1', [])
+    sqlite3_control.select('select * from peti_data_tb limit 1')
 except:
     database_query = open('tables/tables.sql', encoding='utf-8').read()
     sqlite3_control.executescript(database_query)
