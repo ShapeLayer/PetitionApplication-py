@@ -78,10 +78,10 @@ class sqlite3_control:
         conn.commit()
         conn.close()
 
-    def executescript(query, qlist):
+    def executescript(query):
         conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
         curs = conn.cursor()
-        curs.executescript(query, qlist)
+        curs.executescript(query)
         conn.commit()
         conn.close()
 
@@ -471,7 +471,7 @@ super_secret_button = '<button type="submit" name="submit" class="btn btn-link" 
 
 ### === Initialize Database === ###
 try:
-    sqlite3_control.select('select * from peti_data_tb limit 1')
+    sqlite3_control.select('select * from peti_data_tb limit 1', [])
 except:
     database_query = open('tables/tables.sql', encoding='utf-8').read()
     sqlite3_control.executescript(database_query)
@@ -1053,7 +1053,7 @@ def flask_a_article_id_official(article_id):
 </div>
     """
     ### Render Login Status ###
-    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login'])
+    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
     reply_template = reply_template.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
     ### Render End ###
 
@@ -1636,7 +1636,7 @@ def flask_admin_petition_article_id(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', article_id])
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [article_id])
     template = open('templates/a.html', encoding='utf-8').read()
 
     ### Render Bodycontent ###
@@ -1704,7 +1704,7 @@ def flask_admin_static():
 
     if request.method == 'POST':
         ### Update Static Page Data ###
-        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = ?', session['now_login']])
+        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = ?', [session['now_login']])
         received_content = request.form['content'].replace('"', '""')
         sqlite3_control.commit('update static_page_tb set editor = ?, editdate = ?, content = ? where page_name = ?',[
             parser.anti_injection(user_name[0][0]), 
@@ -1821,20 +1821,16 @@ def flask_admin_static_add():
                 return redirect('/admin/static/add?error=reply_target_not_int')
 
         ### Get End ###
-        search = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(static_slug))
-        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(session['now_login']))
+        search = sqlite3_control.select('select * from static_page_tb where page_name = ?', [static_slug])
+        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = ?', [session['now_login']])
         if len(search) != 0:
             return redirect('/admin/static/add?error=already_existed')
-        sqlite3_control.commit('insert into static_page_tb (page_name, title, editor, editdate, content) values("{}", "{}", "{}", "{}", "{}")'.format(
+        sqlite3_control.commit('insert into static_page_tb (page_name, title, editor, editdate, content) values(?, ?, ?, ?, ?)', [
             static_slug, static_display_name, parser.anti_injection(user_name[0][0]), parser.anti_injection(str(datetime.today())), parser.anti_injection(static_body_content)
-        ))
-        print(target)
+        ])
         if target > 0:
-            print('안녕')
-            sqlite3_control.commit('insert into peti_react_tb (peti_id, author_id, react_type, content) values({}, 0, "official", "{}")'.format(
-                target, static_slug
-            ))
-            sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = {}'.format(target))
+            sqlite3_control.commit('insert into peti_react_tb (peti_id, author_id, react_type, content) values(?, 0, "official", ?)', [target, static_slug])
+            sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = ?', [target])
 
         return redirect('/admin/static?page={}'.format(static_slug))
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1867,9 +1863,9 @@ def flask_ajax_a():
         additional_query = 'peti_status = 2 and'
     else:
         additional_query = ''
-    peti_data = sqlite3_control.select('select * from peti_data_tb where {} peti_id >= {} and peti_id <= {} order by peti_id desc'.format(
+    peti_data = sqlite3_control.select('select * from peti_data_tb where ? peti_id >= ? and peti_id <= ? order by peti_id desc', [
         additional_query, request_lower_num, request_higher_num
-    ))
+    ])
     return_json = []
     for i in range(len(peti_data)):
         if peti_data[i][3] == 1:
