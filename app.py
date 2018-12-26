@@ -63,25 +63,25 @@ class parser:
         return content
 
 class sqlite3_control:
-    def select(query):
+    def select(query, qlist):
         conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
         curs = conn.cursor()
-        curs.execute(query)
+        curs.execute(query, qlist)
         result = curs.fetchall()
         conn.close()
         return result
 
-    def commit(query):
+    def commit(query, qlist):
         conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
         curs = conn.cursor()
-        curs.execute(query)
+        curs.execute(query, qlist)
         conn.commit()
         conn.close()
 
-    def executescript(query):
+    def executescript(query, qlist):
         conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
         curs = conn.cursor()
-        curs.executescript(query)
+        curs.executescript(query, qlist)
         conn.commit()
         conn.close()
 
@@ -104,9 +104,9 @@ class user_control:
         user_profile_menu_content = ''
         if 'now_login' in session:
             ### Index Database Data ###
-            user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
-            user_auth_group = sqlite3_control.select('select * from user_acl_list_tb where account_id = {}'.format(session['now_login']))
-            user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
+            user_data = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
+            user_auth_group = sqlite3_control.select('select * from user_acl_list_tb where account_id = ?', [session['now_login']])
+            user_auth = sqlite3_control.select('select * from user_group_acl where user_group = ?', [user_auth_group[0][1]])
             ### Index End ###
 
             ### Render Navbar ###
@@ -134,8 +134,8 @@ class user_control:
         return template
     
     def identify_user(target_id):
-        user_auth_group = sqlite3_control.select('select * from user_acl_list_tb where account_id = {}'.format(target_id))
-        user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
+        user_auth_group = sqlite3_control.select('select * from user_acl_list_tb where account_id = ?', [target_id])
+        user_auth = sqlite3_control.select('select * from user_group_acl where user_group = ?', [user_auth_group[0][1]])
         if user_auth[0][2] != 1 and user_auth[0][3] != 1:
             return False
         else:
@@ -143,7 +143,7 @@ class user_control:
 
     def user_controller(target_id):
         ## Index User Data ##
-        user_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(target_id))
+        user_data = sqlite3_control.select('select * from author_connect where peti_author_id = ?', [target_id])
         ## Index End ##
 
         if 'now_login' in session:
@@ -162,7 +162,7 @@ class user_control:
         return body_content
     
     def super_secret_settings(target_id):
-        user_auth = sqlite3_control.select('select user_group_acl.site_owner from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(target_id))[0][0]
+        user_auth = sqlite3_control.select('select user_group_acl.site_owner from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = ? and user_acl_list_tb.auth = user_group_acl.user_group', [target_id])[0][0]
         if user_auth == 1:
             return True
         else:
@@ -176,7 +176,7 @@ class config:
 
     def load_verify_key(target, user_id):
         ### Check User Target's Authority ###
-        user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_group_acl.user_group = user_acl_list_tb.auth'.format(user_id))
+        user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = ? and user_group_acl.user_group = user_acl_list_tb.auth', [user_id])
         if user_auth_owner == 1:
             is_owner = True
         else:
@@ -213,7 +213,7 @@ class viewer:
         ### Load User Auth Data ###
         if 'now_login' in session:
             now_login = session['now_login']
-            user_auth = sqlite3_control.select('select user_group_acl.site_administrator from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(now_login))
+            user_auth = sqlite3_control.select('select user_group_acl.site_administrator from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = ? and user_acl_list_tb.auth = user_group_acl.user_group', [now_login])
             if user_auth[0][0] == 1:
                 control_delete = ' <a href="/a/{}/delete/"><span class="badge badge-pill badge-danger">삭제</span></a>'.format(target_id)
                 control_official_reply = ' <a href="/a/{}/official/"><span class="badge badge-pill badge-primary">답변</span></a>'.format(target_id)
@@ -225,16 +225,12 @@ class viewer:
         ### Load End ###
 
         ### Index Data from Database ###
-        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(target_id))
-        react_data = sqlite3_control.select('select peti_react_tb.*, author_connect.account_user_id, author_connect.peti_author_display_name from peti_react_tb, author_connect where peti_react_tb.peti_id = {} and author_connect.peti_author_id = peti_react_tb.author_id and peti_react_tb.react_type = "default"'.format(target_id))
-        author_nickname = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(
-            peti_data[0][4]
-        ))
+        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [target_id])
+        react_data = sqlite3_control.select('select peti_react_tb.*, author_connect.account_user_id, author_connect.peti_author_display_name from peti_react_tb, author_connect where peti_react_tb.peti_id = ? and author_connect.peti_author_id = peti_react_tb.author_id and peti_react_tb.react_type = "default"', [target_id])
+        author_nickname = sqlite3_control.select('select * from author_connect where peti_author_id = ?', [peti_data[0][4]])
         if peti_data[0][3] == 2:
-            reply_official_data = sqlite3_control.select('select content from peti_react_tb where peti_id = {} and react_type = "official"'.format(target_id))
-            reply_official_content = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(
-                reply_official_data[0][0]
-            ))
+            reply_official_data = sqlite3_control.select('select content from peti_react_tb where peti_id = ? and react_type = "official"', [target_id])
+            reply_official_content = sqlite3_control.select('select * from static_page_tb where page_name = ?'.format, [reply_official_data[0][0]])
         ### Index End ###
 
         ### Load Template ###
@@ -260,7 +256,7 @@ class viewer:
         ### Render End ###
 
         ### Get Author Data ###
-        author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
+        author_data = sqlite3_control.select('select * from author_connect where peti_author_id = ?', [peti_data[0][4]])
         ### Get End ###
 
         ### 반응 중복 제거
@@ -268,7 +264,7 @@ class viewer:
             query_target = session['now_login']
         else:
             query_target = 0
-        now_login = sqlite3_control.select('select * from author_connect where account_user_id = {} and target_article = {}'.format(query_target, target_id))
+        now_login = sqlite3_control.select('select * from author_connect where account_user_id = ? and target_article = ?', [query_target, target_id])
         if len(now_login) != 0:
             template = template.replace('%_react_author_display_name_%', now_login[0][1])
             template = template.replace('%_react_display_name_is_enabled_%', 'readonly')
@@ -300,7 +296,7 @@ class viewer:
 
     def load_sns_login_status(content):
         if 'now_login' in session:
-            user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+            user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
             content = content.replace('%_sns_login_status_%', '로그인 됨: {}'.format(user_profile_data[0][3]))
         else:
             content = content.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
@@ -456,17 +452,17 @@ class viewer:
         return content
 
 def register(callback_json, sns_type):
-    account_data = sqlite3_control.select('select * from site_user_tb where sns_type = "{}" and sns_id = "{}"'.format(sns_type, callback_json['id']))
+    account_data = sqlite3_control.select('select * from site_user_tb where sns_type = ? and sns_id = ?', [sns_type, callback_json['id']])
     if len(account_data) == 0: # 회원가입 절차
-        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("{}", "{}", "{}", "{}")'.format(sns_type, callback_json['id'], callback_json['name'], callback_json['picture']))
+        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values(?, ?, ?, ?)', [sns_type, callback_json['id'], callback_json['name'], callback_json['picture']])
         account_ids = sqlite3_control.select('select account_id from site_user_tb')
         if len(account_ids) == 1: # 소유자 권한 제공
-            sqlite3_control.commit('insert into user_acl_list_tb values({}, "owner")'.format(len(account_ids)))
+            sqlite3_control.commit('insert into user_acl_list_tb values(?, "owner")', [len(account_ids)])
         else: # 유저 권한 제공
-            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(len(account_ids)))
+            sqlite3_control.commit('insert into user_acl_list_tb values(?, "user")', [len(account_ids)])
         session['now_login'] = len(account_ids)
     else:
-        sqlite3_control.commit('update site_user_tb set user_display_name = "{}", user_display_profile_img = "{}" where sns_id = "{}"'.format(callback_json['name'], callback_json['picture'], callback_json['id']))
+        sqlite3_control.commit('update site_user_tb set user_display_name = ?, user_display_profile_img = ? where sns_id = ?', [callback_json['name'], callback_json['picture'], callback_json['id']])
         session['now_login'] = account_data[0][0]
 
 super_secret_button = '<button type="submit" name="submit" class="btn btn-link" value="super_secret_button">Super Secret Button...</button>'
@@ -697,7 +693,7 @@ def flask_login_entree():
         account_password = parser.anti_injection(request.form['account_password'])
         
         ### Get User Data ###
-        user_data = sqlite3_control.select('select * from site_user_tb where sns_id = "{}"'.format(sns_id))
+        user_data = sqlite3_control.select('select * from site_user_tb where sns_id = ?', [sns_id])
         ### Get End ###
 
         if len(user_data) == 0:
@@ -774,7 +770,7 @@ def flask_register():
         ### Get End ###
 
         ### Check Overlap ID ###
-        same_id_getter = sqlite3_control.select('select * from site_user_tb where sns_type = "entree" and sns_id = "{}"'.format(sns_id))
+        same_id_getter = sqlite3_control.select('select * from site_user_tb where sns_type = "entree" and sns_id = ?', [sns_id])
         if len(same_id_getter) != 0:
             alert_code = """
             <div class="alert alert-dismissible alert-danger">
@@ -791,12 +787,10 @@ def flask_register():
         ### Encrypt End ###
 
         ### Insert User Account into Database ###
-        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, account_password_hash) values("entree", "{}", "{}", "{}")'.format(
-            sns_id, user_display_name, account_password_hash.decode()
-        ))
+        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, account_password_hash) values("entree", ?, ?, ?)', [sns_id, user_display_name, account_password_hash.decode()])
         same_id_getter = sqlite3_control.select('select * from site_user_tb where sns_type = "entree" and sns_id = "{}"'.format(sns_id))
         if same_id_getter[0][0] != 1:
-            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(same_id_getter[0][0]))
+            sqlite3_control.commit('insert into user_acl_list_tb values(?, "user")', [same_id_getter[0][0]])
         ### Insert End ###
 
         ### Verify Key Reset ###
@@ -861,7 +855,7 @@ def flask_a_article_id(article_id):
     nav_bar = user_control.load_nav_bar()
 
     ### Load Petition Data ###
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [article_id])
 
     if peti_data[0][3] == 1 or peti_data[0][3] == 404:
         abort(404)
@@ -890,7 +884,7 @@ def flask_a_article_id(article_id):
         ### Collect End ###
         
         ### 반응 중복 제거
-        now_login = sqlite3_control.select('select * from author_connect where account_user_id = {} and target_article = {}'.format(session['now_login'], article_id))
+        now_login = sqlite3_control.select('select * from author_connect where account_user_id = ? and target_article = ?', [session['now_login'], article_id])
         if len(now_login) != 0:
             author_display = now_login[0][1]
             is_existed = True
@@ -900,8 +894,7 @@ def flask_a_article_id(article_id):
         ### Save React Author Data ###
         if 'now_login' in session and is_existed == False:
             author_list_len = len(sqlite3_control.select('select * from author_connect'))
-            sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id, target_article) values("{}", {}, {})'.format(
-                author_display, session['now_login'], article_id))
+            sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id, target_article) values(?, ?, ?)', [author_display, session['now_login'], article_id])
             react_author_id = author_list_len + 1
         elif 'now_login' in session and is_existed == True:
             react_author_id = now_login[0][0]
@@ -910,12 +903,7 @@ def flask_a_article_id(article_id):
         ### Save End ###
 
         ### Insert Data into Database ###
-        sqlite3_query = 'insert into peti_react_tb (peti_id, author_id, react_type, content) values({}, {}, "default", "{}")'.format(
-            peti_id,
-            react_author_id,
-            content
-        )
-        sqlite3_control.commit(sqlite3_query)
+        sqlite3_control.commit('insert into peti_react_tb (peti_id, author_id, react_type, content) values(?, ?, "default", ?)', [peti_id, react_author_id, content])
         ### Insert End ###
         return redirect('/a/{}'.format(article_id))
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -933,7 +921,7 @@ def flask_a_write():
 
     ### Template Rendering ###
     if 'now_login' in session:
-        user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+        user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
         template = template.replace('%_sns_login_status_%', '로그인 됨: {}'.format(user_profile_data[0][3]))
     else:
         template = template.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
@@ -971,23 +959,12 @@ def flask_a_write():
             account_user_id = session['now_login']
         petition_list_len = len(sqlite3_control.select('select * from peti_data_tb')) + 1
         author_list_len = len(sqlite3_control.select('select * from author_connect'))
-        sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id, target_article) values("{}", {}, {})'.format(
-            peti_author_display_name,
-            account_user_id,
-            petition_list_len
-        ))
+        sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id, target_article) values(?, ?, ?)', [peti_author_display_name, account_user_id, petition_list_len])
         peti_author_id = author_list_len + 1
         ### Save End ###
 
         ### Insert Data into Database ###
-        sqlite3_query = 'insert into peti_data_tb (peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content) values("{}", "{}", {}, {}, "{}")'.format(
-            peti_display_name,
-            peti_publish_date,
-            peti_status,
-            peti_author_id,
-            peti_body_content
-        )
-        sqlite3_control.commit(sqlite3_query)
+        sqlite3_control.commit('insert into peti_data_tb (peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content) values(?, ?, ?, ?, ?)', [peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content])
         ### Insert End ###
 
         return redirect('/a/')
@@ -1010,7 +987,7 @@ def flask_a_article_id_delete(article_id):
     body_content += template
 
     ### Render Login Status ###
-    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
     body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
     body_content = body_content.replace('%_confirm_head_%', '청원 삭제')
     if user_control.super_secret_settings(session['now_login']) == True:
@@ -1021,23 +998,23 @@ def flask_a_article_id_delete(article_id):
     
     if request.method == 'POST':
         ### Log Activity ###
-        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [article_id])
         activity_date = datetime.today()
         activity_object = '청원(<i>{}</i>)'.format(peti_data[0][1])
         activity_description = request.form['description']
         if user_control.super_secret_settings(session['now_login']) == True and request.form['submit'] == 'super_secret_button':
             pass
         else:
-            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values(?, ?, ?, ?, ?)', [
                 session['now_login'],
                 activity_object,
                 '삭제',
                 activity_description,
                 activity_date
-            ))
+            ])
         ### Log End ###
 
-        sqlite3_control.commit('update peti_data_tb set peti_status = 404 where peti_id = {}'.format(article_id))
+        sqlite3_control.commit('update peti_data_tb set peti_status = 404 where peti_id = ?', [article_id])
         return redirect('/a/')
     body_content = body_content.replace('%_form_alerts_%', '')
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1076,7 +1053,7 @@ def flask_a_article_id_official(article_id):
 </div>
     """
     ### Render Login Status ###
-    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login'])
     reply_template = reply_template.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
     ### Render End ###
 
@@ -1108,29 +1085,29 @@ def flask_a_article_id_complete(article_id):
 
 
     ### Render Login Status ###
-    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
     body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
     ### Render End ###
     
     if request.method == 'POST':
         ### Log Activity ###
-        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [article_id])
         activity_date = datetime.today()
         activity_object = '청원(<i>{}</i>)'.format(peti_data[0][1])
         activity_description = request.form['description']
         if user_control.super_secret_settings(session['now_login']) == True and request.form['submit'] == 'super_secret_button':
             pass
         else:
-            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values(?, ?, ?, ?, ?)', [
                 session['now_login'],
                 activity_object,
                 '완료',
                 activity_description,
                 activity_date
-            ))
+            ])
         ### Log End ###
 
-        sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = {}'.format(article_id))
+        sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = ?', [article_id])
         return redirect('/a/')
     body_content = body_content.replace('%_form_alerts_%', '')
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1148,7 +1125,7 @@ def flask_log():
 
     ### Render Log ###
     for i in range(len(log)):
-        profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(log[i][1]))
+        profile = sqlite3_control.select('select * from site_user_tb where account_id = ?', [log[i][1]])
         body_content += '<p>{}  {}(이)가 {}을(를) {}함 (사유: {})'.format(log[i][5], profile[0][3], log[i][2], log[i][3], log[i][4])
     ### Render End ###
 
@@ -1163,7 +1140,7 @@ def flask_static(title):
     nav_bar = user_control.load_nav_bar()
     
     ### Load From Database ###
-    static_data = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(title))
+    static_data = sqlite3_control.select('select * from static_page_tb where page_name = ?', [title])
     if len(static_data) == 0:
         abort(404)
     ### Load End ###
@@ -1297,13 +1274,13 @@ def flask_admin_identify():
         if user_control.super_secret_settings(session['now_login']) == True and request.form['submit'] == 'super_secret_button':
             pass
         else:
-            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values(?, ?, ?, ?, ?)', [
             session['now_login'],
             '닉네임 ' + target_data_sqlite[0][5],
             '명의를 확인',
             activity_description,
             activity_date
-            ))
+            ])
 
         table_template = """
         <h2>검색결과</h2>
@@ -1409,18 +1386,18 @@ def flask_admin_admins_add():
             activity_description = request.form['description']
         except:
             return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = '<h1>!!</h1><h2>이 작업을 수행하기 위해 필요한 데이터가 충족되지 않았습니다.</h2><p>이전으로 돌아가 다시 시도하세요.</p>', nav_bar = nav_bar)
-        target_user_data = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(activity_object))
+        target_user_data = sqlite3_control.select('select user_display_name from site_user_tb where account_id = ?', [activity_object])
         activity_date = datetime.today()
-        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values(?, ?, ?, ?, ?)', [
         session['now_login'],
         '사용자 ' + target_user_data[0][0],
         '관리자로 등록',
         activity_description,
         activity_date
-        ))
-        user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_group_acl.user_group = user_acl_list_tb.auth'.format(activity_object))
+        ])
+        user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = ? and user_group_acl.user_group = user_acl_list_tb.auth', [activity_object])
         if user_auth_owner[0][0] == 0:
-            sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = {}'.format(activity_object))
+            sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = ?', [activity_object])
         return redirect('/admin/admins/')
     
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
@@ -1501,15 +1478,15 @@ def flask_admin_acl():
 
         ### Check Auth ###
         #### 1: manage auth ####
-        acl_data = sqlite3_control.select('select user_acl_list_tb.auth, user_group_acl.manage_acl from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(session['now_login']))
+        acl_data = sqlite3_control.select('select user_acl_list_tb.auth, user_group_acl.manage_acl from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = ? and user_acl_list_tb.auth = user_group_acl.user_group', [session['now_login']])
         if acl_data[0][1] == 1:
             pass
         else:
             return redirect('/error/acl/')
         
         #### 2: acl priority ####
-        acl_pri_user = sqlite3_control.select('select user_group_acl.group_priority from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(session['now_login']))
-        acl_pri_target = sqlite3_control.select('select group_priority from user_group_acl where user_group = "{}"'.format(acl_group))
+        acl_pri_user = sqlite3_control.select('select user_group_acl.group_priority from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = ? and user_acl_list_tb.auth = user_group_acl.user_group', [session['now_login']])
+        acl_pri_target = sqlite3_control.select('select group_priority from user_group_acl where user_group = ?', [acl_group])
         if acl_pri_user[0][0] < acl_pri_target[0][0]:
             return redirect('/error/acl/?error=high_acl')
         ### Check End ###
@@ -1531,7 +1508,7 @@ def flask_admin_acl():
             else:
                 new_acl_data += [1]
         
-        sqlite3_control.commit('update user_group_acl set group_priority = {}, site_owner = {}, site_administrator = {}, peti_read = {}, peti_write = {}, peti_react = {}, peti_disable = {}, peti_delete = {}, user_identify = {}, user_block = {}, manage_user = {}, manage_acl = {}, manage_static_page = {}, manage_notion = {}, not_display_log = {} where user_group = "{}"'.format(
+        sqlite3_control.commit('update user_group_acl set group_priority = ?, site_owner = ?, site_administrator = ?, peti_read = ?, peti_write = ?, peti_react = ?, peti_disable = ?, peti_delete = ?, user_identify = ?, user_block = ?, manage_user = ?, manage_acl = ?, manage_static_page = ?, manage_notion = ?, not_display_log = ? where user_group = ?', [
             group_priority,
             new_acl_data[0],
             new_acl_data[1],
@@ -1548,7 +1525,7 @@ def flask_admin_acl():
             new_acl_data[12],
             new_acl_data[13],
             acl_group
-        ))
+        ])
         return redirect('/admin/acl/')
     ### Confirm End ###
 
@@ -1659,7 +1636,7 @@ def flask_admin_petition_article_id(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', article_id])
     template = open('templates/a.html', encoding='utf-8').read()
 
     ### Render Bodycontent ###
@@ -1710,7 +1687,7 @@ def flask_admin_static():
     ### Render Ststic Page Editor ###
     if request.args.get('page') != None:
         target = request.args.get('page')
-        target_content = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(target))
+        target_content = sqlite3_control.select('select * from static_page_tb where page_name = ?', [target])
         if len(target_content) == 0:
             abort(404)
         textarea = """
@@ -1727,14 +1704,14 @@ def flask_admin_static():
 
     if request.method == 'POST':
         ### Update Static Page Data ###
-        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(session['now_login']))
+        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = ?', session['now_login']])
         received_content = request.form['content'].replace('"', '""')
-        sqlite3_control.commit('update static_page_tb set editor = "{}", editdate = "{}", content = "{}" where page_name = "{}"'.format(
+        sqlite3_control.commit('update static_page_tb set editor = ?, editdate = ?, content = ? where page_name = ?',[
             parser.anti_injection(user_name[0][0]), 
             parser.anti_injection(str(datetime.today())), 
             received_content, 
             parser.anti_injection(request.args.get('page'))
-            ))
+        ]) # issue 27 작업 여기까지 끝냄. (수정)
         ### End Update ###
         return redirect('/admin/static/?page={}'.format(request.args.get('page')))
 
