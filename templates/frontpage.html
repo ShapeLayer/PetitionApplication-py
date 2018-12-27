@@ -18,13 +18,12 @@
 </head>
 <body style="padding: 0;" class="frontpage">
 <section class="main">
-        <div class="navbar navbar-expand-lg fixed-top navbar-dark">
-            <div class="container">
-                    <a href="/" class="navbar-brand">{{ appname }}</a>
-                {{ nav_bar|safe }}
-            </div>
+    <div class="navbar navbar-expand-lg fixed-top navbar-dark">
+        <div class="container">
+            <a href="/" class="navbar-brand">{{ appname }}</a>
+            {{ nav_bar|safe }}
         </div>
-    </div>        
+    </div>
     <div class="container">
         <h1>BLEND IT<br>WITH<br>YOUR VOICE</h1>
         <h2>{{ appname }} 청원페이지</h2>
@@ -33,6 +32,7 @@
         <ul>
             <li><a href="/login/">시작하기</a></li>
             <li><a href="/a/"><span>청원 목록</span></a></li>
+            <li><a href="/a/write/"><span>청원 작성</span></a></li>
             <li><a href="/a?type=done"><span>완료된 청원</span></a></li>
             <li><a href="/notice/"><span>공지</span></a></li>
             <li><a href="/log/"><span>투명성 보고서</span></a></li>
