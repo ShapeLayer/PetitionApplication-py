@@ -63,24 +63,18 @@ class parser:
         return content
 
 class sqlite3_control:
-    def select(query, qlist = None):
+    def select(query, qlist = []):
         conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
         curs = conn.cursor()
-        if qlist == None:
-            curs.execute(query)
-        else:
-            curs.execute(query, qlist)
+        curs.execute(query, qlist)
         result = curs.fetchall()
         conn.close()
         return result
 
-    def commit(query, qlist = None):
+    def commit(query, qlist = []):
         conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
         curs = conn.cursor()
-        if qlist == None:
-            curs.execute(query)
-        else:
-            curs.execute(query, qlist)
+        curs.execute(query, qlist)
         conn.commit()
         conn.close()
 
