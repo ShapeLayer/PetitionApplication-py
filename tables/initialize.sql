@@ -109,42 +109,6 @@ INSERT INTO user_group_acl (
     0
 );
 
-INSERT INTO user_group_acl (
-    user_group,
-    group_priority,
-    site_owner,
-    site_administrator,
-    peti_read,
-    peti_write,
-    peti_react,
-    peti_disable,
-    peti_delete,
-    user_identify,
-    user_block,
-    manage_user,
-    manage_acl,
-    manage_static_page,
-    manage_notion,
-    not_display_log
-) values(
-    "block",
-    0,
-    0,
-    0,
-    1,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
-);
-
 INSERT INTO user_acl_list_tb values(1, "owner");
 INSERT INTO static_page_tb (page_name, title, editor, editdate, content) values("frontpage", "%_appname_%: 대문", "System", "", "<div class='container'><h1>BLEND IT<br>WITH<BR>YOUR WAY</h1><h2>당신의 힘으로 바꿔보세요. %_appname_% 청원페이지</h2><a href='/login' class='btn btn-primary'>시작하기</a><a href='/a' class='btn btn-link'>청원 둘러보기</a><a href='/a/write' class='btn btn-link'>청원 생성하기</a></div>
 ");
