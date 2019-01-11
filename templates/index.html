@@ -25,6 +25,8 @@
     <link rel="stylesheet" href="{{ ASSET_URL }}">
     {% endassets %}
 
+    {{ custom_header[0]|safe }}
+
     <script>
         $(document).ready(function(){
             $('[data-toggle="tooltip"]').tooltip(); 
@@ -81,5 +83,6 @@
     {% assets "main_js" %}
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
     {% endassets %}
+    {{ custom_header[1]|safe }}
 </body>
 </html>

@@ -83,4 +83,10 @@ CREATE TABLE static_page_tb(
     editor TEXT NOT NULL,
     editdate TEXT NOT NULL,
     content TEXT NOT NULL
-)
+);
+
+/**/
+CREATE TABLE server_set(
+    name TEXT NOT NULL,
+    data TEXT NOT NULL
+);
