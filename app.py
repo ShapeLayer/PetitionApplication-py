@@ -141,6 +141,20 @@ class user_control:
         else:
             return True
 
+    def load_acl(acl_target):
+        if 'now_login' in session:
+            acl = sqlite3_control.select('select user_group_acl.{} from user_group_acl, user_acl_list_tb where user_acl_list_tb.auth = user_group_acl.user_group and user_acl_list_tb.account_id = ?'.format(acl_target), [session['now_login']])[0][0]
+            if acl == 0:
+                return False
+            else:
+                return True
+        else:
+            acl = sqlite3_control.select('select {} from user_group_acl where user_group = "not_signed_in"'.format(acl_target))[0][0]
+            if acl == 0:
+                return False
+            else:
+                return True
+
     def user_controller(target_id):
         ## Index User Data ##
         user_data = sqlite3_control.select('select * from author_connect where peti_author_id = ?', [target_id])
@@ -857,6 +871,9 @@ def flask_a():
 # ## flask: Petition Article
 @app.route('/a/<article_id>/', methods=['GET', 'POST'])
 def flask_a_article_id(article_id):
+    if user_control.load_acl('peti_read') == False:
+        return redirect('/error/acl/?error=peti_read')
+
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
@@ -881,6 +898,9 @@ def flask_a_article_id(article_id):
         body_content = body_content.replace('%_enabled_content_%', '비로그인 상태에서는 청원 반응이 불가능합니다.')
     ### Render End ###
     if request.method == 'POST':
+        if user_control.load_acl('peti_react') == False:
+            return redirect('/error/acl/?error=peti_react')
+
         ### Collect React Data ###
         peti_id = article_id
         content = parser.anti_injection(request.form['react_content'])
@@ -917,6 +937,9 @@ def flask_a_article_id(article_id):
 # ## flask: Petition Write
 @app.route('/a/write/', methods=['GET', 'POST'])
 def flask_a_write():
+    if user_control.load_acl('peti_write') == False:
+        return redirect('/error/acl/?error=peti_write')
+
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
@@ -1656,6 +1679,17 @@ def flask_admin_petition_article_id(article_id):
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+# ## flask: Admin-petition_default settings
+@app.route('/admin/peti-default')
+def flask_admin_peti_default():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    nav_bar = user_control.load_nav_bar()
+
 # ## flask: Admin-Sethtmlhead
 @app.route('/admin/header/', methods=['GET', 'POST'])
 def flask_admin_header():
@@ -1927,13 +1961,24 @@ def flask_ajax_a():
 # ## flask: Error Handler
 @app.route('/error/acl/', methods=['GET'])
 def error_acl():
+    if 'now_login' in session:
+        acl = sqlite3_control.select('select auth from user_acl_list_tb where account_id = ?', [session['now_login']])[0][0]
+        acl_id = session['now_login']
+    else:
+        acl = 'not_signed_in'
+        acl_id = 'not_signed_in'
     body_content = '<h1>Oops!</h1><h2>ACL NOT SATISFIED</h2>'
-    if request.args.get('error') == 'no_write':
-        body_content += '<p>당신의 acl은 쓰기 권한을 포함하고 있지 않습니다.<p><p>당신의 <i>%_block_cause_%<i>로 이 서비스 사용이 일시적으로 중지된 것 같습니다.</p>'
+    if request.args.get('error') == 'peti_write':
+        body_content += '<p>당신의 acl은 쓰기 권한을 포함하고 있지 않습니다.</p>'
+    elif request.args.get('error') == 'peti_read':
+        body_content += '<p>당신의 acl은 읽기 권한을 포함하고 있지 않습니다.</p>'
+    elif request.args.get('error') == 'peti_react':
+        body_content += '<p>당신의 acl은 반응 권한을 포함하고 있지 않습니다.</p>'
     elif request.args.get('error') == 'acl_high':
         body_content += '<p>당신보다 낮은 acl 우선도를 가지고 있는 사용자 그룹의 acl만 편집할 수 있습니다.</p>'
     else:
-        body_content += '<p>ACL이 만족되지 않아 접근할 수 없습니다.</p>'
+        body_content += '<p>당신의 acl은 이 작업을 계속하기에 적절한 권한을 포함하고 있지 않습니다.</p>'
+    body_content += '<p>현재 ACL 그룹: {} | 현재 ACL 구분자: {}</p>'.format(acl, acl_id)
     nav_bar = user_control.load_nav_bar()
 
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
