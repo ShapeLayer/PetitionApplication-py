@@ -153,3 +153,5 @@ INSERT INTO static_page_tb (page_name, title, editor, editdate, content) values(
 
 INSERT INTO server_set (name, data) values("custom_header_top", "");
 INSERT INTO server_set (name, data) values("custom_header_bottom", "");
+
+INSERT INTO server_set (name, data) values("petition_publish_default", "0");

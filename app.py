@@ -853,7 +853,7 @@ def flask_a():
     for i in range(len(peti_data)):
         if peti_data[i][3] == 1:
             body_content += '<tr><th scope="row">{}</th><td><a>비공개 청원</a></td></tr>'.format(peti_data[i][0])
-        elif peti_data[i][3] == 404:
+        elif peti_data[i][3] == 3:
             body_content += '<tr><th scope="row">{}</th><td><a>삭제된 청원</a></td></tr>'.format(peti_data[i][0])
         else:
             if peti_data[i][3] == 2:
@@ -880,7 +880,7 @@ def flask_a_article_id(article_id):
     ### Load Petition Data ###
     peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [article_id])
 
-    if peti_data[0][3] == 1 or peti_data[0][3] == 404:
+    if peti_data[0][3] == 1 or peti_data[0][3] == 3:
         abort(404)
     ### Load End ###
 
@@ -957,9 +957,10 @@ def flask_a_write():
     ### Rendering End ###
 
     if request.method == 'POST':
+        publish_default = int(sqlite3_control.select('select data from server_set where name = "petition_publish_default"')[0][0])
         ### Get Login Data ###
         if 'now_login' in session:
-            peti_status = 0
+            peti_status = publish_default
         else:
             peti_status = 1
         ### Get End ###
@@ -1043,7 +1044,7 @@ def flask_a_article_id_delete(article_id):
             ])
         ### Log End ###
 
-        sqlite3_control.commit('update peti_data_tb set peti_status = 404 where peti_id = ?', [article_id])
+        sqlite3_control.commit('update peti_data_tb set peti_status = 3 where peti_id = ?', [article_id])
         return redirect('/a/')
     body_content = body_content.replace('%_form_alerts_%', '')
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
@@ -1639,7 +1640,7 @@ def flask_admin_petition():
     nav_bar = user_control.load_nav_bar()
 
     ### Index Database ###
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 1 or peti_status = 404 order by peti_id desc')
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 1 or peti_status = 3 order by peti_id desc')
     ### Index End ###
 
     ### Render Template ###
@@ -1647,7 +1648,7 @@ def flask_admin_petition():
     for i in range(len(peti_data)):
         if peti_data[i][3] == 1:
             peti_status = '비공개'
-        if peti_data[i][3] == 404:
+        if peti_data[i][3] == 3:
             peti_status = '삭제됨'
         body_content += '<tr><th scope="row">{}</th><td><a href="/admin/petition/{}/">{}</a></td><td>{}</td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1], peti_status)
     body_content += '</tbody></table>'
@@ -1680,7 +1681,7 @@ def flask_admin_petition_article_id(article_id):
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-petition_default settings
-@app.route('/admin/peti-default')
+@app.route('/admin/peti-default/', methods=['GET', 'POST'])
 def flask_admin_peti_default():
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
@@ -1688,7 +1689,49 @@ def flask_admin_peti_default():
     else:
         return redirect('/error/acl/')
 
+    if request.method == 'POST':
+        new_settings = {}
+        try:
+            new_settings['publish'] = request.form['publish']
+        except:
+            return redirect('/admin/peti-default/')
+
+        sqlite3_control.commit('update server_set set data = ? where name = "petition_publish_default"', [new_settings['publish']])
+        return redirect('/admin/peti-default/')
+
     nav_bar = user_control.load_nav_bar()
+    body_content = ''
+
+    now_settings = {}
+    now_settings['publish'] = sqlite3_control.select('select data from server_set where name = "petition_publish_default"')[0][0]
+
+    option = ''
+    option_name = ['공개', '비공개', '답변 완료', '삭제된 것으로 표시']
+    for i in range(4):
+        if now_settings['publish'] == str(i):
+            selected = ' selected'
+        else:
+            selected = ''
+        option += '<option value="{}" {}>'.format(i, selected) + option_name[i] + '</option>'
+
+    body_content += '''
+    <h1>청원 작성 기본 설정</h1>
+    <p>이 설정 사항은 설정 저장 이후 생성되는 청원부터 적용됩니다.</p>
+    <form action="" accept-charset="utf-8" method="post">
+        <div id="publish">
+            <legend style="margin: 0;">청원 공개 기본 설정</legend>
+            <label for="publish"></label>
+            <select class="form-control" name="publish" id="publish">
+                ''' + option + '''
+            </select>
+        </div>
+        <div id="submit-container" style="margin-top: 20px;">
+            <button type="submit" name="submit" class="btn btn-primary" value="publish">저장</button>
+        </div>
+    </form>
+    '''
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-Sethtmlhead
 @app.route('/admin/header/', methods=['GET', 'POST'])
@@ -1707,7 +1750,6 @@ def flask_admin_header():
             new_header += [request.form['top']]
             new_header += [request.form['bottom']]
         except:
-            print('오-류')
             return redirect('/admin/header/')
 
         sqlite3_control.commit('update server_set set data = ? where name="custom_header_top"', [new_header[0]])
@@ -1952,7 +1994,7 @@ def flask_ajax_a():
     for i in range(len(peti_data)):
         if peti_data[i][3] == 1:
             return_json += [{"peti_id" : peti_data[i][0], "peti_display" : "비공개 청원", "peti_status" : peti_data[i][3]}]
-        elif peti_data[i][3] == 404:
+        elif peti_data[i][3] == 3:
             return_json += [{"peti_id" : peti_data[i][0], "peti_display" : "삭제된 청원", "peti_status" : peti_data[i][3]}]
         else:
             return_json += [{"peti_id" : peti_data[i][0], "peti_display" : peti_data[i][1], "peti_status" : peti_data[i][3]}]
