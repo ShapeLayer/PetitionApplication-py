@@ -4,20 +4,7 @@
     <div class="bs-component">
         <p> %_article_body_content_% </p>
     </div>
-    <div class="bs-component bs-official-reply">
-        <p> %_article_official_reply_% </p>
-    </div>
+    %_article_official_reply_%
     <hr>
-    <div class="bs-component">
-        <form action="" accept-charset="utf-8" name="form_write" method="post">
-            <h3 id="progress-animated">청원 반응</h3>
-            <p> %_article_react_count_% 개 반응</p>
-            <input type="text" class="form-control" name="react_author_display_name" placeholder="이름" style="margin-bottom: 5px;" value="%_react_author_display_name_%" %_react_display_name_is_enabled_%>
-            <textarea class="form-control" id="react_content" name="react_content" rows="3" style="resize: none;" required></textarea>
-            <button type="submit" name="submit" class="btn btn-primary" value="publish" %_is_enabled_%>청원 반응하기</button>
-        </form>
-        <div class="bs-component article-margin">
-            %_article_reacts_%
-        </div>
-    </div>
+    %_react_body_%
 </div>

@@ -240,34 +240,54 @@ class viewer:
 
         ### Index Data from Database ###
         peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [target_id])
-        react_data = sqlite3_control.select('select peti_react_tb.*, author_connect.account_user_id, author_connect.peti_author_display_name from peti_react_tb, author_connect where peti_react_tb.peti_id = ? and author_connect.peti_author_id = peti_react_tb.author_id and peti_react_tb.react_type = "default"', [target_id])
+        if sqlite3_control.select('select data from server_set where name = "petition_react_disabled"')[0][0] == '0':
+            react_data = sqlite3_control.select('select peti_react_tb.*, author_connect.account_user_id, author_connect.peti_author_display_name from peti_react_tb, author_connect where peti_react_tb.peti_id = ? and author_connect.peti_author_id = peti_react_tb.author_id and peti_react_tb.react_type = "default"', [target_id])
         author_nickname = sqlite3_control.select('select * from author_connect where peti_author_id = ?', [peti_data[0][4]])
         if peti_data[0][3] == 2:
             reply_official_data = sqlite3_control.select('select content from peti_react_tb where peti_id = ? and react_type = "official"', [target_id])
-            reply_official_content = sqlite3_control.select('select * from static_page_tb where page_name = ?'.format, [reply_official_data[0][0]])
+            reply_official_content = sqlite3_control.select('select * from static_page_tb where page_name = ?', [reply_official_data[0][0]])
         ### Index End ###
 
         ### Load Template ###
         template = open('templates/a.html', encoding='utf-8').read()
         ### Load End ###
 
+        if sqlite3_control.select('select data from server_set where name = "petition_react_disabled"')[0][0] == '0':
+            template = template.replace('%_react_body_%',
+            '''
+            <div class="bs-component">
+                <form action="" accept-charset="utf-8" name="form_write" method="post">
+                    <h3 id="progress-animated">청원 반응</h3>
+                    <p> %_article_react_count_% 개 반응</p>
+                    <input type="text" class="form-control" name="react_author_display_name" placeholder="이름" style="margin-bottom: 5px;" value="%_react_author_display_name_%" %_react_display_name_is_enabled_%>
+                    <textarea class="form-control" id="react_content" name="react_content" rows="3" style="resize: none;" required></textarea>
+                    <button type="submit" name="submit" class="btn btn-primary" value="publish" %_is_enabled_%>청원 반응하기</button>
+                </form>
+                <div class="bs-component article-margin">
+                    %_article_reacts_%
+                </div>
+            </div>
+            ''')
+        else:
+            template = template.replace('%_react_body_%', '')
         ### Render React ###
-        template_react = """
+        if sqlite3_control.select('select data from server_set where name = "petition_react_disabled"')[0][0] == '0':
+            template_react = """
                 <div class="container">
                     <h5>%_article_react_author_display_name_%</h5>
                     <p>%_article_react_body_content_%</p>
                 </div>
                 """
-        react_body_content = ''
-        for i in range(len(react_data)):
-            react_render_object = template_react
-            if author_nickname[0][2] == react_data[i][5]:
-                react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][6])+'   <span class="badge badge-pill badge-warning">작성자</span>')
-            else:
-                react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][6]))
-            react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][4])
-            react_body_content += react_render_object
-        ### Render End ###
+            react_body_content = ''
+            for i in range(len(react_data)):
+                react_render_object = template_react
+                if author_nickname[0][2] == react_data[i][5]:
+                    react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][6])+'   <span class="badge badge-pill badge-warning">작성자</span>')
+                else:
+                    react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][6]))
+                react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][4])
+                react_body_content += react_render_object
+            ### Render End ###
 
         ### Get Author Data ###
         author_data = sqlite3_control.select('select * from author_connect where peti_author_id = ?', [peti_data[0][4]])
@@ -293,13 +313,17 @@ class viewer:
         template = template.replace('%_article_publish_date_%', peti_data[0][2])
         template = template.replace('%_article_author_display_name_%', author_data_display)
         template = template.replace('%_article_body_content_%', peti_data[0][5])
-        template = template.replace('%_article_react_count_%', str(len(react_data)))
-        template = template.replace('%_article_reacts_%', react_body_content)
+        if sqlite3_control.select('select data from server_set where name = "petition_react_disabled"')[0][0] == '0':
+            template = template.replace('%_article_react_count_%', str(len(react_data)))
+            template = template.replace('%_article_reacts_%', react_body_content)
+        else:
+            template = template.replace('%_article_react_count_%', '')
+            template = template.replace('%_article_reacts_%', '')
 
         #### Render Official Reply ####
         if peti_data[0][3] == 2:
             official_reply_content = '<p style="text-align: right; padding-bottom: 0; margin-bottom:0;">청원 답변</p><h4><a href="/static/'+reply_official_data[0][0]+'" data-toggle="tooltip" title="새 창으로 원문 보기" target="_blank">'+reply_official_content[0][1]+'</a></h4><b>사용자: '+reply_official_content[0][2]+' 마지막으로 수정 | '+reply_official_content[0][3]+'</b><hr>'+reply_official_content[0][4]
-            template = template.replace('%_article_official_reply_%', official_reply_content)
+            template = template.replace('%_article_official_reply_%', '<div class="bs-component bs-official-reply"><p>' + official_reply_content + '</p></div>')
         else:
             template = template.replace('%_article_official_reply_%', '')
 
@@ -898,6 +922,8 @@ def flask_a_article_id(article_id):
         body_content = body_content.replace('%_enabled_content_%', '비로그인 상태에서는 청원 반응이 불가능합니다.')
     ### Render End ###
     if request.method == 'POST':
+        if sqlite3_control.select('select data from server_set where name = "petition_react_disabled"')[0][0] == '1':
+            return redirect('/a/{}'.format(article_id))
         if user_control.load_acl('peti_react') == False:
             return redirect('/error/acl/?error=peti_react')
 
@@ -1242,7 +1268,10 @@ def flask_admin_member():
             user_id_display = '<a href="https://facebook.com/{}" target="_blank">{}</a>'.format(user_list[i][2], user_list[i][2])
         else:
             user_id_display = user_list[i][2]
-        user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[i][4], user_list[i][3])
+        if user_list[i][4] == None or user_list[i][4] == '':
+            user_display_name = user_list[i][3]
+        else:
+            user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[i][4], user_list[i][3])
         body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td></tr>'.format(user_display_name, user_list[i][0], user_id_display, user_list[i][1])
     body_content += '</tbody></table>'
     ### Render End ###
@@ -1356,7 +1385,10 @@ def flask_admin_admins():
             user_id_display = '<a href="https://facebook.com/{}" target="_blank">{}</a>'.format(user_list[j][2], user_list[j][2])
         else:
             user_id_display = user_list[j][2]
-        user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[j][4], user_list[j][3])
+        if user_list[i][4] == None or user_list[i][4] == '':
+            user_display_name = user_list[i][3]
+        else:
+            user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[i][4], user_list[i][3])
         body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td><td>{}</td></tr>'.format(user_display_name, user_list[j][0], user_id_display, user_list[j][1], user_auth_list[j])
     body_content += '</tbody></table>'
 
@@ -1697,6 +1729,10 @@ def flask_admin_peti_default():
             return redirect('/admin/peti-default/')
 
         sqlite3_control.commit('update server_set set data = ? where name = "petition_publish_default"', [new_settings['publish']])
+        if 'react_disabled' in request.form:
+            sqlite3_control.commit('update server_set set data = "1" where name = "petition_react_disabled"')
+        else:
+            sqlite3_control.commit('update server_set set data = "0" where name = "petition_react_disabled"')
         return redirect('/admin/peti-default/')
 
     nav_bar = user_control.load_nav_bar()
@@ -1704,6 +1740,7 @@ def flask_admin_peti_default():
 
     now_settings = {}
     now_settings['publish'] = sqlite3_control.select('select data from server_set where name = "petition_publish_default"')[0][0]
+    now_settings['react_disabled'] = sqlite3_control.select('select data from server_set where name = "petition_react_disabled"')[0][0]
 
     option = ''
     option_name = ['공개', '비공개', '답변 완료', '삭제된 것으로 표시']
@@ -1713,6 +1750,12 @@ def flask_admin_peti_default():
         else:
             selected = ''
         option += '<option value="{}" {}>'.format(i, selected) + option_name[i] + '</option>'
+
+    html_enabled = {}
+    if now_settings['react_disabled'] == '0':
+        html_enabled['react_disabled'] = ''
+    else:
+        html_enabled['react_disabled'] = 'checked'
 
     body_content += '''
     <h1>청원 작성 기본 설정</h1>
@@ -1724,6 +1767,15 @@ def flask_admin_peti_default():
             <select class="form-control" name="publish" id="publish">
                 ''' + option + '''
             </select>
+        </div>
+        <hr>
+        <div id="react">
+        <legend style="margin: 0;">청원 반응 활성화</legend>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="react_disabled" name="react_disabled" ''' + html_enabled['react_disabled'] + '''>
+            <label class="custom-control-label" for="react_disabled">청원 반응 기능을 비활성화하고 청원 뷰어에서 나타나지 않도록 합니다.</label>
+        </div>
+
         </div>
         <div id="submit-container" style="margin-top: 20px;">
             <button type="submit" name="submit" class="btn btn-primary" value="publish">저장</button>
