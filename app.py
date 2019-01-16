@@ -545,6 +545,7 @@ def flask_main():
     return render_template('frontpage.html', appname = LocalSettings.entree_appname, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: login
+@app.route('/login', methods=['GET', 'POST'])
 @app.route('/login/', methods=['GET', 'POST'])
 def flask_login():
     if 'now_login' in session:
@@ -610,6 +611,7 @@ $(document).ready(function(){
     body_content += oauth_content
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+@app.route('/login/naver', methods=['GET', 'POST'])
 @app.route('/login/naver/', methods=['GET', 'POST'])
 def flask_login_naver():
     nav_bar = user_control.load_nav_bar()
@@ -630,6 +632,7 @@ def flask_login_naver():
         data['client_id'], data['redirect_uri'], data['state']
     ))
 
+@app.route('/login/naver/callback', methods=['GET', 'POST'])
 @app.route('/login/naver/callback/', methods=['GET', 'POST'])
 def flask_login_naver_callback():
     oauth = config.load_oauth_settings()
@@ -665,6 +668,7 @@ def flask_login_naver_callback():
     register(stand_json, 'naver')
     return redirect('/')
 
+@app.route('/login/facebook', methods=['GET', 'POST'])
 @app.route('/login/facebook/', methods=['GET', 'POST'])
 def flask_login_facebook():
     nav_bar = user_control.load_nav_bar()
@@ -685,6 +689,7 @@ def flask_login_facebook():
         data['client_id'], data['redirect_uri'], data['state']
     ))
 
+@app.route('/login/facebook/callback', methods=['GET', 'POST'])
 @app.route('/login/facebook/callback/', methods=['GET', 'POST'])
 def flask_login_facebook_callback():
     oauth = config.load_oauth_settings()
@@ -721,6 +726,7 @@ def flask_login_facebook_callback():
     register(stand_json, 'facebook')
     return redirect('/')
 
+@app.route('/login/entree', methods=['GET', 'POST'])
 @app.route('/login/entree/', methods=['GET', 'POST'])
 def flask_login_entree():
     body_content = ''
@@ -773,6 +779,7 @@ def flask_login_entree():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Logout
+@app.route('/logout')
 @app.route('/logout/')
 def flask_logout():
     body_content = ''
@@ -783,6 +790,7 @@ def flask_logout():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: register
+@app.route('/register', methods=['GET', 'POST'])
 @app.route('/register/', methods=['GET', 'POST'])
 def flask_register():
     body_content = ''
@@ -862,6 +870,7 @@ def flask_register():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition List
+@app.route('/a', methods=['GET', 'POST'])
 @app.route('/a/', methods=['GET', 'POST'])
 def flask_a():
     body_content = ''
@@ -897,6 +906,7 @@ def flask_a():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Article
+@app.route('/a/<article_id>', methods=['GET', 'POST'])
 @app.route('/a/<article_id>/', methods=['GET', 'POST'])
 def flask_a_article_id(article_id):
     if user_control.load_acl('peti_read') == False:
@@ -965,6 +975,7 @@ def flask_a_article_id(article_id):
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Write
+@app.route('/a/write', methods=['GET', 'POST'])
 @app.route('/a/write/', methods=['GET', 'POST'])
 def flask_a_write():
     if user_control.load_acl('peti_write') == False:
@@ -1074,6 +1085,7 @@ def flask_a_write():
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Delete
+@app.route('/a/<article_id>/delete', methods=['GET', 'POST'])
 @app.route('/a/<article_id>/delete/', methods=['GET', 'POST'])
 def flask_a_article_id_delete(article_id):
     if 'now_login' in session:
@@ -1122,6 +1134,7 @@ def flask_a_article_id_delete(article_id):
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Official React
+@app.route('/a/<article_id>/official', methods=['GET', 'POST'])
 @app.route('/a/<article_id>/official/', methods=['GET', 'POST'])
 def flask_a_article_id_official(article_id):
     if 'now_login' in session:
@@ -1166,6 +1179,7 @@ def flask_a_article_id_official(article_id):
         return redirect('http://localhost:2500/admin/static/add?type=reply&target={}'.format(article_id))
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+@app.route('/a/<article_id>/complete', methods=['GET', 'POST'])
 @app.route('/a/<article_id>/complete/', methods=['GET', 'POST'])
 def flask_a_article_id_complete(article_id):
     if 'now_login' in session:
@@ -1216,6 +1230,7 @@ def flask_a_article_id_complete(article_id):
 
 
 # ## flask: Activity Log
+@app.route('/log')
 @app.route('/log/')
 def flask_log():        
     body_content = ''
@@ -1237,6 +1252,7 @@ def flask_log():
 
 # ## flask: Static Page Viewer
 @app.route('/static/<title>')
+@app.route('/static/<title>/')
 def flask_static(title):    
     body_content = ''
     nav_bar = user_control.load_nav_bar()
@@ -1254,6 +1270,7 @@ def flask_static(title):
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Notice Static Page
+@app.route('/notice')
 @app.route('/notice/')
 def flask_notice():    
     body_content = ''
@@ -1271,6 +1288,7 @@ def flask_notice():
 
 
 # ## flask: Admin Page
+@app.route('/admin')
 @app.route('/admin/')
 def flask_admin():
     if 'now_login' in session:
@@ -1292,6 +1310,7 @@ def flask_admin():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-member
+@app.route('/admin/member')
 @app.route('/admin/member/')
 def flask_admin_member():
     if 'now_login' in session:
@@ -1325,6 +1344,7 @@ def flask_admin_member():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-member-idnetify
+@app.route('/admin/member/identify', methods=['GET', 'POST'])
 @app.route('/admin/member/identify/', methods=['GET', 'POST'])
 def flask_admin_identify():
     if 'now_login' in session:
@@ -1401,6 +1421,7 @@ def flask_admin_identify():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-admins
+@app.route('/admin/admins')
 @app.route('/admin/admins/')
 def flask_admin_admins():
     if 'now_login' in session:
@@ -1444,6 +1465,7 @@ def flask_admin_admins():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-(add admins)
+@app.route('/admin/admins/add', methods=['GET', 'POST'])
 @app.route('/admin/admins/add/', methods=['GET', 'POST'])
 def flask_admin_admins_add():
     if 'now_login' in session:
@@ -1511,6 +1533,7 @@ def flask_admin_admins_add():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-ACL Settings
+@app.route('/admin/acl', methods=['GET', 'POST'])
 @app.route('/admin/acl/', methods=['GET', 'POST'])
 def flask_admin_acl():
     if 'now_login' in session:
@@ -1641,6 +1664,7 @@ def flask_admin_acl():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-verify_key
+@app.route('/admin/verify_key')
 @app.route('/admin/verify_key/')
 def flask_admin_verify_key():
     if 'now_login' in session:
@@ -1669,7 +1693,14 @@ def flask_admin_verify_key():
     body_content += '<p>verify_key는 1회 사용시 갱신됩니다.</p>'
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+# ## flask: Admin-SEO
+@app.route('/admin/seo', methods=['GET', 'POST'])
+@app.route('/admin/seo/', methods=['GET', 'POST'])
+def flask_admin_seo():
+    return ''
+
 # ## flask: Admin-Update
+@app.route('/admin/update')
 @app.route('/admin/update/')
 def flask_admin_update():
     if 'now_login' in session:
@@ -1706,6 +1737,7 @@ def flask_admin_update():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-Petition Manage
+@app.route('/admin/petition')
 @app.route('/admin/petition/')
 def flask_admin_petition():
     if 'now_login' in session:
@@ -1733,6 +1765,7 @@ def flask_admin_petition():
     ### Render End ###
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+@app.route('/admin/petition/<article_id>', methods=['GET', 'POST'])
 @app.route('/admin/petition/<article_id>/', methods=['GET', 'POST'])
 def flask_admin_petition_article_id(article_id):
     if 'now_login' in session:
@@ -1759,6 +1792,7 @@ def flask_admin_petition_article_id(article_id):
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-petition_default settings
+@app.route('/admin/peti-default', methods=['GET', 'POST'])
 @app.route('/admin/peti-default/', methods=['GET', 'POST'])
 def flask_admin_peti_default():
     if 'now_login' in session:
@@ -1844,6 +1878,7 @@ def flask_admin_peti_default():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-Sethtmlhead
+@app.route('/admin/header', methods=['GET', 'POST'])
 @app.route('/admin/header/', methods=['GET', 'POST'])
 def flask_admin_header():
     if 'now_login' in session:
@@ -1885,6 +1920,7 @@ def flask_admin_header():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-Manage Static Page
+@app.route('/admin/static', methods=['GET', 'POST'])
 @app.route('/admin/static/', methods=['GET', 'POST'])
 def flask_admin_static():
     if 'now_login' in session:
@@ -1953,6 +1989,7 @@ def flask_admin_static():
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+@app.route('/admin/static/add', methods=['GET', 'POST'])
 @app.route('/admin/static/add/', methods=['GET', 'POST'])
 def flask_admin_static_add():
     if 'now_login' in session:
@@ -2070,6 +2107,7 @@ def flask_admin_static_add():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Assets Route
+@app.route('/assets/<assets>')
 @app.route('/assets/<assets>/')
 def serve_pictures(assets):
     return send_from_directory('assets', assets)
@@ -2080,6 +2118,7 @@ def robots():
     return robots
 
 # ## flask: Ajax Route
+@app.route('/ajax/a', methods=['GET', 'POST'])
 @app.route('/ajax/a/', methods=['GET', 'POST'])
 def flask_ajax_a():
     request_lower_num = request.args.get('request-s')
@@ -2105,6 +2144,7 @@ def flask_ajax_a():
     return str(return_json)
 
 # ## flask: Error Handler
+@app.route('/error/acl', methods=['GET'])
 @app.route('/error/acl/', methods=['GET'])
 def error_acl():
     if 'now_login' in session:
