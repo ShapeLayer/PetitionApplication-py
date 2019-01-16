@@ -15,6 +15,7 @@ import bcrypt
 import urllib.request
 
 import LocalSettings
+import VarSettings as vs
 ### === Import End === ###
 
 ### === Initialize Application === ###
@@ -126,6 +127,7 @@ class user_control:
         else:
             ### Render Navbar ###
             template = template.replace('%_user_display_name_%', '비로그인 상태')
+            template = template.replace('%_user_display_profile_img_%', 'http://www.gravatar.com/avatar/?d=identicon')
             user_profile_menu_content += """
             <a class="dropdown-item" href="/login/">로그인</a>
             """
@@ -215,7 +217,7 @@ class config:
 
     def recaptcha_existed():
         oauthsettings = json.loads(open('oauthsettings.json', encoding='utf-8').read())
-        if oauthsettings['recaptcha_site_key'] == '' or oauthsettings['recaptcha_secret_key']:
+        if oauthsettings['recaptcha_site_key'] == '' or oauthsettings['recaptcha_secret_key'] == '':
             return False
         else:
             return True
@@ -245,7 +247,10 @@ class viewer:
         author_nickname = sqlite3_control.select('select * from author_connect where peti_author_id = ?', [peti_data[0][4]])
         if peti_data[0][3] == 2:
             reply_official_data = sqlite3_control.select('select content from peti_react_tb where peti_id = ? and react_type = "official"', [target_id])
-            reply_official_content = sqlite3_control.select('select * from static_page_tb where page_name = ?', [reply_official_data[0][0]])
+            if len(reply_official_data) != 0:
+                reply_official_content = sqlite3_control.select('select * from static_page_tb where page_name = ?', [reply_official_data[0][0]])
+            else:
+                reply_official_content = ''
         ### Index End ###
 
         ### Load Template ###
@@ -321,7 +326,7 @@ class viewer:
             template = template.replace('%_article_reacts_%', '')
 
         #### Render Official Reply ####
-        if peti_data[0][3] == 2:
+        if peti_data[0][3] == 2 and len(reply_official_data) != 0:
             official_reply_content = '<p style="text-align: right; padding-bottom: 0; margin-bottom:0;">청원 답변</p><h4><a href="/static/'+reply_official_data[0][0]+'" data-toggle="tooltip" title="새 창으로 원문 보기" target="_blank">'+reply_official_content[0][1]+'</a></h4><b>사용자: '+reply_official_content[0][2]+' 마지막으로 수정 | '+reply_official_content[0][3]+'</b><hr>'+reply_official_content[0][4]
             template = template.replace('%_article_official_reply_%', '<div class="bs-component bs-official-reply"><p>' + official_reply_content + '</p></div>')
         else:
@@ -332,13 +337,12 @@ class viewer:
         
         return body_content
 
-    def load_sns_login_status(content):
+    def load_sns_login_status():
         if 'now_login' in session:
             user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
-            content = content.replace('%_sns_login_status_%', '로그인 됨: {}'.format(user_profile_data[0][3]))
+            return '<label for="peti_author_display_name">로그인 됨: {}</label>'.format(user_profile_data[0][3])
         else:
-            content = content.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
-        return content
+            return '<label for="peti_author_display_name">비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.</label>'
 
     def load_metatag():
         meta = """
@@ -975,18 +979,41 @@ def flask_a_write():
     template = template.replace('%_recaptcha_site_key_%', recaptcha_site_key)
 
     ### Template Rendering ###
-    if 'now_login' in session:
-        user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
-        template = template.replace('%_sns_login_status_%', '로그인 됨: {}'.format(user_profile_data[0][3]))
+    template = template.replace('%_sns_login_status_%', viewer.load_sns_login_status())
+
+    option = ''
+    now_settings = {}
+    html_enabled = {}
+    now_settings['publish'] = sqlite3_control.select('select data from server_set where name = "petition_publish_default"')[0][0]
+    now_settings['publish_fixed'] = sqlite3_control.select('select data from server_set where name = "petition_publish_fixed"')[0][0]
+    if now_settings['publish_fixed'] == '0':
+        html_enabled['publish_fixed'] = ''
     else:
-        template = template.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
+        html_enabled['publish_fixed'] = 'disabled'
+    for i in range(4):
+        if now_settings['publish'] == str(i):
+            selected = ' selected'
+        else:
+            selected = ''
+        if i < 2:
+            option += '<option value="{}"{}>'.format(i, selected) + vs.publish_option_name[i] + '</option>'
+        elif i >= 2 and now_settings['publish_fixed'] == '0':
+            pass
+        else:
+            option += '<option value="{}"{}>시스템이 비공개로 설정함</option>'.format(i, selected)
+    template = template.replace('%_publish_option_%', '''
+    <select class="form-control" name="publish" id="publish" '''+ html_enabled['publish_fixed'] +'''>
+        ''' + option + '''
+    </select>
+    ''')    
     ### Rendering End ###
 
     if request.method == 'POST':
-        publish_default = int(sqlite3_control.select('select data from server_set where name = "petition_publish_default"')[0][0])
         ### Get Login Data ###
-        if 'now_login' in session:
-            peti_status = publish_default
+        if 'now_login' in session and now_settings['publish_fixed'] == '0':
+            peti_status = int(request.form['publish'])
+        elif 'now_login' in session and now_settings['publish_fixed'] == '1':
+            peti_status = int(now_settings['publish'])
         else:
             peti_status = 1
         ### Get End ###
@@ -1006,7 +1033,22 @@ def flask_a_write():
             )
             recaptcha_check_json = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
             if recaptcha_check_json['success'] == False:
-                return '오류! reCaptcha를 제대로 수행하세요.'
+                template = template.replace('%_value:peti_display_name_%', peti_display_name)
+                template = template.replace('%_value:peti_author_display_name_%', peti_author_display_name)
+                template = template.replace('%_value:peti_body_content_%', peti_body_content)
+                template = template.replace('%_recaptcha_alert_%', '''
+                <p id="needed_recaptcha" style="color: red;">로봇이 아닙니다(reCaptcha)를 완료하세요.</p>
+                <script>
+                    $('html, body').animate({
+                        scrollTop: $("#needed_recaptcha").offset().top
+                    }, 2000);
+                    setTimeout(function () {
+                        document.getElementById('needed_recaptcha').style.backgroundColor = 'yellow';
+                    }, 1000);
+                </script>
+                ''')
+                body_content += template
+                return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
         ### Save Author Data ###
         if peti_status == 1:
@@ -1024,6 +1066,10 @@ def flask_a_write():
         ### Insert End ###
 
         return redirect('/a/')
+    template = template.replace('%_value:peti_display_name_%', '')
+    template = template.replace('%_value:peti_author_display_name_%', '')
+    template = template.replace('%_value:peti_body_content_%', '')
+    template = template.replace('%_recaptcha_alert_%', '')
     body_content += template
     return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
@@ -1733,6 +1779,10 @@ def flask_admin_peti_default():
             sqlite3_control.commit('update server_set set data = "1" where name = "petition_react_disabled"')
         else:
             sqlite3_control.commit('update server_set set data = "0" where name = "petition_react_disabled"')
+        if 'publish_fixed' in request.form:
+            sqlite3_control.commit('update server_set set data = "1" where name = "petition_publish_fixed"')
+        else:
+            sqlite3_control.commit('update server_set set data = "0" where name = "petition_publish_fixed"')
         return redirect('/admin/peti-default/')
 
     nav_bar = user_control.load_nav_bar()
@@ -1740,22 +1790,26 @@ def flask_admin_peti_default():
 
     now_settings = {}
     now_settings['publish'] = sqlite3_control.select('select data from server_set where name = "petition_publish_default"')[0][0]
+    now_settings['publish_fixed'] = sqlite3_control.select('select data from server_set where name = "petition_publish_fixed"')[0][0]
     now_settings['react_disabled'] = sqlite3_control.select('select data from server_set where name = "petition_react_disabled"')[0][0]
 
     option = ''
-    option_name = ['공개', '비공개', '답변 완료', '삭제된 것으로 표시']
     for i in range(4):
         if now_settings['publish'] == str(i):
             selected = ' selected'
         else:
             selected = ''
-        option += '<option value="{}" {}>'.format(i, selected) + option_name[i] + '</option>'
+        option += '<option value="{}" {}>'.format(i, selected) +  vs.publish_option_name[i]+ '</option>'
 
     html_enabled = {}
     if now_settings['react_disabled'] == '0':
         html_enabled['react_disabled'] = ''
     else:
         html_enabled['react_disabled'] = 'checked'
+    if now_settings['publish_fixed'] == '0':
+        html_enabled['publish_fixed'] = ''
+    else:
+        html_enabled['publish_fixed'] = 'checked'
 
     body_content += '''
     <h1>청원 작성 기본 설정</h1>
@@ -1767,6 +1821,10 @@ def flask_admin_peti_default():
             <select class="form-control" name="publish" id="publish">
                 ''' + option + '''
             </select>
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="publish_fixed" name="publish_fixed" ''' + html_enabled['publish_fixed'] + '''>
+                <label class="custom-control-label" for="publish_fixed">사용자가 이 설정을 무조건 따르도록 합니다.</label>
+            </div>
         </div>
         <hr>
         <div id="react">
@@ -2018,13 +2076,7 @@ def serve_pictures(assets):
 
 @app.route('/robots.txt')
 def robots():
-    robots = """
-User-agent: *
-Disallow: /admin
-Disallow: /login
-Disallow: /logout
-Disallow: /register
-    """
+    robots = vs.robots
     return robots
 
 # ## flask: Ajax Route
