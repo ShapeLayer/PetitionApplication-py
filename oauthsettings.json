@@ -3,6 +3,6 @@
     "facebook_client_secret" : "",
     "naver_client_id" : "",
     "naver_client_secret" : "",
-    "recaptcha_site_key" : "6Ld9WXsUAAAAAIoU1_qhDku-Rg_bB-w6rQiLXwSb",
-    "recaptcha_secret_key" : "6Ld9WXsUAAAAAFroD8one3Y9Iq-sjPpnFQ_2GRLo"
+    "recaptcha_site_key" : "",
+    "recaptcha_secret_key" : ""
 }
