@@ -5,5 +5,3 @@ __pycache__/*.*
 
 static/gen/*.*
 static/.webassets-cache
-
-oauthsettings.1.json
