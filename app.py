@@ -12,6 +12,7 @@ import base64
 import hashlib
 import random
 import bcrypt
+import urllib.parse
 import urllib.request
 
 import LocalSettings
@@ -294,6 +295,17 @@ class viewer:
                 react_body_content += react_render_object
             ### Render End ###
 
+        ### Get Share Button ###
+        oauth_settings = config.load_oauth_settings()
+        share_render = ''
+        now_settings = {}
+        if oauth_settings['facebook_client_id'] != '':
+            now_settings['facebook_share_enabled'] = sqlite3_control.select('select data from server_set where name = "facebook_share_enabled"')[0][0]
+            if now_settings['facebook_share_enabled'] == '1':
+                fb_url = 'https://www.facebook.com/sharer/sharer.php?u=' + urllib.parse.quote(LocalSettings.publish_host_name + '/a/' + target_id)
+                share_render += ' <a href="{}"><span class="badge badge-pill badge-facebook"><i class="fab fa-facebook-f"></i> Facebook으로 공유</span></a>'.format(fb_url)
+        ### Get End ###
+
         ### Get Author Data ###
         author_data = sqlite3_control.select('select * from author_connect where peti_author_id = ?', [peti_data[0][4]])
         ### Get End ###
@@ -312,7 +324,7 @@ class viewer:
             template = template.replace('%_react_display_name_is_enabled_%', '')
 
         ### Render Template ###
-        author_data_display = user_control.user_controller(author_data[0][0])
+        author_data_display = user_control.user_controller(author_data[0][0]) + share_render
         template = template.replace('%_article_display_name_%', peti_data[0][1])
         template = template.replace('%_article_control_panel_%', petition_control)
         template = template.replace('%_article_publish_date_%', peti_data[0][2])
@@ -1916,6 +1928,53 @@ def flask_admin_header():
         </form>
     </div>
     """.format(now_header[0], now_header[1])
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+
+# ## flask: Admin-Manage Static Page
+@app.route('/admin/sns', methods=['GET', 'POST'])
+@app.route('/admin/sns/', methods=['GET', 'POST'])
+def flask_admin_sns():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    if request.method == 'POST':
+        if 'facebook_share_enabled' in request.form:
+            sqlite3_control.commit('update server_set set data = "1" where name = "facebook_share_enabled"')
+        else:
+            sqlite3_control.commit('update server_set set data = "0" where name = "facebook_share_enabled"')
+
+    nav_bar = user_control.load_nav_bar()
+    body_content = ''
+
+    now_settings = {}
+    now_settings['facebook_share_enabled'] = sqlite3_control.select('select data from server_set where name="facebook_share_enabled"')[0][0]
+
+    html_enabled = {}
+    if now_settings['facebook_share_enabled'] == '1':
+        html_enabled['facebook_share_enabled'] = 'checked'
+    else:
+        html_enabled['facebook_share_enabled'] = ''
+
+    body_content += '<h1>SNS 설정</h1>'
+    body_content += '''
+    <form action="" accept-charset="utf-8" method="post">
+        <div id="share">
+            <legend style="margin: 0;">공유 기능 활성화</legend>
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="facebook_share_enabled" name="facebook_share_enabled" ''' + html_enabled['facebook_share_enabled'] + '''>
+                <label class="custom-control-label" for="facebook_share_enabled">Facebook으로 청원을 공유하는 것을 허용합니다.</label>
+                <p> * LocalSettings.py의 publish_host_name이 제대로 지정되어야 작동합니다.</p>
+            </div>
+        </div>
+        <div id="submit-container" style="margin-top: 20px;">
+            <button type="submit" name="submit" class="btn btn-primary" value="publish">저장</button>
+        </div>
+    </form>
+    '''
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 

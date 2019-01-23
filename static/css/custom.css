@@ -65,3 +65,7 @@ input{
 #needed_recaptcha {
     transition: .5s ease;
 }
+
+.badge-facebook {
+    background-color: #3b5998;
+}
