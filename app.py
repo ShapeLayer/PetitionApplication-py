@@ -1889,6 +1889,34 @@ def flask_admin_peti_default():
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+# ## flask: Admin-all petition settings
+@app.route('/admin/peti-all', methods=['GET', 'POST'])
+@app.route('/admin/peti-all/', methods=['GET', 'POST'])
+def flask_admin_peti_all():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    nav_bar = user_control.load_nav_bar()
+
+    body_content = ''
+    body_content += '<h1>청원 일괄 설정</h1>'
+    body_content += '<p>모든 청원 상태를 변경합니다.</p>'
+    body_content += '''
+    <form action="" accept-charset="utf-8" method="post" name="publish">
+        <button type="submit" name="submit" class="btn btn-primary" value="submit">저장</button>
+    </form>
+    <hr>
+    <form action="" accept-charset="utf-8" method="post" name="all">
+        <h2 class="text-danger">Danger Zone</h2>
+        <button type="submit" name="submit" class="btn btn-danger" value="delete-all">전체 삭제</button>
+    </form>
+    '''
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+
 # ## flask: Admin-Sethtmlhead
 @app.route('/admin/header', methods=['GET', 'POST'])
 @app.route('/admin/header/', methods=['GET', 'POST'])
