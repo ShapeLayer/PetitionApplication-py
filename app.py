@@ -1901,15 +1901,34 @@ def flask_admin_peti_all():
 
     nav_bar = user_control.load_nav_bar()
 
+    if request.method == 'POST':
+        if 'publish' in request.form:
+            request.form['peti-status']
+            try:
+                publish_value = request.form['peti-status']
+            except:
+                publish_value = '' # request error
+            if publish_value == 'publish':
+                sqlite3_control.commit('update peti_data_tb set peti_status = 0')
+            elif publish_value == 'secret':
+                sqlite3_control.commit('update peti_data_tb set peti_status = 1')
+        elif request.form['submit'] == 'delete-all':
+            sqlite3_control.commit('delete from peti_data_tb')
+        return redirect('/admin/peti-all')
+
     body_content = ''
     body_content += '<h1>청원 일괄 설정</h1>'
     body_content += '<p>모든 청원 상태를 변경합니다.</p>'
     body_content += '''
     <form action="" accept-charset="utf-8" method="post" name="publish">
+        <select class="form-control" name="peti-status" id="peti-status">
+            <option value="publish">전체공개</option>
+            <option value="secret">비공개</option>
+        </select>
         <button type="submit" name="submit" class="btn btn-primary" value="submit">저장</button>
     </form>
     <hr>
-    <form action="" accept-charset="utf-8" method="post" name="all">
+    <form action="" accept-charset="utf-8" method="post" name="danger">
         <h2 class="text-danger">Danger Zone</h2>
         <button type="submit" name="submit" class="btn btn-danger" value="delete-all">전체 삭제</button>
     </form>
