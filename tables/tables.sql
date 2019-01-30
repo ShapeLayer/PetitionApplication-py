@@ -90,3 +90,8 @@ CREATE TABLE server_set(
     name TEXT NOT NULL,
     data TEXT NOT NULL
 );
+
+CREATE TABLE seo_set(
+    name TEXT NOT NULL,
+    data TEXT NOT NULL
+);

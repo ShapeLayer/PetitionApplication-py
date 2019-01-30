@@ -180,6 +180,12 @@ INSERT INTO static_page_tb (page_name, title, editor, editdate, content) values(
 ");
 INSERT INTO static_page_tb (page_name, title, editor, editdate, content) values("notice", "공지", "System", "", "아직 공지가 없습니다.");
 
+INSERT INTO seo_set (name, data) values("og:url", "%_url_%");
+INSERT INTO seo_set (name, data) values("og:title", "%_page_title_% - %_appname_%");
+INSERT INTO seo_set (name, data) values("og:image", "%_app_image_%");
+INSERT INTO seo_set (name, data) values("og:type", "article");
+INSERT INTO seo_set (name, data) values("og:locale", "ko_KR");
+
 INSERT INTO server_set (name, data) values("custom_header_top", "");
 INSERT INTO server_set (name, data) values("custom_header_bottom", "");
 

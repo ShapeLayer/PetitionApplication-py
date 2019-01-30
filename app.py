@@ -499,7 +499,13 @@ class viewer:
         body_content = js_code + css_code + searchbar + overlay_code
         return body_content
 
-    def render_var(content):
+    def render_var(content, target_page = None, title = None):
+        if target_page:
+            content = content.replace('%_url_%', LocalSettings.publish_host_name + target_page)
+        if title:
+            content = content.replace('%_page_title_%', title)
+        else:
+            content = content.replace('%_page_title_%', '')
         content = content.replace('%_appname_%', LocalSettings.entree_appname)
         content = content.replace('%_now_%', str(datetime.today()))
         content = content.replace('%_fetea_ver_%', fetea_ver)
@@ -1709,7 +1715,20 @@ def flask_admin_verify_key():
 @app.route('/admin/seo', methods=['GET', 'POST'])
 @app.route('/admin/seo/', methods=['GET', 'POST'])
 def flask_admin_seo():
-    return ''
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    nav_bar = user_control.load_nav_bar()
+    body_content = ''
+    seo_select = sqlite3_control.select('select name, data from seo_set')
+    
+    #for i in range(len(seo_select)):
+    #    
+    body_content = str(seo_select)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-Update
 @app.route('/admin/update')
