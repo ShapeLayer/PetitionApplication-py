@@ -1,6 +1,6 @@
 '''
 fetea Global Variable File
-VarSettings.py
+app_variables.py
 
 uses as 'vs'
 '''

@@ -1,5 +1,5 @@
 <div class="bs-docs-section">
-    <h1>새로운 청원 생성</h1>
+    <h1>새로운 %_article_% 생성</h1>
     <div class="bs-component">
         <form action="" accept-charset="utf-8" name="peti_write" method="post">
             <fieldset>
@@ -15,7 +15,7 @@
                                     <input type="text" class="form-control peti_control peti_author_name" id="peti_author_display_name" name="peti_author_display_name" placeholder="작성자 이름" value="%_value:peti_author_display_name_%" required>                
                                 </div>
                                 <div class="col-sm">
-                                    <label for="peti_publish">청원 공개 범위</label>
+                                    <label for="peti_publish">공개 범위</label>
                                     %_publish_option_%
                                 </div>
                             </div>
@@ -27,11 +27,11 @@
             </fieldset>
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" class="custom-control-input" id="Check" required>
-                <label class="custom-control-label" for="Check">청원 등록 후 그 내용을 수정할 수 없음을 확인하고 이에 동의합니다.</label>
+                <label class="custom-control-label" for="Check">%_article_% 등록 후 그 내용을 수정할 수 없음을 확인하고 이에 동의합니다.</label>
             </div>
             %_recaptcha_alert_%
             <div class="g-recaptcha" data-sitekey="%_recaptcha_site_key_%"></div>
-            <button type="submit" name="submit" class="btn btn-primary" value="publish">청원 등록</button>
+            <button type="submit" name="submit" class="btn btn-primary" value="publish">%_article_% 등록</button>
         </form>
     </div>
 </div>

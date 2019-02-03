@@ -16,7 +16,7 @@ import urllib.parse
 import urllib.request
 
 import LocalSettings
-import VarSettings as vs
+import variable.app_variables as vs
 ### === Import End === ###
 
 ### === Initialize Application === ###
@@ -509,6 +509,13 @@ class viewer:
         content = content.replace('%_appname_%', LocalSettings.entree_appname)
         content = content.replace('%_now_%', str(datetime.today()))
         content = content.replace('%_fetea_ver_%', fetea_ver)
+        static = json.loads(open('variable/str_variables.json', encoding='utf-8').read())
+        keys = list(static.keys())
+        for i in range(len(static)):
+            if i == 0:
+                pass
+            else:
+                content = content.replace(keys[i], static[keys[i]])
         return content
 
 def register(callback_json, sns_type):
@@ -1002,7 +1009,7 @@ def flask_a_write():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    template = open('templates/a_write.html', encoding='utf-8').read()
+    template = viewer.render_var(open('templates/a_write.html', encoding='utf-8').read())
     
     recaptcha_site_key = config.load_oauth_settings()['recaptcha_site_key']
     template = template.replace('%_recaptcha_site_key_%', recaptcha_site_key)
