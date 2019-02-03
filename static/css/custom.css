@@ -69,3 +69,27 @@ input{
 .badge-facebook {
     background-color: #3b5998;
 }
+
+form #peti-status {
+    width: 10vw;
+}
+.petiall-status {
+    display: inline-block;
+}
+@media (max-width: 768px) {
+    form #peti-status {
+        width: 40vw;
+    }
+}
+.btn-submit-container {
+    position: relative;
+}
+.btn-submit-container * {
+    position: absolute;
+}
+.btn-delall-first {
+    z-index: 2;
+}
+.btn-delall-confirm {
+    z-index: 0;
+}

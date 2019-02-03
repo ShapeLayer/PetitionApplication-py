@@ -1932,6 +1932,8 @@ def flask_admin_peti_all():
             elif publish_value == 'secret':
                 sqlite3_control.commit('update peti_data_tb set peti_status = 1')
         elif request.form['submit'] == 'delete-all':
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values(?, ?, ?, ?, ?)',
+            [session['now_login'], '모든 청원', '삭제', '', datetime.today()])
             sqlite3_control.commit('delete from peti_data_tb')
         return redirect('/admin/peti-all')
 
@@ -1939,18 +1941,25 @@ def flask_admin_peti_all():
     body_content += '<h1>청원 일괄 설정</h1>'
     body_content += '<p>모든 청원 상태를 변경합니다.</p>'
     body_content += '''
+    <p>모든 작업은 <a href="/log">투명성 보고서</a>에 기록되며, 철회할 수 없습니다.</p>
+    <hr>
     <form action="" accept-charset="utf-8" method="post" name="publish">
-        <select class="form-control" name="peti-status" id="peti-status">
+        <select class="form-control petiall-status" name="peti-status" id="peti-status">
             <option value="publish">전체공개</option>
             <option value="secret">비공개</option>
         </select>
-        <button type="submit" name="submit" class="btn btn-primary" value="submit">저장</button>
+        <button type="submit" name="submit" class="btn btn-primary petiall-status" value="submit">저장</button>
     </form>
     <hr>
     <form action="" accept-charset="utf-8" method="post" name="danger">
         <h2 class="text-danger">Danger Zone</h2>
-        <button type="submit" name="submit" class="btn btn-danger" value="delete-all">전체 삭제</button>
+        <div class="btn-submit-container">
+            <div class="btn btn-danger btn-delall-first" id="btn-delall-first" value="delete-all" onclick="this.style.display = 'none';">전체 삭제</div>
+            <button type="submit" name="submit" class="btn btn-info btn-delall-confirm" value="delete-all">삭제 확인</button>
+        </div>
     </form>
+    <div style="margin-bottom: 80px;"></div>
+    <hr>
     '''
 
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
