@@ -36,6 +36,7 @@ curs = conn.cursor()
 bundles = {
     'main_js' : Bundle(
         'js/bootstrap.min.js',
+        'js/var_viewer.js',
         output = 'gen/main.js'
     ),
 
@@ -2245,6 +2246,68 @@ def flask_admin_static_add():
             sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = ?', [target])
 
         return redirect('/admin/static?page={}'.format(static_slug))
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+
+# ## flask-Admin Static Variables
+@app.route('/admin/var', methods=['GET', 'POST'])
+@app.route('/admin/var/', methods=['GET', 'POST'])
+def flask_admin_var():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+    nav_bar = user_control.load_nav_bar()
+
+    static = json.loads(open('variable/str_variables.json', encoding='utf-8').read())
+    keys = list(static.keys())
+    vars_html = ''
+    for i in range(len(static)):
+        if i == 0:
+            pass
+        else:
+            vars_html += '''
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="{num}-key"></label>
+                        <input type="text" class="form-control" name="{num}-key" id="{num}-key" value="{key}" placeholder="키">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="{num}-var"></label>
+                        <input type="text" class="form-control" name="{num}-var" id="{num}-var" value="{var}" placeholder="값">
+                    </div>
+                </div>
+            </div>
+            '''.format(num = i, key = keys[i], var = static[keys[i]])
+
+    body_content = '''
+    <h1>정적 환경 변수 관리</h1>
+    <p>동적 환경 변수는 수정이 불가능하며, 이미 있는 정적 환경 변수를 제거하려고 할 때는 다른 페이지에서 해당 변수를 사용하고 있는지 확인하세요.</p>
+    <div class="container fetea-col fetea-col-2">
+        <div class="row fetea-primary">
+            <div class="col">
+                키
+            </div>
+            <div class="col">
+                값
+            </div>
+        </div>
+        <div id="fetea-vars">
+            ''' + vars_html + '''
+        </div>
+        <div class="row fetea-add">
+            <div class="col" onclick="add_var_list()">
+                추가
+            </div>
+        </div>
+    </div>
+    <script>
+    varLen = {len};
+    </script>
+    '''.format(len = len(static))
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Assets Route

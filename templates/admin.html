@@ -25,10 +25,11 @@
 
     {{ custom_header[0]|safe }}
 
-<script>
+    <script>
         $(document).ready(function(){
             $('[data-toggle="tooltip"]').tooltip(); 
-        });</script>
+        });
+    </script>
 </head>
 <body>
     <div class="navbar navbar-expand-lg fixed-top navbar-light bg-light">
@@ -72,6 +73,7 @@
                             <a class="dropdown-item" href="/admin/header/">HTML 커스텀 head 설정</a>
                             <a class="dropdown-item" href="/admin/sns/">SNS 연계 설정</a>
                             <a class="dropdown-item" href="/admin/seo/">SEO(검색 엔진 최적화) 설정</a>
+                            <a class="dropdown-item" href="/admin/var/">정적 환경 변수 관리</a>
                         </div>
                     </li>
                     </li>  

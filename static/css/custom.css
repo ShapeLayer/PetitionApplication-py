@@ -93,3 +93,23 @@ form #peti-status {
 .btn-delall-confirm {
     z-index: 0;
 }
+
+.fetea-col .row .col {
+    padding: 15px;
+    padding-left: 25px;
+    padding-right: 25px;
+    border: 1px solid;
+    border-color: #f1f1f1;
+}
+.fetea-primary {
+    background-color: #f8f9fa;
+    color: #000;
+}
+.fetea-add {
+    cursor: pointer;
+}
+@media (min-width: 768px) {
+    .fetea-col-2 {
+        width: 70vw;
+    }
+}
