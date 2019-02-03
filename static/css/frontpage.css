@@ -32,6 +32,9 @@ body.frontpage {
 /* ===== */
 
 /* Contents */
+.frontpage .container h1, .frontpage .container h2 {
+    color: #fff;
+}
 .frontpage .container h1 {
     margin-top: 0;
     margin-bottom: 10px;
@@ -45,27 +48,23 @@ body.frontpage {
 }
 @media (min-width: 768px) {
     .frontpage .container h1 {
-        font-size: 2em;
+        font-size: 3em;
         letter-spacing: 0.3em;
         margin-left: 0.3em;
-        color: #ffffff;
     }
     .frontpage .container h2 {
-        font-size: 20px;
-        margin-right: 10px;
-        color: #ffffff;
+        font-size: 1.6em;
     }
 
 }
 @media (max-width: 768px) {
     .frontpage .container h1 {
-        font-size: 1em;
+        font-size: 1.7em;
         letter-spacing: 0.1em;
         margin-left: 0.1em;
     }
     .frontpage .container h2 {
-        font-size: 15px;
-        margin-right: 20px;
+        font-size: 1.3em;
     }
 }
 /* ===== */
@@ -77,13 +76,15 @@ body.frontpage {
     padding: 0;
 }
 .frontpage .site-link {
-    width: 40vw;
     text-align: center;
     padding: 20px;
     transition: .5s ease;
 }
 .frontpage .site-link li {
+    font-size: 1.15em;
     padding: 4px;
+    padding-left: 7px;
+    padding-right: 7px;
     border-radius: 5px;
 }
 .frontpage .site-link li:hover {
