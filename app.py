@@ -92,11 +92,6 @@ def flask_login():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    ### 오류 처리
-    if request.args.get('error') == 'null':
-        pass
-    ###
-
     oauth = config.load_oauth_settings()
     if oauth['naver_client_id'] == '' or oauth['naver_client_secret'] == '':
         naver_comment = '관리자가 이 기능을 비활성화 시켰습니다.'
@@ -462,7 +457,8 @@ def flask_a_article_id(article_id):
     ### Load End ###
 
     if request.args.get('error') == 'no_login':
-        pass ## return error
+        body_content = viewer.render_err('login_required')
+        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 
     ### Render Bodycontent ###
