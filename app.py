@@ -2321,13 +2321,13 @@ def flask_admin_var():
                 </div>
             </div>
         </div>
-        <input type="text" style="display: none;" id="input-count" name="input-count" value="{lenpp}">
+        <input type="text" style="display: none;" id="input-count" name="input-count" value="{len}">
         <button type="submit" class="btn btn-primary">저장</button>
     </form>
     <script>
     varLen = {len};
     </script>
-    '''.format(len = len(static), lenpp = len(static)+1)
+    '''.format(len = len(static))
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Assets Route
