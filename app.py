@@ -2258,36 +2258,55 @@ def flask_admin_var():
     else:
         return redirect('/error/acl/')
 
+    already_existed = []
+
     if request.method == 'POST':
         try:
             input_count = int(request.form['input-count'])
         except:
             pass
         
+        static = {"_README" : "fetea static variables settings"}
         new_static = {"_README" : "fetea static variables settings"}
         for i in range(input_count):
             if i == 0:
                 pass
             else:
-                new_static[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
+                if request.form[str(i)+'-key'] in vs.dynamic_var:
+                    already_existed += [i]
+                    static[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
+                else:
+                    static[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
+                    new_static[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
         with open('variable/str_variables.json', 'w', encoding='utf-8') as f:
             f.write(json.dumps(new_static))
 
     nav_bar = user_control.load_nav_bar()
 
-    static = json.loads(open('variable/str_variables.json', encoding='utf-8').read())
+    new_static = 0
+    try:
+        static
+    except:
+        static = json.loads(open('variable/str_variables.json', encoding='utf-8').read())
     keys = list(static.keys())
     vars_html = ''
     for i in range(len(static)):
         if i == 0:
             pass
         else:
+            if i in already_existed:
+                wrong_class = 'is-invalid'
+                wrong_div = '<div class="invalid-feedback">사용할 수 없는 키입니다.</div>'
+            else:
+                wrong_class = ''
+                wrong_div = ''
             vars_html += '''
             <div class="row">
                 <div class="col">
                     <div class="form-group">
                         <label for="{num}-key"></label>
-                        <input type="text" class="form-control" name="{num}-key" id="{num}-key" value="{key}" placeholder="키">
+                        <input type="text" class="form-control {wrong_class}" name="{num}-key" id="{num}-key" value="{key}" placeholder="키">
+                        {wrong_div}
                     </div>
                 </div>
                 <div class="col">
@@ -2297,11 +2316,15 @@ def flask_admin_var():
                     </div>
                 </div>
             </div>
-            '''.format(num = i, key = keys[i], var = static[keys[i]])
+            '''.format(num = i, key = keys[i], var = static[keys[i]], wrong_class = wrong_class, wrong_div = wrong_div)
 
+    dy_var_list = ''
+    for i in range(len(vs.dynamic_var)):
+        dy_var_list += vs.dynamic_var[i] + ' '
     body_content = '''
     <h1>정적 환경 변수 관리</h1>
     <p>동적 환경 변수는 수정이 불가능하며, 이미 있는 정적 환경 변수를 제거하려고 할 때는 다른 페이지에서 해당 변수를 사용하고 있는지 확인하세요.</p>
+    <p>동적 환경 변수 목록: ''' + dy_var_list + '''</p>
     <form action="" accept-charset="utf-8" method="post">
         <div class="container fetea-col fetea-col-2">
             <div class="row fetea-primary">

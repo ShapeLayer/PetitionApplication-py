@@ -16,3 +16,5 @@ Disallow: /login
 Disallow: /logout
 Disallow: /register
 """
+
+dynamic_var = ['%_url_%', '%_page_title_%', '%_appname_%', '%_now_%', '%_fetea_ver_%']
