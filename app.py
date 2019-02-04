@@ -2257,6 +2257,22 @@ def flask_admin_var():
             return redirect('/error/acl')
     else:
         return redirect('/error/acl/')
+
+    if request.method == 'POST':
+        try:
+            input_count = int(request.form['input-count'])
+        except:
+            pass
+        
+        new_static = {"_README" : "fetea static variables settings"}
+        for i in range(input_count):
+            if i == 0:
+                pass
+            else:
+                new_static[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
+        with open('variable/str_variables.json', 'w', encoding='utf-8') as f:
+            f.write(json.dumps(new_static))
+
     nav_bar = user_control.load_nav_bar()
 
     static = json.loads(open('variable/str_variables.json', encoding='utf-8').read())
@@ -2286,28 +2302,32 @@ def flask_admin_var():
     body_content = '''
     <h1>정적 환경 변수 관리</h1>
     <p>동적 환경 변수는 수정이 불가능하며, 이미 있는 정적 환경 변수를 제거하려고 할 때는 다른 페이지에서 해당 변수를 사용하고 있는지 확인하세요.</p>
-    <div class="container fetea-col fetea-col-2">
-        <div class="row fetea-primary">
-            <div class="col">
-                키
+    <form action="" accept-charset="utf-8" method="post">
+        <div class="container fetea-col fetea-col-2">
+            <div class="row fetea-primary">
+                <div class="col">
+                    키
+                </div>
+                <div class="col">
+                    값
+                </div>
             </div>
-            <div class="col">
-                값
+            <div id="fetea-vars">
+                ''' + vars_html + '''
+            </div>
+            <div class="row fetea-add">
+                <div class="col" onclick="add_var_list()">
+                    추가
+                </div>
             </div>
         </div>
-        <div id="fetea-vars">
-            ''' + vars_html + '''
-        </div>
-        <div class="row fetea-add">
-            <div class="col" onclick="add_var_list()">
-                추가
-            </div>
-        </div>
-    </div>
+        <input type="text" style="display: none;" id="input-count" name="input-count" value="{lenpp}">
+        <button type="submit" class="btn btn-primary">저장</button>
+    </form>
     <script>
     varLen = {len};
     </script>
-    '''.format(len = len(static))
+    '''.format(len = len(static), lenpp = len(static)+1)
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Assets Route

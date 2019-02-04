@@ -107,6 +107,11 @@ form #peti-status {
 }
 .fetea-add {
     cursor: pointer;
+    transition: .3s ease;
+}
+.fetea-add:hover, .fetea-add:focus {
+    color: #78c2ad;
+    background-color: #f1f1f1;
 }
 @media (min-width: 768px) {
     .fetea-col-2 {
