@@ -2320,7 +2320,7 @@ def flask_admin_var():
 
     dy_var_list = ''
     for i in range(len(vs.dynamic_var)):
-        dy_var_list += vs.dynamic_var[i] + ' '
+        dy_var_list += '<code>' + vs.dynamic_var[i] + '</code> '
     body_content = '''
     <h1>정적 환경 변수 관리</h1>
     <p>동적 환경 변수는 수정이 불가능하며, 이미 있는 정적 환경 변수를 제거하려고 할 때는 다른 페이지에서 해당 변수를 사용하고 있는지 확인하세요.</p>
