@@ -1770,6 +1770,7 @@ def flask_admin_var():
             return redirect('/error/acl')
     else:
         return redirect('/error/acl/')
+    nav_bar = user_control.load_nav_bar()
 
     already_existed = []
 
@@ -1794,8 +1795,6 @@ def flask_admin_var():
                     new_static[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
         with open('variable/str_variables.json', 'w', encoding='utf-8') as f:
             f.write(json.dumps(new_static))
-
-    nav_bar = user_control.load_nav_bar()
 
     new_static = 0
     try:

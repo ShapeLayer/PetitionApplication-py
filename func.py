@@ -477,7 +477,7 @@ class viewer:
     def render_err(code):
         if code not in vs.err:
             code = 'err_code_not_found'
-        render = '<h1>{head}</h1><h2>{code}<p>{body}</p>'.format(head = vs.err[code]['head'], code = vs.err[code]['code'], body = vs.err[code]['body'])
+        render = '<h1>{head}</h1><h2>{code}</h2><p>{body}</p>'.format(head = vs.err[code]['head'], code = vs.err[code]['code'], body = vs.err[code]['body'])
         return render
 
 def register(callback_json, sns_type):
