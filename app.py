@@ -1759,30 +1759,55 @@ def flask_admin_var(func = None):
             body_content = viewer.render_err('no_data_required')
             return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
         
-        static = {"_README" : "fetea static variables settings"}
-        new_static = {"_README" : "fetea static variables settings"}
+        if func == 'var':
+            dict_ = {"_README" : "fetea static variables settings"}
+            new_dict_ = {"_README" : "fetea static variables settings"}
+        elif func == 'seo':
+            dict_ = {}
         for i in range(input_count):
-            if i == 0:
+            if i == 0 and func == 'var':
                 pass
             else:
-                if request.form[str(i)+'-key'] in vs.dynamic_var:
+                if request.form[str(i)+'-key'] in vs.dynamic_var and func == 'var':
                     already_existed += [i]
-                    static[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
+                    dict_[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
                 else:
-                    static[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
-                    new_static[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
-        with open('variable/str_variables.json', 'w', encoding='utf-8') as f:
-            f.write(json.dumps(new_static))
+                    dict_[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
+                    if func == 'var':
+                        new_dict_[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
+        if func == 'var':
+            with open('variable/str_variables.json', 'w', encoding='utf-8') as f:
+                f.write(json.dumps(new_dict_))
+        elif func == 'seo':
+            keys = list(dict_.keys())
+            sql_result = sqlite3_control.select('select name from seo_set')
+            for i in range(len(sql_result)):
+                if sql_result[i][0] not in keys:
+                    sqlite3_control.commit('delete from seo_set where name = ?', [sql_result[i][0]])
+            for i in range(len(dict_)):
+                # select -> 결과에 따라 insert, update
+                sql_result = sqlite3_control.select('select data from seo_set where name = ?', [keys[i]])
+                if len(sql_result) == 0:
+                    sqlite3_control.commit('insert into seo_set (name, data) values(?, ?)', [keys[i], dict_[keys[i]]])
+                else:
+                    sqlite3_control.commit('update seo_set set data = ? where name = ?', [dict_[keys[i]], keys[i]])
 
-    new_static = 0
+    new_dict_ = 0
+    sql_result = 0
     try:
-        static
+        dict_
     except:
-        static = json.loads(open('variable/str_variables.json', encoding='utf-8').read())
-    keys = list(static.keys())
+        if func == 'var':
+            dict_ = json.loads(open('variable/str_variables.json', encoding='utf-8').read())
+        elif func == 'seo':
+            sql_result = sqlite3_control.select('select name, data from seo_set')
+            dict_ = {}
+            for i in range(len(sql_result)):
+                dict_[sql_result[i][0]] = sql_result[i][1]
+    keys = list(dict_.keys())
     vars_html = ''
-    for i in range(len(static)):
-        if i == 0:
+    for i in range(len(dict_)):
+        if i == 0 and func == 'var':
             pass
         else:
             if i in already_existed:
@@ -1807,15 +1832,22 @@ def flask_admin_var(func = None):
                     </div>
                 </div>
             </div>
-            '''.format(num = i, key = keys[i], var = static[keys[i]], wrong_class = wrong_class, wrong_div = wrong_div)
+            '''.format(num = i, key = keys[i], var = dict_[keys[i]], wrong_class = wrong_class, wrong_div = wrong_div)
 
     dy_var_list = ''
     for i in range(len(vs.dynamic_var)):
         dy_var_list += '<code>' + vs.dynamic_var[i] + '</code> '
-    body_content = '''
-    <h1>정적 환경 변수 관리</h1>
-    <p>동적 환경 변수는 수정이 불가능하며, 이미 있는 정적 환경 변수를 제거하려고 할 때는 다른 페이지에서 해당 변수를 사용하고 있는지 확인하세요.</p>
-    <p>동적 환경 변수 목록: ''' + dy_var_list + '''</p>
+    if func == 'var':
+        body_content = '''
+        <h1>정적 환경 변수 관리</h1>
+        <p>동적 환경 변수는 수정이 불가능하며, 이미 있는 정적 환경 변수를 제거하려고 할 때는 다른 페이지에서 해당 변수를 사용하고 있는지 확인하세요.</p>
+        <p>동적 환경 변수 목록: ''' + dy_var_list + '''</p>'''
+    elif func == 'seo':
+        body_content = '''
+        <h1>검색엔진 최적화 태그 관리</h1>
+        '''
+
+    body_content += '''
     <form action="" accept-charset="utf-8" method="post">
         <div class="container fetea-col fetea-col-2">
             <div class="row fetea-primary">
@@ -1841,7 +1873,7 @@ def flask_admin_var(func = None):
     <script>
     varLen = {len};
     </script>
-    '''.format(len = len(static))
+    '''.format(len = len(dict_))
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Assets Route
