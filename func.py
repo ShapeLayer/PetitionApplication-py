@@ -12,6 +12,9 @@ import variable.app_variables as vs
 conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
 curs = conn.cursor()
 
+version = json.loads(open('version.json', encoding='utf-8').read())
+fetea_ver = str(version['ver']) + '.' + str(version['rel'])
+
 ### === Define Functions === ###
 class parser:
     def anti_injection(content):

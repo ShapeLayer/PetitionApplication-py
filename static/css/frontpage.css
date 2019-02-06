@@ -86,10 +86,10 @@ body.frontpage {
     padding-left: 7px;
     padding-right: 7px;
     border-radius: 5px;
+    transition: .5s ease;
 }
 .frontpage .site-link li:hover {
     background-color: rgba(256, 256, 256, 0.5);
-    transition: .5s ease;
 }
 @media (min-width: 768px) {
     .frontpage .site-link li {

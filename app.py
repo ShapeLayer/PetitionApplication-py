@@ -2,6 +2,8 @@
 ### === Import Python Modules === ###
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_from_directory
 from flask_assets import Bundle, Environment
+import flask_reggie
+import werkzeug.routing
 from datetime import datetime
 import sqlite3
 import re
@@ -32,6 +34,8 @@ except:
 conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
 curs = conn.cursor()
 
+flask_reggie.Reggie(app)
+
     #### == Assets Building == ####
 bundles = {
     'main_js' : Bundle(
@@ -51,9 +55,6 @@ bundles = {
 
 assets = Environment(app)
 assets.register(bundles)
-
-version = json.loads(open('version.json', encoding='utf-8').read())
-fetea_ver = str(version['ver']) + '.' + str(version['rel'])
 ### === Initialize End === ###
 
 ### === Initialize Database === ###
@@ -1228,25 +1229,6 @@ def flask_admin_verify_key():
     body_content += '<p>verify_key는 1회 사용시 갱신됩니다.</p>'
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
-# ## flask: Admin-SEO
-@app.route('/admin/seo', methods=['GET', 'POST'])
-@app.route('/admin/seo/', methods=['GET', 'POST'])
-def flask_admin_seo():
-    if 'now_login' in session:
-        if user_control.identify_user(session['now_login']) == False:
-            return redirect('/error/acl')
-    else:
-        return redirect('/error/acl/')
-
-    nav_bar = user_control.load_nav_bar()
-    body_content = ''
-    seo_select = sqlite3_control.select('select name, data from seo_set')
-    
-    #for i in range(len(seo_select)):
-    #    
-    body_content = str(seo_select)
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
-
 # ## flask: Admin-Update
 @app.route('/admin/update')
 @app.route('/admin/update/')
@@ -1758,9 +1740,9 @@ def flask_admin_static_add():
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask-Admin Static Variables
-@app.route('/admin/var', methods=['GET', 'POST'])
-@app.route('/admin/var/', methods=['GET', 'POST'])
-def flask_admin_var():
+@app.route('/admin/<regex("var|seo"):func>', methods=['GET', 'POST'])
+@app.route('/admin/<regex("var|seo"):func>/', methods=['GET', 'POST'])
+def flask_admin_var(func = None):
     if 'now_login' in session:
         if user_control.identify_user(session['now_login']) == False:
             return redirect('/error/acl')
