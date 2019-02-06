@@ -611,8 +611,29 @@ def flask_a_write():
         ### Insert Data into Database ###
         sqlite3_control.commit('insert into peti_data_tb (peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content) values(?, ?, ?, ?, ?)', [peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content])
         ### Insert End ###
+        if request.args.get('outer').lower() == 'yes':
+            if request.args.get('from') == 'facebook':
+                redirect_target = ['Facebook', 'https://facebook.com']
+            elif request.args.get('from') == 'naver':
+                redirect_target = ['네이버', 'https://www.naver.com']
 
-        return redirect('/a/')
+            if sqlite3_control.select('select data from server_set where name = "petition_publish_default"')[0][0] == '0':
+                publish_comment = '<p>또는 <a href="/a">이곳에서 자신의 %_article_%과 다른 사람들의 %_article_%을 확인할 수 있습니다.</a></p>'
+            else:
+                publish_comment = '<p>현재 모든 %_article_%은 관리자가 비공개로 설정하였습니다. 죄송합니다.</p>'
+            body_content = '''
+            <h1>%_article_% 보내기 완료!</h1>
+            <h2>감사합니다!</h2>
+            <p>보내주신 %_article_%(은)는 내부적으로 검토하도록 하겠습니다.</p>
+            <p><a href="{provider_uri}">{provider}로 돌아가기</a></p>
+            <hr>
+            <h2>%_article_% 보기</h2>
+            {publish_comment}
+            '''.format(provider = redirect_target[0], provider_uri = redirect_target[1], publish_comment = publish_comment)
+            body_content = viewer.render_var(body_content)
+            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+        else:
+            return redirect('/a/')
     template = template.replace('%_value:peti_display_name_%', '')
     template = template.replace('%_value:peti_author_display_name_%', '')
     template = template.replace('%_value:peti_body_content_%', '')
