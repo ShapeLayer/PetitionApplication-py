@@ -2,7 +2,7 @@
 ####################### ENTREE Flask Web App Config File #######################
 
 # SQLITE3_FILENAME must be in string format.
-sqlite3_filename = 'db.db'
+sqlite3_filename = 'data/db.db'
 # flask_host must be in string format.
 flask_host = 'localhost'
 # flask_host must be in integer format.
