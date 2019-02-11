@@ -164,6 +164,7 @@ INSERT INTO static_page_tb (page_name, title, editor, editdate, content) values(
       <ul>
         <li><a href=""/admin/petition/"">비정규 상태 청원 관리</a></li>
         <li><a href=""/admin/peti-default/"">청원 작성 기본 설정</a></li>
+        <li><a href=""/admin/peti-all/"">청원 일괄 설정</a></li>
       </ul>
     </div>
     <div class=""col-sm"">
@@ -173,6 +174,9 @@ INSERT INTO static_page_tb (page_name, title, editor, editdate, content) values(
         <li><a href=""/admin/verify_key/"">verify_key 정보</a></li>
         <li><a href=""/admin/update/"">시스템 업데이트 확인</a></li>
         <li><a href=""/admin/header/"">HTML 커스텀 head 설정</a></li>
+        <li><a href=""/admin/sns/"">SNS 연계 설정</a></li>
+        <li><a href=""/admin/seo/"">SEO(검색 엔진 최적화) 설정</a></li>
+        <li><a href=""/admin/var/"">정적 환경 변수 관리</a></li>
       </ul>
     </div>
   </div>
