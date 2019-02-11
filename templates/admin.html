@@ -23,10 +23,13 @@
     <link rel="stylesheet" href="{{ ASSET_URL }}">
     {% endassets %}
 
-<script>
+    {{ custom_header[0]|safe }}
+
+    <script>
         $(document).ready(function(){
             $('[data-toggle="tooltip"]').tooltip(); 
-        });</script>
+        });
+    </script>
 </head>
 <body>
     <div class="navbar navbar-expand-lg fixed-top navbar-light bg-light">
@@ -56,14 +59,21 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download">청원 관리 <span class="caret"></span></a>
                         <div class="dropdown-menu" aria-labelledby="download">
-                            <a class="dropdown-item" href="/admin/petition/">청원 비정규 상태</a>
+                            <a class="dropdown-item" href="/admin/petition/">비정규 상태 청원 관리</a>
+                            <a class="dropdown-item" href="/admin/peti-default/">청원 작성 기본 설정</a>
+                            <a class="dropdown-item" href="/admin/peti-all/">청원 일괄 설정</a>
                         </div>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download">사이트 관리 <span class="caret"></span></a>
+                        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download">시스템 관리 <span class="caret"></span></a>
                         <div class="dropdown-menu" aria-labelledby="download">
                             <a class="dropdown-item" href="/admin/static/">정적 페이지 관리</a>
                             <a class="dropdown-item" href="/admin/verify_key/">verify_key 정보</a>
+                            <a class="dropdown-item" href="/admin/update/">시스템 업데이트 확인</a>
+                            <a class="dropdown-item" href="/admin/header/">HTML 커스텀 head 설정</a>
+                            <a class="dropdown-item" href="/admin/sns/">SNS 연계 설정</a>
+                            <a class="dropdown-item" href="/admin/seo/">SEO(검색 엔진 최적화) 설정</a>
+                            <a class="dropdown-item" href="/admin/var/">정적 환경 변수 관리</a>
                         </div>
                     </li>
                     </li>  
@@ -94,5 +104,6 @@
     {% assets "main_js" %}
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
     {% endassets %}
+    {{ custom_header[1]|safe }}
 </body>
 </html>

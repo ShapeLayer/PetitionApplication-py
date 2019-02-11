@@ -1,9 +1,7 @@
 .vscode/*.*
-__pycache__/*.*
+__pycache__
 *.db
 */*.db
 
 static/gen/*.*
 static/.webassets-cache
-
-oauthsettings.1.json

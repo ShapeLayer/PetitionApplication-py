@@ -3,18 +3,20 @@ Fe-tea, Flask 기반 청원 수집 웹 애플리케이션
 
 ![Python Required](https://img.shields.io/badge/python-3.5%20or%20higher-blue.svg?style=flat-square)
 ![BSD-3 License](https://img.shields.io/badge/license-BSD--3-lightgrey.svg?style=flat-square)
-[![Latest Release](https://img.shields.io/badge/latest%20release-1.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2)
-[![Latest Stable Release](https://img.shields.io/badge/stable-1.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2)
+[![Latest Release](https://img.shields.io/badge/latest%20release-1.2.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.1-stable-fix)
+[![Latest Stable Release](https://img.shields.io/badge/stable-1.2.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.1-stable-fix)
 [![Bootstrap-License](https://img.shields.io/badge/bootstrap-MIT-cef19e.svg?style=flat-square)](https://github.com/twbs/bootstrap/blob/master/LICENSE)
 [![Minty-License](https://img.shields.io/badge/minty-MIT-cef19e.svg?style=flat-square)](https://github.com/thomaspark/bootswatch/blob/master/LICENSE)
 
-![](./fe.png)
+![](/.github/fe.png)
 
 Fe-tea는 숭덕고등학교 학생회의 요청으로 개발되고 있는 플라스크 기반의 청원 수집 웹 애플리케이션입니다. Fe-tea는 학교 내에서 발생하는 문제점에 대해 구성원이 직접 의견을 공개적으로 올릴 수 있게 합니다.
 
 공개된 의견은 다른 구성원들이 청원 반응 기능으로 청원에 대한 의견을 보낼 수 있게 해 해당 의견에 대한 여론도 확인할 수 있습니다. 또한 장난성 청원 방지 대책으로 SNS 로그인 기능이 추가되어 있으며, SNS 로그인을 사용하지 않고 청원을 작성할 경우, 비공개로 운영자에게 청원을 작성 할 수 있게 되어 있습니다.또한 익명 청원에 대한 법적 문제 해결을 위해 익명 사용자의 명의를 기록, 확인하는 기능도 추가되어 있습니다.
 
-자동 생성된 다량 청원 방지 대책으로 reCaptcha v2가 추가되어있으며, 익명 청원에 대한 법적 문제 해결을 위해 익명 사용자의 명의를 기록, 확인하는 기능도 추가되어 있습니다. reCaptcha v2 API 키 정보를 `oauthsettings.json`에 추가하지 않으면 청원 작성 기능이 제대로 작동하지 않을 수 있습니다. [자세한 내용 확인하기](#api-%ED%82%A4-%EC%84%A4%EC%A0%95) 
+자동 생성된 다량 청원 방지 대책으로 reCaptcha v2가 추가되어있으며, 익명 청원에 대한 법적 문제 해결을 위해 익명 사용자의 명의를 기록, 확인하는 기능도 추가되어 있습니다. reCaptcha v2 API 키 정보를 `oauthsettings.json`에 추가하지 않으면 청원 작성 기능이 제대로 작동하지 않을 수 있습니다. [자세한 내용 확인하기](#api-%ED%82%A4-%EC%84%A4%EC%A0%95)
+
+**1.2.2 이후 변경될 예정입니다.** 이제 reCaptcha v2 정보를 입력하지 않으면 reCapthcha v2를 비활성화 한 것으로 처리됩니다.
 
 # 시작하기
 Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로, 파이썬 환경을 필요로 합니다. 
@@ -25,10 +27,11 @@ Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로
 
 ### 릴리즈 다운로드
 [릴리즈](https://github.com/kpjhg0124/PetitionApplication-py/releases)에서 Fe-tea의 릴리즈 판을 다운로드 받고, 압축을 해제합니다.
-* stable 이 아닌 릴리즈는 업데이트 간 데이터 마이그레이션을 지원하지 않습니다.
+* 각 버전 사이 DB 변경점은 애플리케이션이 자동 반영하지 않으며, 버전 간 데이터 마이그레이션을 지원하지 않습니다. (저말고 아무도 안쓰는것 같아서요...)
 
 | 구분 | 릴리즈 |
 | :----: | :----: |
+| stable | [![](https://img.shields.io/badge/stable-1.2.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.1-stable-fix) |
 | stable | [![](https://img.shields.io/badge/stable-1.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2) |
 | stable | [![](https://img.shields.io/badge/stable-1.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.1-stable) |
 | stable | [![](https://img.shields.io/badge/stable-1.0-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.0) |
@@ -85,7 +88,7 @@ python3 app.py
 * Fe-tea의 첫 계정은 소유자 계정으로 설정됩니다. 소유자 계정은 SNS 계정이 아닌 내부계정(entree 엔진)으로 생성하는 것을 권장합니다.
 
 ### 애플리케이션 공개
-SNS 로그인 기능으로 인해 페이지 공개 시 페이지는 https 연결을 사용해야 합니다. [LocalSettings.py](./LocalSettings.py) 파일의 `publish_host_name` 값을 https 프로토콜을 포함한 도메인 주소로 설정하고, 실제로 https 연결을 지원해야합니다. 리버스 프록시를 사용해 실현하는 것을 권장합니다. 
+SNS 로그인 기능으로 인해 페이지 공개 시 페이지는 https 연결을 사용해야 합니다. [LocalSettings.py](./LocalSettings.py) 파일의 `publish_host_name` 값을 https 프로토콜을 포함한 도메인 주소로 설정하고, 실제로 https 연결을 지원해야합니다. `flask_debug_mode`를 `False`로 설정하는 것을 권장하며, 도메인과의 연결은 리버스 프록시를 사용해 실현하십시오.
 
  * ([apache 설정 파일](./conf/apache/), [nginx 설정 파일](./conf/nginx.conf))
 
@@ -108,4 +111,4 @@ SNS 로그인 기능으로 인해 페이지 공개 시 페이지는 https 연결
 * [숭덕고등학교 학생회](https://www.facebook.com/sungdeokcouncil/) 및 [IT 동아리 \n](https://github.com/404-sdok)
 
 # 라이선스
-이 프로젝트는 BSD 3-Clause 라이선스에 의거 보호되고 있습니다. 더 많은 정보는 [LICENSE](/LICENSE) 문서를 참고하세요.
+fetea 프로젝트는 [BSD 3-Clause License](/LICENSE)(이하 BSD-3 라이선스)의 보호를 받고 있으며, fetea 프로젝트를 사용하고자 한다면 BSD-3 라이선스를 준수해야 합니다. 본 라이선스를 위반할 경우 개발자는 DMCA Takedown 등 관련 제재를 관계자에게 요청할 권리가 있으며, 그 책임은 모두 라이선스 위반 사용자에게 있습니다. 자세한 내용은 문서를 참고하세요.

@@ -2,6 +2,8 @@
 ### === Import Python Modules === ###
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_from_directory
 from flask_assets import Bundle, Environment
+import flask_reggie
+import werkzeug.routing
 from datetime import datetime
 import sqlite3
 import re
@@ -12,10 +14,11 @@ import base64
 import hashlib
 import random
 import bcrypt
-import urllib.request
+import urllib.parse, urllib.request
 
+from func import *
 import LocalSettings
-from ver import *
+import variable.app_variables as vs
 ### === Import End === ###
 
 ### === Initialize Application === ###
@@ -31,10 +34,13 @@ except:
 conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
 curs = conn.cursor()
 
+flask_reggie.Reggie(app)
+
     #### == Assets Building == ####
 bundles = {
     'main_js' : Bundle(
         'js/bootstrap.min.js',
+        'js/var_viewer.js',
         output = 'gen/main.js'
     ),
 
@@ -42,6 +48,7 @@ bundles = {
         'css/minty.css',
         'css/custom.css',
         'css/oauth.css',
+        'css/frontpage.css',
         output = 'gen/main.css'
     )
 }
@@ -49,415 +56,6 @@ bundles = {
 assets = Environment(app)
 assets.register(bundles)
 ### === Initialize End === ###
-
-
-### === Define Functions === ###
-class parser:
-    def anti_injection(content):
-        content = content.replace('"', '""')
-        content = content.replace('<', '&lt;')
-        content = content.replace('>', '&gt;')
-        return content
-
-class sqlite3_control:
-    def select(query):
-        conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
-        curs = conn.cursor()
-        curs.execute(query)
-        result = curs.fetchall()
-        conn.close()
-        return result
-
-    def commit(query):
-        conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
-        curs = conn.cursor()
-        curs.execute(query)
-        conn.commit()
-        conn.close()
-
-    def executescript(query):
-        conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
-        curs = conn.cursor()
-        curs.executescript(query)
-        conn.commit()
-        conn.close()
-
-
-
-class user_control:
-    def load_nav_bar():
-        ### Render Template ###
-        template = """
-        <ul class="nav navbar-nav ml-auto">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="download"><img src="%_user_display_profile_img_%" width="17px" height="17px"> %_user_display_name_% <span class="caret"></span></a>
-                <div class="dropdown-menu" aria-labelledby="download">
-                    %_user_profile_menu_content_%
-                </div>
-            </li>
-        </ul>
-        """
-        ### Render End ###
-        user_profile_menu_content = ''
-        if 'now_login' in session:
-            ### Index Database Data ###
-            user_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
-            user_auth_group = sqlite3_control.select('select * from user_acl_list_tb where account_id = {}'.format(session['now_login']))
-            user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
-            ### Index End ###
-
-            ### Render Navbar ###
-            template = template.replace('%_user_display_name_%', user_data[0][3])
-            if user_data[0][4] == None:
-                template = template.replace('%_user_display_profile_img_%', '')
-            else:
-                template = template.replace('%_user_display_profile_img_%', user_data[0][4])
-            if user_auth[0][2] == 1:
-                user_profile_menu_content += """
-                <a class="dropdown-item" href="/admin/">관리자 메뉴</a>
-                """
-            user_profile_menu_content += """
-            <a class="dropdown-item" href="/logout/">로그아웃</a>
-            """
-            ### Render End ###
-        else:
-            ### Render Navbar ###
-            template = template.replace('%_user_display_name_%', '비로그인 상태')
-            user_profile_menu_content += """
-            <a class="dropdown-item" href="/login/">로그인</a>
-            """
-            ### Render End ###
-        template = template.replace('%_user_profile_menu_content_%', user_profile_menu_content)
-        return template
-    
-    def identify_user(target_id):
-        user_auth_group = sqlite3_control.select('select * from user_acl_list_tb where account_id = {}'.format(target_id))
-        user_auth = sqlite3_control.select('select * from user_group_acl where user_group = "{}"'.format(user_auth_group[0][1]))
-        if user_auth[0][2] != 1 and user_auth[0][3] != 1:
-            return False
-        else:
-            return True
-
-    def user_controller(target_id):
-        ## Index User Data ##
-        user_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(target_id))
-        ## Index End ##
-
-        if 'now_login' in session:
-            if user_control.identify_user(session['now_login']) == False:
-                return user_data[0][1]
-        else:
-            return user_data[0][1]
-        script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
-        user_id_badge = ' <span class="badge badge-pill badge-success" data-toggle="tooltip" title="작성자 구분자: {}">{}</span>'.format(target_id, target_id)
-        user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
-        body_content = script + user_data[0][1] + user_id_badge + user_identify_badge
-        return body_content
-    
-    def super_secret_settings(target_id):
-        user_auth = sqlite3_control.select('select user_group_acl.site_owner from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(target_id))[0][0]
-        if user_auth == 1:
-            return True
-        else:
-            return False
-        
-class config:
-    def load_oauth_settings():
-        oauth_native = open('oauthsettings.json', encoding='utf-8').read()
-        oauth_json = json.loads(oauth_native)
-        return oauth_json
-
-    def load_verify_key(target, user_id):
-        ### Check User Target's Authority ###
-        user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_group_acl.user_group = user_acl_list_tb.auth'.format(user_id))
-        if user_auth_owner == 1:
-            is_owner = True
-        else:
-            is_owner = False
-        ### Check End ###
-
-        ### Check Verify Key ###
-        verify_key = open('verify_key', encoding='utf-8').read()
-        if verify_key != target and verify_key+verify_key != target:
-            return [False, False]
-        ### Check End ###
-        elif verify_key+verify_key == target:
-            return [True, True] # is owner
-        else:
-            ### Verify Key Reset ###
-            string = 'abcdefghijklmfgqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!?@#$%_-'
-            verify_key = ''.join(random.choice(string) for x in range(10))
-            with open('verify_key', mode='w', encoding='utf-8') as f:
-                f.write(verify_key)
-            ### Reset End ###
-            return [True, False]
-
-class viewer:
-    def load_petition(target_id):
-        body_content = ''
-
-        ### Load User Auth Data ###
-        if 'now_login' in session:
-            now_login = session['now_login']
-            user_auth = sqlite3_control.select('select user_group_acl.site_administrator from user_group_acl, user_acl_list_tb where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(now_login))
-            if user_auth[0][0] == 1:
-                control_delete = ' <a href="/a/{}/delete/"><span class="badge badge-pill badge-danger">삭제</span></a>'.format(target_id)
-                control_official_reply = ' <a href="/a/{}/official/"><span class="badge badge-pill badge-primary">답변</span></a>'.format(target_id)
-                petition_control = '<p> 이 청원을... ' + control_delete + control_official_reply + '</p>'
-            else:
-                petition_control = ''
-        else:
-            petition_control = ''
-        ### Load End ###
-
-        ### Index Data from Database ###
-        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(target_id))
-        react_data = sqlite3_control.select('select peti_react_tb.*, author_connect.account_user_id, author_connect.peti_author_display_name from peti_react_tb, author_connect where peti_react_tb.peti_id = {} and author_connect.peti_author_id = peti_react_tb.author_id and peti_react_tb.react_type = "default"'.format(target_id))
-        author_nickname = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(
-            peti_data[0][4]
-        ))
-        if peti_data[0][3] == 2:
-            reply_official_data = sqlite3_control.select('select content from peti_react_tb where peti_id = {} and react_type = "official"'.format(target_id))
-            reply_official_content = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(
-                reply_official_data[0][0]
-            ))
-        ### Index End ###
-
-        ### Load Template ###
-        template = open('templates/a.html', encoding='utf-8').read()
-        ### Load End ###
-
-        ### Render React ###
-        template_react = """
-                <div class="container">
-                    <h5>%_article_react_author_display_name_%</h5>
-                    <p>%_article_react_body_content_%</p>
-                </div>
-                """
-        react_body_content = ''
-        for i in range(len(react_data)):
-            react_render_object = template_react
-            if author_nickname[0][2] == react_data[i][5]:
-                react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][6])+'   <span class="badge badge-pill badge-warning">작성자</span>')
-            else:
-                react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][6]))
-            react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][4])
-            react_body_content += react_render_object
-        ### Render End ###
-
-        ### Get Author Data ###
-        author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
-        ### Get End ###
-
-        ### 반응 중복 제거
-        if 'now_login' in session:
-            query_target = session['now_login']
-        else:
-            query_target = 0
-        now_login = sqlite3_control.select('select * from author_connect where account_user_id = {} and target_article = {}'.format(query_target, target_id))
-        if len(now_login) != 0:
-            template = template.replace('%_react_author_display_name_%', now_login[0][1])
-            template = template.replace('%_react_display_name_is_enabled_%', 'readonly')
-        else:
-            template = template.replace('%_react_author_display_name_%', '')
-            template = template.replace('%_react_display_name_is_enabled_%', '')
-
-        ### Render Template ###
-        author_data_display = user_control.user_controller(author_data[0][0])
-        template = template.replace('%_article_display_name_%', peti_data[0][1])
-        template = template.replace('%_article_control_panel_%', petition_control)
-        template = template.replace('%_article_publish_date_%', peti_data[0][2])
-        template = template.replace('%_article_author_display_name_%', author_data_display)
-        template = template.replace('%_article_body_content_%', peti_data[0][5])
-        template = template.replace('%_article_react_count_%', str(len(react_data)))
-        template = template.replace('%_article_reacts_%', react_body_content)
-
-        #### Render Official Reply ####
-        if peti_data[0][3] == 2:
-            official_reply_content = '<p style="text-align: right; padding-bottom: 0; margin-bottom:0;">청원 답변</p><h4><a href="/static/'+reply_official_data[0][0]+'" data-toggle="tooltip" title="새 창으로 원문 보기" target="_blank">'+reply_official_content[0][1]+'</a></h4><b>사용자: '+reply_official_content[0][2]+' 마지막으로 수정 | '+reply_official_content[0][3]+'</b><hr>'+reply_official_content[0][4]
-            template = template.replace('%_article_official_reply_%', official_reply_content)
-        else:
-            template = template.replace('%_article_official_reply_%', '')
-
-        body_content += template
-        ### Render End ###
-        
-        return body_content
-
-    def load_sns_login_status(content):
-        if 'now_login' in session:
-            user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
-            content = content.replace('%_sns_login_status_%', '로그인 됨: {}'.format(user_profile_data[0][3]))
-        else:
-            content = content.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
-        return content
-
-    def load_metatag():
-        meta = """
-        <meta name="description" content="%_desc_%>
-        <meta name="keyword" content="%_keyword_%">
-        <meta name="distribution" content="%_dist_%">
-        <meta property="og:type" content="website">
-        <meta property="og:url" content="url">
-        <meta property="og:title" content="%_title_%">
-        <meta property="og:description" content="%_desc_%">
-        """
-        meta = meta.replace('%_desc_%', LocalSettings.entree_appname + ', 청원페이지입니다.')
-        meta = meta.replace('%_dist_%', LocalSettings.entree_appname)
-        meta = meta.replace('%_title_%', LocalSettings.entree_appname)
-        meta = meta.replace('%_keyword_%', LocalSettings.entree_appname + ' ' + '청원페이지 청원')
-        return meta
-
-    def load_search():
-        ### Render Searchbar ###
-        searchbar = """
-        <div class="form-group">
-            <div class="form-group">
-                <div class="input-group mb-3">
-                    <input type="number" class="form-control" id="search" onChange="revealResult()" aria-label="검색">
-                    <div class="input-group-append">
-                        <span class="input-group-text" id="search"><i class="fas fa-search"></i></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div id="result"></div>
-        """
-
-        ### Render End ###
-
-        ### CSS Code Render ###
-        css_code = """
-        <style>
-            #overlay {
-                position: fixed;
-                display: none;
-                width: 100%;
-                height: 100%;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: rgba(0,0,0,0.5);
-                z-index: 2;
-            }
-
-            #text{
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%,-50%);
-                -ms-transform: translate(-50%,-50%);
-            }
-
-            .bs-docs-section{
-                width: 70vw;
-                background-color: white;
-                border-radius: 10px;
-                padding: 50px;
-            }
-
-            @media (max-width: 767px) {
-                .bs-docs-section{
-                width: 95vw;
-                }
-            }
-        </style>
-        """
-        ## need to edit: .bs-docs-section. mediaquery
-        ### Render End ###
-
-        ### Overlay HTML Render ###
-        overlay_code = """
-<div id="overlay">
-    <div id="text">
-  
-        <div class="bs-docs-section">
-            <p class="close" onclick="overlay_off()">x</p>
-            <h1>작업 수행 확인</h1>
-            <div class="bs-component">
-                <form action="" accept-charset="utf-8" name="" method="post">
-                    <fieldset>
-                        <div class="form-group">
-                            <div class="form-group">
-                                %_sns_login_status_%
-                            </div>
-                            <div class="form-group">
-                                <label class="custom-control-label" for="description">처리 사유를 입력하십시오.</label>
-                                <input type="text" class="form-control" name="description" id="description" placeholder="" required>
-
-                                <input type="hidden" id="target_id" name="target_id" value="">
-                            </div>
-                        </div>
-                    </fieldset>
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="Check" required>
-                        <label class="custom-control-label" for="Check">해당 작업 처리 시 서버에 요청 기록이 남음을 확인하고 이 작업을 계속합니다.</label>
-                    </div>
-                    <button type="submit" name="submit" class="btn btn-primary" value="publish">계속하기</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-        """
-        overlay_code = viewer.load_sns_login_status(overlay_code)
-        ### Render End ###
-
-        ### Javascript Code Render ###
-        user_data_sqlite = sqlite3_control.select('select account_id, sns_id, sns_type, user_display_name, user_display_profile_img from site_user_tb')
-        json_code = '['
-        for i in range(len(user_data_sqlite)):
-            json_code += '{{account_id : "{}", sns_id : "{}", sns_type : "{}", user_display_name: "{}", user_display_profile_img : "{}" }}'.format(
-                user_data_sqlite[i][0], user_data_sqlite[i][1], user_data_sqlite[i][2], user_data_sqlite[i][3], user_data_sqlite[i][4])
-            if i != len(user_data_sqlite) - 1:
-                json_code += ','
-        json_code += ']'
-        js_code = """
-        <script>
-            var target
-            var user_data = %_user_data_list_%
-            function revealResult() {
-                target = parseInt(document.getElementById("search").value) - 1
-                document.getElementById("result").innerHTML = "<h2>검색결과</h2><table class='table table-hover'><thead><tr><th scope='col'>ID</th><th>실명</th><th>고유 식별자</th><th>사용 SNS</th><th>확인</th></tr><tbody><td scope='row'>"+user_data[target]["account_id"]+"</td><td><img src="+user_data[target]["user_display_profile_img"]+" width='20' height='20' />  "+user_data[target]["user_display_name"]+"</td><td>"+user_data[target]["sns_id"]+"</td><td>"+user_data[target]["sns_type"]+"</td><td><a onClick='overlay_on()' class='btn btn-link' style='margin: 0; padding: 0'>확인</a></td></tbody></thead></table>"
-            }
-            function overlay_on() {
-                document.getElementById("target_id").value = target + 1;
-                document.getElementById("overlay").style.display = "block";
-            }
-            function overlay_off() {
-                document.getElementById("overlay").style.display = "none";
-            }
-        </script>
-        """
-        js_code = js_code.replace('%_user_data_list_%', json_code)
-        ### Render End ###
-        body_content = js_code + css_code + searchbar + overlay_code
-        return body_content
-
-    def render_var(content):
-        content = content.replace('%_appname_%', LocalSettings.entree_appname)
-        content = content.replace('%_now_%', str(datetime.today()))
-        content = content.replace('%_fetea_ver_%', str(fetea_ver))
-        return content
-
-def register(callback_json, sns_type):
-    account_data = sqlite3_control.select('select * from site_user_tb where sns_type = "{}" and sns_id = "{}"'.format(sns_type, callback_json['id']))
-    if len(account_data) == 0: # 회원가입 절차
-        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, user_display_profile_img) values("{}", "{}", "{}", "{}")'.format(sns_type, callback_json['id'], callback_json['name'], callback_json['picture']))
-        account_ids = sqlite3_control.select('select account_id from site_user_tb')
-        if len(account_ids) == 1: # 소유자 권한 제공
-            sqlite3_control.commit('insert into user_acl_list_tb values({}, "owner")'.format(len(account_ids)))
-        else: # 유저 권한 제공
-            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(len(account_ids)))
-        session['now_login'] = len(account_ids)
-    else:
-        sqlite3_control.commit('update site_user_tb set user_display_name = "{}", user_display_profile_img = "{}" where sns_id = "{}"'.format(callback_json['name'], callback_json['picture'], callback_json['id']))
-        session['now_login'] = account_data[0][0]
-
-super_secret_button = '<button type="submit" name="submit" class="btn btn-link" value="super_secret_button">Super Secret Button...</button>'
-### === Define End === ###
-
 
 ### === Initialize Database === ###
 try:
@@ -484,9 +82,10 @@ def flask_main():
     body_content = static_data[0][4]
     body_content = viewer.render_var(body_content)
 
-    return render_template('frontpage.html', appname = LocalSettings.entree_appname, nav_bar = nav_bar)
+    return render_template('frontpage.html', appname = LocalSettings.entree_appname, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: login
+@app.route('/login', methods=['GET', 'POST'])
 @app.route('/login/', methods=['GET', 'POST'])
 def flask_login():
     if 'now_login' in session:
@@ -494,10 +93,9 @@ def flask_login():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    ### 오류 처리
-    if request.args.get('error') == 'null':
-        pass
-    ###
+    if 'from' in request.args:
+        print(True)
+        session['login_from'] = request.args.get('from')
 
     oauth = config.load_oauth_settings()
     if oauth['naver_client_id'] == '' or oauth['naver_client_secret'] == '':
@@ -550,18 +148,19 @@ $(document).ready(function(){
     ## Render End ##
     body_content += '<p style="margin:0;">SNS 로그인 시 해당 SNS 서비스의 로그인 상태가 유지됩니다.</p><p>공용 컴퓨터에서 SNS 로그인을 사용하는 경우 시크릿 모드(Inprivate 모드)에서 로그인을 계속하십시오.</p>'
     body_content += oauth_content
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+@app.route('/login/naver', methods=['GET', 'POST'])
 @app.route('/login/naver/', methods=['GET', 'POST'])
 def flask_login_naver():
     nav_bar = user_control.load_nav_bar()
     oauth = config.load_oauth_settings()
     if request.args.get('error') == 'no_get_values':
         body_content = '요구 로그인 값을 충족시키지 못했습니다..'
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
     if oauth['facebook_client_id'] == '' or oauth['facebook_client_secret'] == '':
         body_content = '관리자가 이 기능을 비활성화 시켰습니다.'
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
     data = {
         'client_id' : oauth['naver_client_id'],
@@ -572,6 +171,7 @@ def flask_login_naver():
         data['client_id'], data['redirect_uri'], data['state']
     ))
 
+@app.route('/login/naver/callback', methods=['GET', 'POST'])
 @app.route('/login/naver/callback/', methods=['GET', 'POST'])
 def flask_login_naver_callback():
     oauth = config.load_oauth_settings()
@@ -605,18 +205,24 @@ def flask_login_naver_callback():
     profile_result_json = json.loads(profile_result)
     stand_json = {'id' : profile_result_json['response']['id'], 'name' : profile_result_json['response']['name'], 'picture' : profile_result_json['response']['profile_image']}
     register(stand_json, 'naver')
+    if 'login_from' in session:
+        if session['login_from'][0] == '/':
+            return redirect(session['login_from'])
+        else:
+            return redirect('/'+session['login_from'])
     return redirect('/')
 
+@app.route('/login/facebook', methods=['GET', 'POST'])
 @app.route('/login/facebook/', methods=['GET', 'POST'])
 def flask_login_facebook():
     nav_bar = user_control.load_nav_bar()
     oauth = config.load_oauth_settings()
     if request.args.get('error') == 'no_get_values':
         body_content = '요구 로그인 값을 충족시키지 못했습니다..'
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
     if oauth['facebook_client_id'] == '' or oauth['facebook_client_secret'] == '':
         body_content = '관리자가 이 기능을 비활성화 시켰습니다.'
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
     data = {
         'client_id' : oauth['facebook_client_id'],
@@ -627,6 +233,7 @@ def flask_login_facebook():
         data['client_id'], data['redirect_uri'], data['state']
     ))
 
+@app.route('/login/facebook/callback', methods=['GET', 'POST'])
 @app.route('/login/facebook/callback/', methods=['GET', 'POST'])
 def flask_login_facebook_callback():
     oauth = config.load_oauth_settings()
@@ -661,8 +268,14 @@ def flask_login_facebook_callback():
 
     stand_json = {'id': profile_result_json['id'], 'name': profile_result_json['name'], 'picture': profile_result_json['picture']['data']['url']}
     register(stand_json, 'facebook')
+    if 'login_from' in session:
+        if session['login_from'][0] == '/':
+            return redirect(session['login_from'])
+        else:
+            return redirect('/'+session['login_from'])
     return redirect('/')
 
+@app.route('/login/entree', methods=['GET', 'POST'])
 @app.route('/login/entree/', methods=['GET', 'POST'])
 def flask_login_entree():
     body_content = ''
@@ -683,7 +296,7 @@ def flask_login_entree():
         account_password = parser.anti_injection(request.form['account_password'])
         
         ### Get User Data ###
-        user_data = sqlite3_control.select('select * from site_user_tb where sns_id = "{}"'.format(sns_id))
+        user_data = sqlite3_control.select('select * from site_user_tb where sns_id = ?', [sns_id])
         ### Get End ###
 
         if len(user_data) == 0:
@@ -695,11 +308,16 @@ def flask_login_entree():
             </div>
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+            return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
         elif bcrypt.hashpw(account_password.encode(), user_data[0][5].encode()) == user_data[0][5].encode():
             session['now_login'] = user_data[0][0]
             alert_code = ''
             body_content = body_content.replace('%_form_alerts_%', alert_code)
+            if 'login_from' in session:
+                if session['login_from'][0] == '/':
+                    return redirect(session['login_from'])
+                else:
+                    return redirect('/'+session['login_from'])
             return redirect('/')
         else:
             alert_code = """
@@ -709,22 +327,25 @@ def flask_login_entree():
             </div>
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+            return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
     body_content = body_content.replace('%_form_alerts_%', '')
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Logout
+@app.route('/logout')
 @app.route('/logout/')
 def flask_logout():
     body_content = ''
     session.pop('now_login', None)
+    session.pop('login_from', None)
     nav_bar = user_control.load_nav_bar()
 
     body_content += '<h1>로그아웃 완료</h1><p>{}에서 로그아웃되었습니다.</p><p>브라우저 캐시를 삭제하지 않으면 로그인한 것처럼 보일 수도 있음에 유의하세요.</p>'.format(LocalSettings.entree_appname)
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: register
+@app.route('/register', methods=['GET', 'POST'])
 @app.route('/register/', methods=['GET', 'POST'])
 def flask_register():
     body_content = ''
@@ -750,7 +371,7 @@ def flask_register():
             </div>
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+            return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
         ### Check End ###
 
         ### Get Register Data ###
@@ -760,7 +381,7 @@ def flask_register():
         ### Get End ###
 
         ### Check Overlap ID ###
-        same_id_getter = sqlite3_control.select('select * from site_user_tb where sns_type = "entree" and sns_id = "{}"'.format(sns_id))
+        same_id_getter = sqlite3_control.select('select * from site_user_tb where sns_type = "entree" and sns_id = ?', [sns_id])
         if len(same_id_getter) != 0:
             alert_code = """
             <div class="alert alert-dismissible alert-danger">
@@ -769,7 +390,7 @@ def flask_register():
             </div>
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+            return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
         ### Check End ###
         
         ### Encrypt Password ###
@@ -777,12 +398,10 @@ def flask_register():
         ### Encrypt End ###
 
         ### Insert User Account into Database ###
-        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, account_password_hash) values("entree", "{}", "{}", "{}")'.format(
-            sns_id, user_display_name, account_password_hash.decode()
-        ))
+        sqlite3_control.commit('insert into site_user_tb (sns_type, sns_id, user_display_name, account_password_hash) values("entree", ?, ?, ?)', [sns_id, user_display_name, account_password_hash.decode()])
         same_id_getter = sqlite3_control.select('select * from site_user_tb where sns_type = "entree" and sns_id = "{}"'.format(sns_id))
         if same_id_getter[0][0] != 1:
-            sqlite3_control.commit('insert into user_acl_list_tb values({}, "user")'.format(same_id_getter[0][0]))
+            sqlite3_control.commit('insert into user_acl_list_tb values(?, "user")', [same_id_getter[0][0]])
         ### Insert End ###
 
         ### Verify Key Reset ###
@@ -800,12 +419,13 @@ def flask_register():
         """
         alert_code = alert_code.replace('%_user_display_name_%', user_display_name)
         body_content = body_content.replace('%_form_alerts_%', alert_code)
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
     
     body_content = body_content.replace('%_form_alerts_%', '')
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition List
+@app.route('/a', methods=['GET', 'POST'])
 @app.route('/a/', methods=['GET', 'POST'])
 def flask_a():
     body_content = ''
@@ -825,7 +445,7 @@ def flask_a():
     for i in range(len(peti_data)):
         if peti_data[i][3] == 1:
             body_content += '<tr><th scope="row">{}</th><td><a>비공개 청원</a></td></tr>'.format(peti_data[i][0])
-        elif peti_data[i][3] == 404:
+        elif peti_data[i][3] == 3:
             body_content += '<tr><th scope="row">{}</th><td><a>삭제된 청원</a></td></tr>'.format(peti_data[i][0])
         else:
             if peti_data[i][3] == 2:
@@ -838,28 +458,35 @@ def flask_a():
         body_content += '<p style="margin-left: 20px;">청원이 없습니다.</p>'
     body_content += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
     ### Render End ###
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Article
+@app.route('/a/<article_id>', methods=['GET', 'POST'])
 @app.route('/a/<article_id>/', methods=['GET', 'POST'])
 def flask_a_article_id(article_id):
+    if user_control.load_acl('peti_read') == False:
+        return redirect('/error/acl/?error=peti_read')
+
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
     ### Load Petition Data ###
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [article_id])
 
-    if peti_data[0][3] == 1 or peti_data[0][3] == 404:
+    if peti_data[0][3] == 1 or peti_data[0][3] == 3:
         abort(404)
     ### Load End ###
 
     if request.args.get('error') == 'no_login':
-        pass ## return error
+        body_content = viewer.render_err('login_required')
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 
     ### Render Bodycontent ###
     body_content += viewer.load_metatag()
     body_content += viewer.load_petition(article_id)
+    peti_postname = sqlite3_control.select('select peti_display_name from peti_data_tb where peti_id = ?', [article_id])[0][0] + ' - '
+
     if 'now_login' in session:
         body_content = body_content.replace('%_enabled_content_%', '')
     else:
@@ -867,6 +494,11 @@ def flask_a_article_id(article_id):
         body_content = body_content.replace('%_enabled_content_%', '비로그인 상태에서는 청원 반응이 불가능합니다.')
     ### Render End ###
     if request.method == 'POST':
+        if sqlite3_control.select('select data from server_set where name = "petition_react_disabled"')[0][0] == '1':
+            return redirect('/a/{}'.format(article_id))
+        if user_control.load_acl('peti_react') == False:
+            return redirect('/error/acl/?error=peti_react')
+
         ### Collect React Data ###
         peti_id = article_id
         content = parser.anti_injection(request.form['react_content'])
@@ -876,7 +508,7 @@ def flask_a_article_id(article_id):
         ### Collect End ###
         
         ### 반응 중복 제거
-        now_login = sqlite3_control.select('select * from author_connect where account_user_id = {} and target_article = {}'.format(session['now_login'], article_id))
+        now_login = sqlite3_control.select('select * from author_connect where account_user_id = ? and target_article = ?', [session['now_login'], article_id])
         if len(now_login) != 0:
             author_display = now_login[0][1]
             is_existed = True
@@ -886,8 +518,7 @@ def flask_a_article_id(article_id):
         ### Save React Author Data ###
         if 'now_login' in session and is_existed == False:
             author_list_len = len(sqlite3_control.select('select * from author_connect'))
-            sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id, target_article) values("{}", {}, {})'.format(
-                author_display, session['now_login'], article_id))
+            sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id, target_article) values(?, ?, ?)', [author_display, session['now_login'], article_id])
             react_author_id = author_list_len + 1
         elif 'now_login' in session and is_existed == True:
             react_author_id = now_login[0][0]
@@ -896,39 +527,62 @@ def flask_a_article_id(article_id):
         ### Save End ###
 
         ### Insert Data into Database ###
-        sqlite3_query = 'insert into peti_react_tb (peti_id, author_id, react_type, content) values({}, {}, "default", "{}")'.format(
-            peti_id,
-            react_author_id,
-            content
-        )
-        sqlite3_control.commit(sqlite3_query)
+        sqlite3_control.commit('insert into peti_react_tb (peti_id, author_id, react_type, content) values(?, ?, "default", ?)', [peti_id, react_author_id, content])
         ### Insert End ###
         return redirect('/a/{}'.format(article_id))
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = peti_postname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Write
+@app.route('/a/write', methods=['GET', 'POST'])
 @app.route('/a/write/', methods=['GET', 'POST'])
 def flask_a_write():
+    if user_control.load_acl('peti_write') == False:
+        return redirect('/error/acl/?error=peti_write')
+
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    template = open('templates/a_write.html', encoding='utf-8').read()
+    template = viewer.render_var(open('templates/a_write.html', encoding='utf-8').read())
     
     recaptcha_site_key = config.load_oauth_settings()['recaptcha_site_key']
     template = template.replace('%_recaptcha_site_key_%', recaptcha_site_key)
 
     ### Template Rendering ###
-    if 'now_login' in session:
-        user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
-        template = template.replace('%_sns_login_status_%', '로그인 됨: {}'.format(user_profile_data[0][3]))
+    template = template.replace('%_sns_login_status_%', viewer.load_sns_login_status())
+
+    option = ''
+    now_settings = {}
+    html_enabled = {}
+    now_settings['publish'] = sqlite3_control.select('select data from server_set where name = "petition_publish_default"')[0][0]
+    now_settings['publish_fixed'] = sqlite3_control.select('select data from server_set where name = "petition_publish_fixed"')[0][0]
+    if now_settings['publish_fixed'] == '0':
+        html_enabled['publish_fixed'] = ''
     else:
-        template = template.replace('%_sns_login_status_%', '비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.')
+        html_enabled['publish_fixed'] = 'disabled'
+    for i in range(4):
+        if now_settings['publish'] == str(i):
+            selected = ' selected'
+        else:
+            selected = ''
+        if i < 2:
+            option += '<option value="{}"{}>'.format(i, selected) + vs.publish_option_name[i] + '</option>'
+        elif i >= 2 and now_settings['publish_fixed'] == '0':
+            pass
+        else:
+            option += '<option value="{}"{}>시스템이 비공개로 설정함</option>'.format(i, selected)
+    template = template.replace('%_publish_option_%', '''
+    <select class="form-control" name="publish" id="publish" '''+ html_enabled['publish_fixed'] +'''>
+        ''' + option + '''
+    </select>
+    ''')    
     ### Rendering End ###
 
     if request.method == 'POST':
         ### Get Login Data ###
-        if 'now_login' in session:
-            peti_status = 0
+        if 'now_login' in session and now_settings['publish_fixed'] == '0':
+            peti_status = int(request.form['publish'])
+        elif 'now_login' in session and now_settings['publish_fixed'] == '1':
+            peti_status = int(now_settings['publish'])
         else:
             peti_status = 1
         ### Get End ###
@@ -938,16 +592,32 @@ def flask_a_write():
         peti_publish_date = datetime.today()
         peti_author_display_name = parser.anti_injection(request.form['peti_author_display_name'])
         peti_body_content = parser.anti_injection(request.form['peti_body_content'])
-        recaptcha_response = request.form['g-recaptcha-response']
 
         ### reCaptcha Check ###
-        recaptcha_secret_key = config.load_oauth_settings()['recaptcha_secret_key']
-        url = 'https://www.google.com/recaptcha/api/siteverify?secret={}&response={}'.format(
-            recaptcha_secret_key, recaptcha_response
-        )
-        recaptcha_check_json = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
-        if recaptcha_check_json['success'] == False:
-            return '오류! reCaptcha를 제대로 수행하세요.'
+        if config.recaptcha_existed():
+            recaptcha_response = request.form['g-recaptcha-response']
+            recaptcha_secret_key = config.load_oauth_settings()['recaptcha_secret_key']
+            url = 'https://www.google.com/recaptcha/api/siteverify?secret={}&response={}'.format(
+                recaptcha_secret_key, recaptcha_response
+            )
+            recaptcha_check_json = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
+            if recaptcha_check_json['success'] == False:
+                template = template.replace('%_value:peti_display_name_%', peti_display_name)
+                template = template.replace('%_value:peti_author_display_name_%', peti_author_display_name)
+                template = template.replace('%_value:peti_body_content_%', peti_body_content)
+                template = template.replace('%_recaptcha_alert_%', '''
+                <p id="needed_recaptcha" style="color: red;">로봇이 아닙니다(reCaptcha)를 완료하세요.</p>
+                <script>
+                    $('html, body').animate({
+                        scrollTop: $("#needed_recaptcha").offset().top
+                    }, 2000);
+                    setTimeout(function () {
+                        document.getElementById('needed_recaptcha').style.backgroundColor = 'yellow';
+                    }, 1000);
+                </script>
+                ''')
+                body_content += template
+                return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
         ### Save Author Data ###
         if peti_status == 1:
@@ -956,30 +626,45 @@ def flask_a_write():
             account_user_id = session['now_login']
         petition_list_len = len(sqlite3_control.select('select * from peti_data_tb')) + 1
         author_list_len = len(sqlite3_control.select('select * from author_connect'))
-        sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id, target_article) values("{}", {}, {})'.format(
-            peti_author_display_name,
-            account_user_id,
-            petition_list_len
-        ))
+        sqlite3_control.commit('insert into author_connect (peti_author_display_name, account_user_id, target_article) values(?, ?, ?)', [peti_author_display_name, account_user_id, petition_list_len])
         peti_author_id = author_list_len + 1
         ### Save End ###
 
         ### Insert Data into Database ###
-        sqlite3_query = 'insert into peti_data_tb (peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content) values("{}", "{}", {}, {}, "{}")'.format(
-            peti_display_name,
-            peti_publish_date,
-            peti_status,
-            peti_author_id,
-            peti_body_content
-        )
-        sqlite3_control.commit(sqlite3_query)
+        sqlite3_control.commit('insert into peti_data_tb (peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content) values(?, ?, ?, ?, ?)', [peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content])
         ### Insert End ###
+        if request.args.get('outer').lower() == 'yes':
+            if request.args.get('from') == 'facebook':
+                redirect_target = ['Facebook', 'https://facebook.com']
+            elif request.args.get('from') == 'naver':
+                redirect_target = ['네이버', 'https://www.naver.com']
 
-        return redirect('/a/')
+            if sqlite3_control.select('select data from server_set where name = "petition_publish_default"')[0][0] == '0':
+                publish_comment = '<p>또는 <a href="/a">이곳에서 자신의 %_article_%과 다른 사람들의 %_article_%을 확인할 수 있습니다.</a></p>'
+            else:
+                publish_comment = '<p>현재 모든 %_article_%은 관리자가 비공개로 설정하였습니다. 죄송합니다.</p>'
+            body_content = '''
+            <h1>%_article_% 보내기 완료!</h1>
+            <h2>감사합니다!</h2>
+            <p>보내주신 %_article_%(은)는 내부적으로 검토하도록 하겠습니다.</p>
+            <p><a href="{provider_uri}">{provider}로 돌아가기</a></p>
+            <hr>
+            <h2>%_article_% 보기</h2>
+            {publish_comment}
+            '''.format(provider = redirect_target[0], provider_uri = redirect_target[1], publish_comment = publish_comment)
+            body_content = viewer.render_var(body_content)
+            return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+        else:
+            return redirect('/a/')
+    template = template.replace('%_value:peti_display_name_%', '')
+    template = template.replace('%_value:peti_author_display_name_%', '')
+    template = template.replace('%_value:peti_body_content_%', '')
+    template = template.replace('%_recaptcha_alert_%', '')
     body_content += template
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Delete
+@app.route('/a/<article_id>/delete', methods=['GET', 'POST'])
 @app.route('/a/<article_id>/delete/', methods=['GET', 'POST'])
 def flask_a_article_id_delete(article_id):
     if 'now_login' in session:
@@ -995,7 +680,7 @@ def flask_a_article_id_delete(article_id):
     body_content += template
 
     ### Render Login Status ###
-    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
     body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
     body_content = body_content.replace('%_confirm_head_%', '청원 삭제')
     if user_control.super_secret_settings(session['now_login']) == True:
@@ -1006,28 +691,29 @@ def flask_a_article_id_delete(article_id):
     
     if request.method == 'POST':
         ### Log Activity ###
-        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [article_id])
         activity_date = datetime.today()
         activity_object = '청원(<i>{}</i>)'.format(peti_data[0][1])
         activity_description = request.form['description']
         if user_control.super_secret_settings(session['now_login']) == True and request.form['submit'] == 'super_secret_button':
             pass
         else:
-            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values(?, ?, ?, ?, ?)', [
                 session['now_login'],
                 activity_object,
                 '삭제',
                 activity_description,
                 activity_date
-            ))
+            ])
         ### Log End ###
 
-        sqlite3_control.commit('update peti_data_tb set peti_status = 404 where peti_id = {}'.format(article_id))
+        sqlite3_control.commit('update peti_data_tb set peti_status = 3 where peti_id = ?', [article_id])
         return redirect('/a/')
     body_content = body_content.replace('%_form_alerts_%', '')
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Official React
+@app.route('/a/<article_id>/official', methods=['GET', 'POST'])
 @app.route('/a/<article_id>/official/', methods=['GET', 'POST'])
 def flask_a_article_id_official(article_id):
     if 'now_login' in session:
@@ -1061,7 +747,7 @@ def flask_a_article_id_official(article_id):
 </div>
     """
     ### Render Login Status ###
-    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
     reply_template = reply_template.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
     ### Render End ###
 
@@ -1070,8 +756,9 @@ def flask_a_article_id_official(article_id):
 
     if request.method == 'POST':
         return redirect('http://localhost:2500/admin/static/add?type=reply&target={}'.format(article_id))
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+@app.route('/a/<article_id>/complete', methods=['GET', 'POST'])
 @app.route('/a/<article_id>/complete/', methods=['GET', 'POST'])
 def flask_a_article_id_complete(article_id):
     if 'now_login' in session:
@@ -1093,35 +780,36 @@ def flask_a_article_id_complete(article_id):
 
 
     ### Render Login Status ###
-    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(session['now_login']))
+    user_profile = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
     body_content = body_content.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
     ### Render End ###
     
     if request.method == 'POST':
         ### Log Activity ###
-        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+        peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [article_id])
         activity_date = datetime.today()
         activity_object = '청원(<i>{}</i>)'.format(peti_data[0][1])
         activity_description = request.form['description']
         if user_control.super_secret_settings(session['now_login']) == True and request.form['submit'] == 'super_secret_button':
             pass
         else:
-            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values(?, ?, ?, ?, ?)', [
                 session['now_login'],
                 activity_object,
                 '완료',
                 activity_description,
                 activity_date
-            ))
+            ])
         ### Log End ###
 
-        sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = {}'.format(article_id))
+        sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = ?', [article_id])
         return redirect('/a/')
     body_content = body_content.replace('%_form_alerts_%', '')
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 
 # ## flask: Activity Log
+@app.route('/log')
 @app.route('/log/')
 def flask_log():        
     body_content = ''
@@ -1133,33 +821,35 @@ def flask_log():
 
     ### Render Log ###
     for i in range(len(log)):
-        profile = sqlite3_control.select('select * from site_user_tb where account_id = {}'.format(log[i][1]))
+        profile = sqlite3_control.select('select * from site_user_tb where account_id = ?', [log[i][1]])
         body_content += '<p>{}  {}(이)가 {}을(를) {}함 (사유: {})'.format(log[i][5], profile[0][3], log[i][2], log[i][3], log[i][4])
     ### Render End ###
 
     nav_bar = user_control.load_nav_bar()
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Static Page Viewer
 @app.route('/static/<title>')
+@app.route('/static/<title>/')
 def flask_static(title):    
     body_content = ''
     nav_bar = user_control.load_nav_bar()
     
     ### Load From Database ###
-    static_data = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(title))
+    static_data = sqlite3_control.select('select * from static_page_tb where page_name = ?', [title])
     if len(static_data) == 0:
         abort(404)
     ### Load End ###
 
     body_content += viewer.load_metatag()
-    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' 마지막으로 수정 | '+static_data[0][3]+'</b><hr>'+static_data[0][4]
+    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' | 마지막으로 수정 '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Notice Static Page
+@app.route('/notice')
 @app.route('/notice/')
 def flask_notice():    
     body_content = ''
@@ -1170,13 +860,14 @@ def flask_notice():
     print(static_data)
     ### Load End ###
 
-    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' 마지막으로 수정 | '+static_data[0][3]+'</b><hr>'+static_data[0][4]
+    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' | 마지막으로 수정 '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 
 # ## flask: Admin Page
+@app.route('/admin')
 @app.route('/admin/')
 def flask_admin():
     if 'now_login' in session:
@@ -1190,14 +881,15 @@ def flask_admin():
     static_data = sqlite3_control.select('select * from static_page_tb where page_name = "adminpage"')
     ### Load End ###
 
-    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' 마지막으로 수정 | '+static_data[0][3]+'</b><hr>'+static_data[0][4]
+    body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' | 마지막으로 수정 '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
     nav_bar = user_control.load_nav_bar()
 
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-member
+@app.route('/admin/member')
 @app.route('/admin/member/')
 def flask_admin_member():
     if 'now_login' in session:
@@ -1220,14 +912,18 @@ def flask_admin_member():
             user_id_display = '<a href="https://facebook.com/{}" target="_blank">{}</a>'.format(user_list[i][2], user_list[i][2])
         else:
             user_id_display = user_list[i][2]
-        user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[i][4], user_list[i][3])
+        if user_list[i][4] == None or user_list[i][4] == '':
+            user_display_name = user_list[i][3]
+        else:
+            user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[i][4], user_list[i][3])
         body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td></tr>'.format(user_display_name, user_list[i][0], user_id_display, user_list[i][1])
     body_content += '</tbody></table>'
     ### Render End ###
 
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-member-idnetify
+@app.route('/admin/member/identify', methods=['GET', 'POST'])
 @app.route('/admin/member/identify/', methods=['GET', 'POST'])
 def flask_admin_identify():
     if 'now_login' in session:
@@ -1253,8 +949,6 @@ def flask_admin_identify():
             target_id = int(request.args.get('user'))
         except:
             return redirect('/?error=need_enough_data')
-    #else:
-    #    return redirect('/?error=need_enough_data')
     ### Review End ###
 
     ### Render
@@ -1284,13 +978,13 @@ def flask_admin_identify():
         if user_control.super_secret_settings(session['now_login']) == True and request.form['submit'] == 'super_secret_button':
             pass
         else:
-            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values(?, ?, ?, ?, ?)', [
             session['now_login'],
             '닉네임 ' + target_data_sqlite[0][5],
             '명의를 확인',
             activity_description,
             activity_date
-            ))
+            ])
 
         table_template = """
         <h2>검색결과</h2>
@@ -1303,9 +997,10 @@ def flask_admin_identify():
 
         body_content = table_template
     
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-admins
+@app.route('/admin/admins')
 @app.route('/admin/admins/')
 def flask_admin_admins():
     if 'now_login' in session:
@@ -1336,16 +1031,20 @@ def flask_admin_admins():
             user_id_display = '<a href="https://facebook.com/{}" target="_blank">{}</a>'.format(user_list[j][2], user_list[j][2])
         else:
             user_id_display = user_list[j][2]
-        user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[j][4], user_list[j][3])
+        if user_list[i][4] == None or user_list[i][4] == '':
+            user_display_name = user_list[i][3]
+        else:
+            user_display_name = '<img src="{}" width="20" height="20" />  {}'.format(user_list[i][4], user_list[i][3])
         body_content += '<tr><th scope="row"></th><td>{}</td><td>{}, {}</td><td>{}</td><td>{}</td></tr>'.format(user_display_name, user_list[j][0], user_id_display, user_list[j][1], user_auth_list[j])
     body_content += '</tbody></table>'
 
     body_content += '<a href="/admin/admins/add/" class="btn btn-primary">관리자 추가</a>'
     ### Render End ###
 
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-(add admins)
+@app.route('/admin/admins/add', methods=['GET', 'POST'])
 @app.route('/admin/admins/add/', methods=['GET', 'POST'])
 def flask_admin_admins_add():
     if 'now_login' in session:
@@ -1395,24 +1094,25 @@ def flask_admin_admins_add():
             activity_object = request.form['target_id']
             activity_description = request.form['description']
         except:
-            pass ### 오류!
-        target_user_data = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(activity_object))
+            return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = '<h1>!!</h1><h2>이 작업을 수행하기 위해 필요한 데이터가 충족되지 않았습니다.</h2><p>이전으로 돌아가 다시 시도하세요.</p>', nav_bar = nav_bar)
+        target_user_data = sqlite3_control.select('select user_display_name from site_user_tb where account_id = ?', [activity_object])
         activity_date = datetime.today()
-        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values({}, "{}", "{}", "{}", "{}")'.format(
+        sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values(?, ?, ?, ?, ?)', [
         session['now_login'],
         '사용자 ' + target_user_data[0][0],
         '관리자로 등록',
         activity_description,
         activity_date
-        ))
-        user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_group_acl.user_group = user_acl_list_tb.auth'.format(activity_object))
+        ])
+        user_auth_owner = sqlite3_control.select('select user_group_acl.site_owner from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = ? and user_group_acl.user_group = user_acl_list_tb.auth', [activity_object])
         if user_auth_owner[0][0] == 0:
-            sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = {}'.format(activity_object))
+            sqlite3_control.commit('update user_acl_list_tb set auth="administrator" where account_id = ?', [activity_object])
         return redirect('/admin/admins/')
     
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-ACL Settings
+@app.route('/admin/acl', methods=['GET', 'POST'])
 @app.route('/admin/acl/', methods=['GET', 'POST'])
 def flask_admin_acl():
     if 'now_login' in session:
@@ -1488,15 +1188,15 @@ def flask_admin_acl():
 
         ### Check Auth ###
         #### 1: manage auth ####
-        acl_data = sqlite3_control.select('select user_acl_list_tb.auth, user_group_acl.manage_acl from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(session['now_login']))
+        acl_data = sqlite3_control.select('select user_acl_list_tb.auth, user_group_acl.manage_acl from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = ? and user_acl_list_tb.auth = user_group_acl.user_group', [session['now_login']])
         if acl_data[0][1] == 1:
             pass
         else:
             return redirect('/error/acl/')
         
         #### 2: acl priority ####
-        acl_pri_user = sqlite3_control.select('select user_group_acl.group_priority from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = {} and user_acl_list_tb.auth = user_group_acl.user_group'.format(session['now_login']))
-        acl_pri_target = sqlite3_control.select('select group_priority from user_group_acl where user_group = "{}"'.format(acl_group))
+        acl_pri_user = sqlite3_control.select('select user_group_acl.group_priority from user_acl_list_tb, user_group_acl where user_acl_list_tb.account_id = ? and user_acl_list_tb.auth = user_group_acl.user_group', [session['now_login']])
+        acl_pri_target = sqlite3_control.select('select group_priority from user_group_acl where user_group = ?', [acl_group])
         if acl_pri_user[0][0] < acl_pri_target[0][0]:
             return redirect('/error/acl/?error=high_acl')
         ### Check End ###
@@ -1518,7 +1218,7 @@ def flask_admin_acl():
             else:
                 new_acl_data += [1]
         
-        sqlite3_control.commit('update user_group_acl set group_priority = {}, site_owner = {}, site_administrator = {}, peti_read = {}, peti_write = {}, peti_react = {}, peti_disable = {}, peti_delete = {}, user_identify = {}, user_block = {}, manage_user = {}, manage_acl = {}, manage_static_page = {}, manage_notion = {}, not_display_log = {} where user_group = "{}"'.format(
+        sqlite3_control.commit('update user_group_acl set group_priority = ?, site_owner = ?, site_administrator = ?, peti_read = ?, peti_write = ?, peti_react = ?, peti_disable = ?, peti_delete = ?, user_identify = ?, user_block = ?, manage_user = ?, manage_acl = ?, manage_static_page = ?, manage_notion = ?, not_display_log = ? where user_group = ?', [
             group_priority,
             new_acl_data[0],
             new_acl_data[1],
@@ -1535,14 +1235,15 @@ def flask_admin_acl():
             new_acl_data[12],
             new_acl_data[13],
             acl_group
-        ))
+        ])
         return redirect('/admin/acl/')
     ### Confirm End ###
 
     body_content += table_container
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-verify_key
+@app.route('/admin/verify_key')
 @app.route('/admin/verify_key/')
 def flask_admin_verify_key():
     if 'now_login' in session:
@@ -1561,34 +1262,55 @@ def flask_admin_verify_key():
 <div class="form-group">
   <div class="form-group">
     <div class="input-group mb-3 single-center">
-      <div class="input-group-prepend">
-        <span class="input-group-text"></span>
-      </div>
       <input type="text" class="form-control" id="verify_key_value" value="%_verify_key_value_%" disabled>
-      <div class="input-group-append">
-        <span class="input-group-text" id="copy_target" onclick="copy_to_clipboard()" data-toggle="tooltip" title="복사" style="cursor: pointer;"><i class="fas fa-copy"></i></span>
-      </div>
     </div>
   </div>
 </div>
-<script type="text/javascript">
-function copy_to_clipboard() {
-  var copyText = document.getElementById("copy_target");
-  copyText.select();
-  document.execCommand("Copy");
-}
-
-$(function () {
-  $('[data-toggle="tooltip"]').tooltip()
-})
-</script>
     """
     ###
     body_content += verify_key_template.replace('%_verify_key_value_%', verify_key)
     body_content += '<p>verify_key는 1회 사용시 갱신됩니다.</p>'
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+
+# ## flask: Admin-Update
+@app.route('/admin/update')
+@app.route('/admin/update/')
+def flask_admin_update():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    nav_bar = user_control.load_nav_bar()
+
+    body_content = '<h1>업데이트 확인</h1><p>fetea의 업데이트 파일을 확인합니다.</p><hr>'
+
+    local_stable = json.loads(open('version.json', encoding='utf-8').read())
+    
+    try:
+        github_stable = json.loads(urllib.request.urlopen('https://raw.githubusercontent.com/kpjhg0124/PetitionApplication-py/master/version.json').read().decode('utf-8'))
+        done = True
+    except:
+        body_content += '업데이트 확인 작업 중 문제가 발생했습니다. 나중에 다시 시도하세요.'
+        done = False
+        github_stable = {'ver' : 0, 'rel' : 0}
+
+    latest = '<i class="fas fa-check"></i> fetea가 최신버전입니다. 업데이트가 필요하지 않습니다.'
+    old = '<i class="fas fa-download"></i> fetea의 최신버전이 발견되었습니다. <a href="https://github.com/kpjhg0124/PetitionApplication-py/releases">Github 릴리즈 페이지</a>에서 최신 릴리즈를 받아 업데이트하세요.'
+
+    if local_stable['ver'] < github_stable['ver'] and done == True:
+        body_content += old
+    elif local_stable['rel'] < github_stable['rel'] and done == True:
+        body_content += old
+    elif done == True:
+        body_content += latest
+
+    body_content += '<hr><h4>fetea 버전</h4><p>현재: {}. {}번째 추가 릴리즈<br>최신: {}. {}번째 추가 릴리즈</p>'.format(local_stable['ver'], local_stable['rel'], github_stable['ver'], github_stable['rel'])
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-Petition Manage
+@app.route('/admin/petition')
 @app.route('/admin/petition/')
 def flask_admin_petition():
     if 'now_login' in session:
@@ -1601,7 +1323,7 @@ def flask_admin_petition():
     nav_bar = user_control.load_nav_bar()
 
     ### Index Database ###
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 1 or peti_status = 404 order by peti_id desc')
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_status = 1 or peti_status = 3 order by peti_id desc')
     ### Index End ###
 
     ### Render Template ###
@@ -1609,13 +1331,14 @@ def flask_admin_petition():
     for i in range(len(peti_data)):
         if peti_data[i][3] == 1:
             peti_status = '비공개'
-        if peti_data[i][3] == 404:
+        if peti_data[i][3] == 3:
             peti_status = '삭제됨'
         body_content += '<tr><th scope="row">{}</th><td><a href="/admin/petition/{}/">{}</a></td><td>{}</td></tr>'.format(peti_data[i][0], peti_data[i][0], peti_data[i][1], peti_status)
     body_content += '</tbody></table>'
     ### Render End ###
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+@app.route('/admin/petition/<article_id>', methods=['GET', 'POST'])
 @app.route('/admin/petition/<article_id>/', methods=['GET', 'POST'])
 def flask_admin_petition_article_id(article_id):
     if 'now_login' in session:
@@ -1627,47 +1350,253 @@ def flask_admin_petition_article_id(article_id):
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = {}'.format(article_id))
+    peti_data = sqlite3_control.select('select * from peti_data_tb where peti_id = ?', [article_id])
     template = open('templates/a.html', encoding='utf-8').read()
 
-    ### Index React Content ###
-    react_data = sqlite3_control.select('select * from peti_react_tb where peti_id = {}'.format(article_id))
-    ### Index End ###
+    ### Render Bodycontent ###
+    body_content += viewer.load_metatag()
+    body_content += viewer.load_petition(article_id)
+    if 'now_login' in session:
+        body_content = body_content.replace('%_enabled_content_%', '')
+    else:
+        body_content = body_content.replace('%_is_enabled_%', 'disabled')
+        body_content = body_content.replace('%_enabled_content_%', '비로그인 상태에서는 청원 반응이 불가능합니다.')
 
-    ### Get Author Data ###
-    author_data = sqlite3_control.select('select * from author_connect where peti_author_id = {}'.format(peti_data[0][4]))
-    author_display_name = author_data[0][1]
-    ### Get End ###
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
-    ### Render React ###
-    template_react = """
-            <div class="container">
-                <h5>%_article_react_author_display_name_%</h5>
-                <p>%_article_react_body_content_%</p>
+# ## flask: Admin-petition_default settings
+@app.route('/admin/peti-default', methods=['GET', 'POST'])
+@app.route('/admin/peti-default/', methods=['GET', 'POST'])
+def flask_admin_peti_default():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    if request.method == 'POST':
+        new_settings = {}
+        try:
+            new_settings['publish'] = request.form['publish']
+        except:
+            return redirect('/admin/peti-default/')
+
+        sqlite3_control.commit('update server_set set data = ? where name = "petition_publish_default"', [new_settings['publish']])
+        if 'react_disabled' in request.form:
+            sqlite3_control.commit('update server_set set data = "1" where name = "petition_react_disabled"')
+        else:
+            sqlite3_control.commit('update server_set set data = "0" where name = "petition_react_disabled"')
+        if 'publish_fixed' in request.form:
+            sqlite3_control.commit('update server_set set data = "1" where name = "petition_publish_fixed"')
+        else:
+            sqlite3_control.commit('update server_set set data = "0" where name = "petition_publish_fixed"')
+        return redirect('/admin/peti-default/')
+
+    nav_bar = user_control.load_nav_bar()
+    body_content = ''
+
+    now_settings = {}
+    now_settings['publish'] = sqlite3_control.select('select data from server_set where name = "petition_publish_default"')[0][0]
+    now_settings['publish_fixed'] = sqlite3_control.select('select data from server_set where name = "petition_publish_fixed"')[0][0]
+    now_settings['react_disabled'] = sqlite3_control.select('select data from server_set where name = "petition_react_disabled"')[0][0]
+
+    option = ''
+    for i in range(4):
+        if now_settings['publish'] == str(i):
+            selected = ' selected'
+        else:
+            selected = ''
+        option += '<option value="{}" {}>'.format(i, selected) +  vs.publish_option_name[i]+ '</option>'
+
+    html_enabled = {}
+    if now_settings['react_disabled'] == '0':
+        html_enabled['react_disabled'] = ''
+    else:
+        html_enabled['react_disabled'] = 'checked'
+    if now_settings['publish_fixed'] == '0':
+        html_enabled['publish_fixed'] = ''
+    else:
+        html_enabled['publish_fixed'] = 'checked'
+
+    body_content += '''
+    <h1>청원 작성 기본 설정</h1>
+    <p>이 설정 사항은 설정 저장 이후 생성되는 청원부터 적용됩니다.</p>
+    <form action="" accept-charset="utf-8" method="post">
+        <div id="publish">
+            <legend style="margin: 0;">청원 공개 기본 설정</legend>
+            <label for="publish"></label>
+            <select class="form-control" name="publish" id="publish">
+                ''' + option + '''
+            </select>
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="publish_fixed" name="publish_fixed" ''' + html_enabled['publish_fixed'] + '''>
+                <label class="custom-control-label" for="publish_fixed">사용자가 이 설정을 무조건 따르도록 합니다.</label>
             </div>
-            """
-    react_body_content = ''
-    template = template.replace('%_is_enabled_%', 'disabled')
-    for i in range(len(react_data)):
-        react_render_object = template_react
-        react_render_object = react_render_object.replace('%_article_react_author_display_name_%', str(react_data[i][3]))
-        react_render_object = react_render_object.replace('%_article_react_body_content_%', react_data[i][4])
-        react_body_content += react_render_object
-    ### Render End ###
+        </div>
+        <hr>
+        <div id="react">
+        <legend style="margin: 0;">청원 반응 활성화</legend>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="react_disabled" name="react_disabled" ''' + html_enabled['react_disabled'] + '''>
+            <label class="custom-control-label" for="react_disabled">청원 반응 기능을 비활성화하고 청원 뷰어에서 나타나지 않도록 합니다.</label>
+        </div>
 
-    ### Render Template ###
-    template = template.replace('%_article_display_name_%', peti_data[0][1])
-    template = template.replace('%_article_publish_date_%', peti_data[0][2])
-    template = template.replace('%_article_author_display_name_%', author_display_name)
-    template = template.replace('%_article_body_content_%', peti_data[0][5])
-    template = template.replace('%_article_react_count_%', str(len(react_data)))
-    template = template.replace('%_article_reacts_%', react_body_content)
-    body_content += template
-    ### Render End ###
+        </div>
+        <div id="submit-container" style="margin-top: 20px;">
+            <button type="submit" name="submit" class="btn btn-primary" value="publish">저장</button>
+        </div>
+    </form>
+    '''
 
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+
+# ## flask: Admin-all petition settings
+@app.route('/admin/peti-all', methods=['GET', 'POST'])
+@app.route('/admin/peti-all/', methods=['GET', 'POST'])
+def flask_admin_peti_all():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    nav_bar = user_control.load_nav_bar()
+
+    if request.method == 'POST':
+        if 'publish' in request.form:
+            request.form['peti-status']
+            try:
+                publish_value = request.form['peti-status']
+            except:
+                publish_value = '' # request error
+            if publish_value == 'publish':
+                sqlite3_control.commit('update peti_data_tb set peti_status = 0')
+            elif publish_value == 'secret':
+                sqlite3_control.commit('update peti_data_tb set peti_status = 1')
+        elif request.form['submit'] == 'delete-all':
+            sqlite3_control.commit('insert into user_activity_log_tb (account_id, activity_object, activity, activity_description, activity_date) values(?, ?, ?, ?, ?)',
+            [session['now_login'], '모든 청원', '삭제', '', datetime.today()])
+            sqlite3_control.commit('delete from peti_data_tb')
+        return redirect('/admin/peti-all')
+
+    body_content = ''
+    body_content += '<h1>청원 일괄 설정</h1>'
+    body_content += '<p>모든 청원 상태를 변경합니다.</p>'
+    body_content += '''
+    <p>모든 작업은 <a href="/log">투명성 보고서</a>에 기록되며, 철회할 수 없습니다.</p>
+    <hr>
+    <form action="" accept-charset="utf-8" method="post" name="publish">
+        <select class="form-control petiall-status" name="peti-status" id="peti-status">
+            <option value="publish">전체공개</option>
+            <option value="secret">비공개</option>
+        </select>
+        <button type="submit" name="submit" class="btn btn-primary petiall-status" value="submit">저장</button>
+    </form>
+    <hr>
+    <form action="" accept-charset="utf-8" method="post" name="danger">
+        <h2 class="text-danger">Danger Zone</h2>
+        <div class="btn-submit-container">
+            <div class="btn btn-danger btn-delall-first" id="btn-delall-first" value="delete-all" onclick="this.style.display = 'none';">전체 삭제</div>
+            <button type="submit" name="submit" class="btn btn-info btn-delall-confirm" value="delete-all">삭제 확인</button>
+        </div>
+    </form>
+    <div style="margin-bottom: 80px;"></div>
+    <hr>
+    '''
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+
+# ## flask: Admin-Sethtmlhead
+@app.route('/admin/header', methods=['GET', 'POST'])
+@app.route('/admin/header/', methods=['GET', 'POST'])
+def flask_admin_header():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    nav_bar = user_control.load_nav_bar()
+
+    if request.method == 'POST':
+        try:
+            new_header = []
+            new_header += [request.form['top']]
+            new_header += [request.form['bottom']]
+        except:
+            return redirect('/admin/header/')
+
+        sqlite3_control.commit('update server_set set data = ? where name="custom_header_top"', [new_header[0]])
+        sqlite3_control.commit('update server_set set data = ? where name="custom_header_bottom"', [new_header[1]])
+        return redirect('/admin/header/')
+
+
+    now_header = load_header()
+
+    body_content = """
+    <div class="bs-docs-section">
+        <form action="" accept-charset="utf-8" method="post">
+            <h3>상단 헤더(&lt;head&gt; 안) HTML 코드</h3>
+            <textarea class="form-control" name="top" rows="3" placeholder="html 코드로 작성합니다.">{}</textarea>
+            <hr>
+            <h3>하단 헤더(&lt;/body&gt; 위) HTML 코드</h3>
+            <textarea class="form-control" name="bottom" rows="3" placeholder="html 코드로 작성합니다.">{}</textarea>
+            <button type="submit" name="submit" class="btn btn-primary" value="publish">업데이트</button>
+        </form>
+    </div>
+    """.format(now_header[0], now_header[1])
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Admin-Manage Static Page
+@app.route('/admin/sns', methods=['GET', 'POST'])
+@app.route('/admin/sns/', methods=['GET', 'POST'])
+def flask_admin_sns():
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    if request.method == 'POST':
+        if 'facebook_share_enabled' in request.form:
+            sqlite3_control.commit('update server_set set data = "1" where name = "facebook_share_enabled"')
+        else:
+            sqlite3_control.commit('update server_set set data = "0" where name = "facebook_share_enabled"')
+
+    nav_bar = user_control.load_nav_bar()
+    body_content = ''
+
+    now_settings = {}
+    now_settings['facebook_share_enabled'] = sqlite3_control.select('select data from server_set where name="facebook_share_enabled"')[0][0]
+
+    html_enabled = {}
+    if now_settings['facebook_share_enabled'] == '1':
+        html_enabled['facebook_share_enabled'] = 'checked'
+    else:
+        html_enabled['facebook_share_enabled'] = ''
+
+    body_content += '<h1>SNS 설정</h1>'
+    body_content += '''
+    <form action="" accept-charset="utf-8" method="post">
+        <div id="share">
+            <legend style="margin: 0;">공유 기능 활성화</legend>
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="facebook_share_enabled" name="facebook_share_enabled" ''' + html_enabled['facebook_share_enabled'] + '''>
+                <label class="custom-control-label" for="facebook_share_enabled">Facebook으로 청원을 공유하는 것을 허용합니다.</label>
+                <p> * LocalSettings.py의 publish_host_name이 제대로 지정되어야 작동합니다.</p>
+            </div>
+        </div>
+        <div id="submit-container" style="margin-top: 20px;">
+            <button type="submit" name="submit" class="btn btn-primary" value="publish">저장</button>
+        </div>
+    </form>
+    '''
+
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+
+# ## flask: Admin-Manage Static Page
+@app.route('/admin/static', methods=['GET', 'POST'])
 @app.route('/admin/static/', methods=['GET', 'POST'])
 def flask_admin_static():
     if 'now_login' in session:
@@ -1704,7 +1633,7 @@ def flask_admin_static():
     ### Render Ststic Page Editor ###
     if request.args.get('page') != None:
         target = request.args.get('page')
-        target_content = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(target))
+        target_content = sqlite3_control.select('select * from static_page_tb where page_name = ?', [target])
         if len(target_content) == 0:
             abort(404)
         textarea = """
@@ -1721,21 +1650,22 @@ def flask_admin_static():
 
     if request.method == 'POST':
         ### Update Static Page Data ###
-        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(session['now_login']))
+        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = ?', [session['now_login']])
         received_content = request.form['content'].replace('"', '""')
-        sqlite3_control.commit('update static_page_tb set editor = "{}", editdate = "{}", content = "{}" where page_name = "{}"'.format(
+        sqlite3_control.commit('update static_page_tb set editor = ?, editdate = ?, content = ? where page_name = ?',[
             parser.anti_injection(user_name[0][0]), 
             parser.anti_injection(str(datetime.today())), 
             received_content, 
             parser.anti_injection(request.args.get('page'))
-            ))
+        ]) # issue 27 작업 여기까지 끝냄. (수정)
         ### End Update ###
         return redirect('/admin/static/?page={}'.format(request.args.get('page')))
 
     nav_bar = user_control.load_nav_bar()
 
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
+@app.route('/admin/static/add', methods=['GET', 'POST'])
 @app.route('/admin/static/add/', methods=['GET', 'POST'])
 def flask_admin_static_add():
     if 'now_login' in session:
@@ -1838,41 +1768,170 @@ def flask_admin_static_add():
                 return redirect('/admin/static/add?error=reply_target_not_int')
 
         ### Get End ###
-        search = sqlite3_control.select('select * from static_page_tb where page_name = "{}"'.format(static_slug))
-        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = {}'.format(session['now_login']))
+        search = sqlite3_control.select('select * from static_page_tb where page_name = ?', [static_slug])
+        user_name = sqlite3_control.select('select user_display_name from site_user_tb where account_id = ?', [session['now_login']])
         if len(search) != 0:
             return redirect('/admin/static/add?error=already_existed')
-        sqlite3_control.commit('insert into static_page_tb (page_name, title, editor, editdate, content) values("{}", "{}", "{}", "{}", "{}")'.format(
+        sqlite3_control.commit('insert into static_page_tb (page_name, title, editor, editdate, content) values(?, ?, ?, ?, ?)', [
             static_slug, static_display_name, parser.anti_injection(user_name[0][0]), parser.anti_injection(str(datetime.today())), parser.anti_injection(static_body_content)
-        ))
-        print(target)
+        ])
         if target > 0:
-            print('안녕')
-            sqlite3_control.commit('insert into peti_react_tb (peti_id, author_id, react_type, content) values({}, 0, "official", "{}")'.format(
-                target, static_slug
-            ))
-            sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = {}'.format(target))
+            sqlite3_control.commit('insert into peti_react_tb (peti_id, author_id, react_type, content) values(?, 0, "official", ?)', [target, static_slug])
+            sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = ?', [target])
 
         return redirect('/admin/static?page={}'.format(static_slug))
-    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+
+# ## flask-Admin Static Variables
+@app.route('/admin/<regex("var|seo"):func>', methods=['GET', 'POST'])
+@app.route('/admin/<regex("var|seo"):func>/', methods=['GET', 'POST'])
+def flask_admin_var(func = None):
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+    nav_bar = user_control.load_nav_bar()
+
+    already_existed = []
+
+    if request.method == 'POST':
+        try:
+            input_count = int(request.form['input-count'])
+        except:
+            body_content = viewer.render_err('no_data_required')
+            return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+        
+        if func == 'var':
+            dict_ = {"_README" : "fetea static variables settings"}
+            new_dict_ = {"_README" : "fetea static variables settings"}
+        elif func == 'seo':
+            dict_ = {}
+        for i in range(input_count):
+            if i == 0 and func == 'var':
+                pass
+            else:
+                if request.form[str(i)+'-key'] in vs.dynamic_var and func == 'var':
+                    already_existed += [i]
+                    dict_[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
+                else:
+                    dict_[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
+                    if func == 'var':
+                        new_dict_[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
+        if func == 'var':
+            with open('variable/str_variables.json', 'w', encoding='utf-8') as f:
+                f.write(json.dumps(new_dict_))
+        elif func == 'seo':
+            keys = list(dict_.keys())
+            sql_result = sqlite3_control.select('select name from seo_set')
+            for i in range(len(sql_result)):
+                if sql_result[i][0] not in keys:
+                    sqlite3_control.commit('delete from seo_set where name = ?', [sql_result[i][0]])
+            for i in range(len(dict_)):
+                # select -> 결과에 따라 insert, update
+                sql_result = sqlite3_control.select('select data from seo_set where name = ?', [keys[i]])
+                if len(sql_result) == 0:
+                    sqlite3_control.commit('insert into seo_set (name, data) values(?, ?)', [keys[i], dict_[keys[i]]])
+                else:
+                    sqlite3_control.commit('update seo_set set data = ? where name = ?', [dict_[keys[i]], keys[i]])
+
+    new_dict_ = 0
+    sql_result = 0
+    try:
+        dict_
+    except:
+        if func == 'var':
+            dict_ = json.loads(open('variable/str_variables.json', encoding='utf-8').read())
+        elif func == 'seo':
+            sql_result = sqlite3_control.select('select name, data from seo_set')
+            dict_ = {}
+            for i in range(len(sql_result)):
+                dict_[sql_result[i][0]] = sql_result[i][1]
+    keys = list(dict_.keys())
+    vars_html = ''
+    for i in range(len(dict_)):
+        if i == 0 and func == 'var':
+            pass
+        else:
+            if i in already_existed:
+                wrong_class = 'is-invalid'
+                wrong_div = '<div class="invalid-feedback">사용할 수 없는 키입니다.</div>'
+            else:
+                wrong_class = ''
+                wrong_div = ''
+            vars_html += '''
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="{num}-key"></label>
+                        <input type="text" class="form-control {wrong_class}" name="{num}-key" id="{num}-key" value="{key}" placeholder="키">
+                        {wrong_div}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="{num}-var"></label>
+                        <input type="text" class="form-control" name="{num}-var" id="{num}-var" value="{var}" placeholder="값">
+                    </div>
+                </div>
+            </div>
+            '''.format(num = i, key = keys[i], var = dict_[keys[i]], wrong_class = wrong_class, wrong_div = wrong_div)
+
+    dy_var_list = ''
+    for i in range(len(vs.dynamic_var)):
+        dy_var_list += '<code>' + vs.dynamic_var[i] + '</code> '
+    if func == 'var':
+        body_content = '''
+        <h1>정적 환경 변수 관리</h1>
+        <p>동적 환경 변수는 수정이 불가능하며, 이미 있는 정적 환경 변수를 제거하려고 할 때는 다른 페이지에서 해당 변수를 사용하고 있는지 확인하세요.</p>
+        <p>동적 환경 변수 목록: ''' + dy_var_list + '''</p>'''
+    elif func == 'seo':
+        body_content = '''
+        <h1>검색엔진 최적화 태그 관리</h1>
+        '''
+
+    body_content += '''
+    <form action="" accept-charset="utf-8" method="post">
+        <div class="container fetea-col fetea-col-2">
+            <div class="row fetea-primary">
+                <div class="col">
+                    키
+                </div>
+                <div class="col">
+                    값
+                </div>
+            </div>
+            <div id="fetea-vars">
+                ''' + vars_html + '''
+            </div>
+            <div class="row fetea-add">
+                <div class="col" onclick="add_var_list()">
+                    추가
+                </div>
+            </div>
+        </div>
+        <input type="text" style="display: none;" id="input-count" name="input-count" value="{len}">
+        <button type="submit" class="btn btn-primary">저장</button>
+    </form>
+    <script>
+    varLen = {len};
+    </script>
+    '''.format(len = len(dict_))
+    return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Assets Route
+@app.route('/assets/<assets>')
 @app.route('/assets/<assets>/')
 def serve_pictures(assets):
     return send_from_directory('assets', assets)
 
 @app.route('/robots.txt')
 def robots():
-    robots = """
-User-agent: *
-Disallow: /admin
-Disallow: /login
-Disallow: /logout
-Disallow: /register
-    """
+    robots = vs.robots
     return robots
 
 # ## flask: Ajax Route
+@app.route('/ajax/a', methods=['GET', 'POST'])
 @app.route('/ajax/a/', methods=['GET', 'POST'])
 def flask_ajax_a():
     request_lower_num = request.args.get('request-s')
@@ -1884,44 +1943,56 @@ def flask_ajax_a():
         additional_query = 'peti_status = 2 and'
     else:
         additional_query = ''
-    peti_data = sqlite3_control.select('select * from peti_data_tb where {} peti_id >= {} and peti_id <= {} order by peti_id desc'.format(
+    peti_data = sqlite3_control.select('select * from peti_data_tb where ? peti_id >= ? and peti_id <= ? order by peti_id desc', [
         additional_query, request_lower_num, request_higher_num
-    ))
+    ])
     return_json = []
     for i in range(len(peti_data)):
         if peti_data[i][3] == 1:
             return_json += [{"peti_id" : peti_data[i][0], "peti_display" : "비공개 청원", "peti_status" : peti_data[i][3]}]
-        elif peti_data[i][3] == 404:
+        elif peti_data[i][3] == 3:
             return_json += [{"peti_id" : peti_data[i][0], "peti_display" : "삭제된 청원", "peti_status" : peti_data[i][3]}]
         else:
             return_json += [{"peti_id" : peti_data[i][0], "peti_display" : peti_data[i][1], "peti_status" : peti_data[i][3]}]
     return str(return_json)
 
 # ## flask: Error Handler
+@app.route('/error/acl', methods=['GET'])
 @app.route('/error/acl/', methods=['GET'])
 def error_acl():
+    if 'now_login' in session:
+        acl = sqlite3_control.select('select auth from user_acl_list_tb where account_id = ?', [session['now_login']])[0][0]
+        acl_id = session['now_login']
+    else:
+        acl = 'not_signed_in'
+        acl_id = 'not_signed_in'
     body_content = '<h1>Oops!</h1><h2>ACL NOT SATISFIED</h2>'
-    if request.args.get('error') == 'no_write':
-        body_content += '<p>당신의 acl은 쓰기 권한을 포함하고 있지 않습니다.<p><p>당신의 <i>%_block_cause_%<i>로 이 서비스 사용이 일시적으로 중지된 것 같습니다.</p>'
+    if request.args.get('error') == 'peti_write':
+        body_content += '<p>당신의 acl은 쓰기 권한을 포함하고 있지 않습니다.</p>'
+    elif request.args.get('error') == 'peti_read':
+        body_content += '<p>당신의 acl은 읽기 권한을 포함하고 있지 않습니다.</p>'
+    elif request.args.get('error') == 'peti_react':
+        body_content += '<p>당신의 acl은 반응 권한을 포함하고 있지 않습니다.</p>'
     elif request.args.get('error') == 'acl_high':
         body_content += '<p>당신보다 낮은 acl 우선도를 가지고 있는 사용자 그룹의 acl만 편집할 수 있습니다.</p>'
     else:
-        body_content += '<p>ACL이 만족되지 않아 접근할 수 없습니다.</p>'
+        body_content += '<p>당신의 acl은 이 작업을 계속하기에 적절한 권한을 포함하고 있지 않습니다.</p>'
+    body_content += '<p>현재 ACL 그룹: {} | 현재 ACL 구분자: {}</p>'.format(acl, acl_id)
     nav_bar = user_control.load_nav_bar()
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 @app.errorhandler(404)
 def error_404(self):
     body_content = '<h1>Oops!</h1><h2>404 NOT FOUND</h2><p>존재하지 않는 페이지입니다.</p>'
     nav_bar = user_control.load_nav_bar()
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 @app.errorhandler(500)
 def error_500(self):
     body_content = '<h1>Oops!</h1><h2>500 Internal Server Error</h2><p>서버 내부에 오류가 발생했습니다.</p><p><a href="https://github.com/kpjhg0124/PetitionApplication-py/issues">Github의 fetea 이슈 트래커</a>에 버그 상황을 자세히 남겨주시면 바로 조치하겠습니다.</p>'
     nav_bar = user_control.load_nav_bar()
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar)
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 ### === Application Run === ###
-app.run(LocalSettings.flask_host, flask_port_set, debug = True)
+app.run(LocalSettings.flask_host, flask_port_set, debug = LocalSettings.flask_debug_mode)

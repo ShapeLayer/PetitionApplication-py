@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-    <title>{{ appname }}</title>
+    <title>{{ pagename }}{{ appname }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!--Fonts Import-->
@@ -24,6 +24,8 @@
     {% assets "main_css" %}
     <link rel="stylesheet" href="{{ ASSET_URL }}">
     {% endassets %}
+
+    {{ custom_header[0]|safe }}
 
     <script>
         $(document).ready(function(){
@@ -81,5 +83,6 @@
     {% assets "main_js" %}
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
     {% endassets %}
+    {{ custom_header[1]|safe }}
 </body>
 </html>

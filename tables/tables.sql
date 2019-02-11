@@ -5,7 +5,7 @@ CREATE TABLE peti_data_tb(
     peti_id INTEGER primary key AUTOINCREMENT,
     peti_display_name TEXT NOT NULL,
     peti_publish_date TEXT NOT NULL,
-    peti_status INTEGER NOT NULL, /* 0: Published  1: Disabled  2: Completed  404: Return 404*/
+    peti_status INTEGER NOT NULL, /* 0: Published  1: Disabled  2: Completed  3: Return 404*/
     peti_author_id INTEGER NOT NULL,
     peti_body_content TEXT NOT NULL
 );
@@ -83,4 +83,15 @@ CREATE TABLE static_page_tb(
     editor TEXT NOT NULL,
     editdate TEXT NOT NULL,
     content TEXT NOT NULL
-)
+);
+
+/**/
+CREATE TABLE server_set(
+    name TEXT NOT NULL,
+    data TEXT NOT NULL
+);
+
+CREATE TABLE seo_set(
+    name TEXT NOT NULL,
+    data TEXT NOT NULL
+);

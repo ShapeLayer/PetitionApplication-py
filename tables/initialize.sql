@@ -127,12 +127,12 @@ INSERT INTO user_group_acl (
     manage_notion,
     not_display_log
 ) values(
-    "block",
-    0,
+    "not_signed_in",
+    15,
     0,
     0,
     1,
-    0,
+    1,
     0,
     0,
     0,
@@ -148,5 +148,53 @@ INSERT INTO user_group_acl (
 INSERT INTO user_acl_list_tb values(1, "owner");
 INSERT INTO static_page_tb (page_name, title, editor, editdate, content) values("frontpage", "%_appname_%: 대문", "System", "", "<div class='container'><h1>BLEND IT<br>WITH<BR>YOUR WAY</h1><h2>당신의 힘으로 바꿔보세요. %_appname_% 청원페이지</h2><a href='/login' class='btn btn-primary'>시작하기</a><a href='/a' class='btn btn-link'>청원 둘러보기</a><a href='/a/write' class='btn btn-link'>청원 생성하기</a></div>
 ");
-INSERT INTO static_page_tb (page_name, title, editor, editdate, content) values("adminpage", "관리자: 대문", "System", "", "<h1>환영합니다!</h1><p>이곳은 관리자 페이지입니다. 관리자 권한을 받은 acl 그룹의 유저만 접근할 수 있으며, 메인 페이지의 각종 작업들을 수행할 수 있습니다.</p>");
+INSERT INTO static_page_tb (page_name, title, editor, editdate, content) values("adminpage", "관리자: 대문", "System", "", "
+<div class=""container"">
+  <div class=""row"">
+    <div class=""col-sm"">
+      <h3>사용자 관리</h3>
+      <ul>
+        <li><a href=""/admin/member/"">전체 사용자 목록</a></li>
+        <li><a href=""/admin/admins/"">관리자 관리</a></li>
+        <li><a href=""/admin/acl/"">사용자 권한 레벨</a></li>
+      </ul>
+    </div>
+    <div class=""col-sm"">
+      <h3>청원 관리</h3>
+      <ul>
+        <li><a href=""/admin/petition/"">비정규 상태 청원 관리</a></li>
+        <li><a href=""/admin/peti-default/"">청원 작성 기본 설정</a></li>
+        <li><a href=""/admin/peti-all/"">청원 일괄 설정</a></li>
+      </ul>
+    </div>
+    <div class=""col-sm"">
+      <h3>시스템 관리</h3>
+      <ul>
+        <li><a href=""/admin/static/"">정적 페이지 관리</a></li>
+        <li><a href=""/admin/verify_key/"">verify_key 정보</a></li>
+        <li><a href=""/admin/update/"">시스템 업데이트 확인</a></li>
+        <li><a href=""/admin/header/"">HTML 커스텀 head 설정</a></li>
+        <li><a href=""/admin/sns/"">SNS 연계 설정</a></li>
+        <li><a href=""/admin/seo/"">SEO(검색 엔진 최적화) 설정</a></li>
+        <li><a href=""/admin/var/"">정적 환경 변수 관리</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+");
 INSERT INTO static_page_tb (page_name, title, editor, editdate, content) values("notice", "공지", "System", "", "아직 공지가 없습니다.");
+
+INSERT INTO seo_set (name, data) values("og:url", "%_url_%");
+INSERT INTO seo_set (name, data) values("og:title", "%_page_title_% - %_appname_%");
+INSERT INTO seo_set (name, data) values("og:image", "%_app_image_%");
+INSERT INTO seo_set (name, data) values("og:type", "article");
+INSERT INTO seo_set (name, data) values("og:locale", "ko_KR");
+
+INSERT INTO server_set (name, data) values("custom_header_top", "");
+INSERT INTO server_set (name, data) values("custom_header_bottom", "");
+
+INSERT INTO server_set (name, data) values("petition_publish_default", "0");
+INSERT INTO server_set (name, data) values("petition_publish_fixed", "0");
+INSERT INTO server_set (name, data) values("petition_react_disabled", "0");
+
+INSERT INTO server_set (name, data) values("facebook_share_enabled", "1");
