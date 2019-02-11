@@ -93,6 +93,10 @@ def flask_login():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
+    if 'from' in request.args:
+        print(True)
+        session['login_from'] = request.args.get('from')
+
     oauth = config.load_oauth_settings()
     if oauth['naver_client_id'] == '' or oauth['naver_client_secret'] == '':
         naver_comment = '관리자가 이 기능을 비활성화 시켰습니다.'
@@ -144,7 +148,7 @@ $(document).ready(function(){
     ## Render End ##
     body_content += '<p style="margin:0;">SNS 로그인 시 해당 SNS 서비스의 로그인 상태가 유지됩니다.</p><p>공용 컴퓨터에서 SNS 로그인을 사용하는 경우 시크릿 모드(Inprivate 모드)에서 로그인을 계속하십시오.</p>'
     body_content += oauth_content
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 @app.route('/login/naver', methods=['GET', 'POST'])
 @app.route('/login/naver/', methods=['GET', 'POST'])
@@ -153,10 +157,10 @@ def flask_login_naver():
     oauth = config.load_oauth_settings()
     if request.args.get('error') == 'no_get_values':
         body_content = '요구 로그인 값을 충족시키지 못했습니다..'
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
     if oauth['facebook_client_id'] == '' or oauth['facebook_client_secret'] == '':
         body_content = '관리자가 이 기능을 비활성화 시켰습니다.'
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
     data = {
         'client_id' : oauth['naver_client_id'],
@@ -201,6 +205,11 @@ def flask_login_naver_callback():
     profile_result_json = json.loads(profile_result)
     stand_json = {'id' : profile_result_json['response']['id'], 'name' : profile_result_json['response']['name'], 'picture' : profile_result_json['response']['profile_image']}
     register(stand_json, 'naver')
+    if 'login_from' in session:
+        if session['login_from'][0] == '/':
+            return redirect(session['login_from'])
+        else:
+            return redirect('/'+session['login_from'])
     return redirect('/')
 
 @app.route('/login/facebook', methods=['GET', 'POST'])
@@ -210,10 +219,10 @@ def flask_login_facebook():
     oauth = config.load_oauth_settings()
     if request.args.get('error') == 'no_get_values':
         body_content = '요구 로그인 값을 충족시키지 못했습니다..'
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
     if oauth['facebook_client_id'] == '' or oauth['facebook_client_secret'] == '':
         body_content = '관리자가 이 기능을 비활성화 시켰습니다.'
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
     data = {
         'client_id' : oauth['facebook_client_id'],
@@ -259,6 +268,11 @@ def flask_login_facebook_callback():
 
     stand_json = {'id': profile_result_json['id'], 'name': profile_result_json['name'], 'picture': profile_result_json['picture']['data']['url']}
     register(stand_json, 'facebook')
+    if 'login_from' in session:
+        if session['login_from'][0] == '/':
+            return redirect(session['login_from'])
+        else:
+            return redirect('/'+session['login_from'])
     return redirect('/')
 
 @app.route('/login/entree', methods=['GET', 'POST'])
@@ -294,11 +308,16 @@ def flask_login_entree():
             </div>
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+            return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
         elif bcrypt.hashpw(account_password.encode(), user_data[0][5].encode()) == user_data[0][5].encode():
             session['now_login'] = user_data[0][0]
             alert_code = ''
             body_content = body_content.replace('%_form_alerts_%', alert_code)
+            if 'login_from' in session:
+                if session['login_from'][0] == '/':
+                    return redirect(session['login_from'])
+                else:
+                    return redirect('/'+session['login_from'])
             return redirect('/')
         else:
             alert_code = """
@@ -308,10 +327,10 @@ def flask_login_entree():
             </div>
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+            return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
     body_content = body_content.replace('%_form_alerts_%', '')
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Logout
 @app.route('/logout')
@@ -319,10 +338,11 @@ def flask_login_entree():
 def flask_logout():
     body_content = ''
     session.pop('now_login', None)
+    session.pop('login_from', None)
     nav_bar = user_control.load_nav_bar()
 
     body_content += '<h1>로그아웃 완료</h1><p>{}에서 로그아웃되었습니다.</p><p>브라우저 캐시를 삭제하지 않으면 로그인한 것처럼 보일 수도 있음에 유의하세요.</p>'.format(LocalSettings.entree_appname)
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: register
 @app.route('/register', methods=['GET', 'POST'])
@@ -351,7 +371,7 @@ def flask_register():
             </div>
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+            return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
         ### Check End ###
 
         ### Get Register Data ###
@@ -370,7 +390,7 @@ def flask_register():
             </div>
             """
             body_content = body_content.replace('%_form_alerts_%', alert_code)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+            return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
         ### Check End ###
         
         ### Encrypt Password ###
@@ -399,10 +419,10 @@ def flask_register():
         """
         alert_code = alert_code.replace('%_user_display_name_%', user_display_name)
         body_content = body_content.replace('%_form_alerts_%', alert_code)
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
     
     body_content = body_content.replace('%_form_alerts_%', '')
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition List
 @app.route('/a', methods=['GET', 'POST'])
@@ -438,7 +458,7 @@ def flask_a():
         body_content += '<p style="margin-left: 20px;">청원이 없습니다.</p>'
     body_content += '<button onclick="window.location.href=\'write\'" class="btn btn-primary" value="publish">청원 등록</button>'
     ### Render End ###
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Article
 @app.route('/a/<article_id>', methods=['GET', 'POST'])
@@ -459,12 +479,14 @@ def flask_a_article_id(article_id):
 
     if request.args.get('error') == 'no_login':
         body_content = viewer.render_err('login_required')
-        return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+        return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 
     ### Render Bodycontent ###
     body_content += viewer.load_metatag()
     body_content += viewer.load_petition(article_id)
+    peti_postname = sqlite3_control.select('select peti_display_name from peti_data_tb where peti_id = ?', [article_id])[0][0] + ' - '
+
     if 'now_login' in session:
         body_content = body_content.replace('%_enabled_content_%', '')
     else:
@@ -508,7 +530,7 @@ def flask_a_article_id(article_id):
         sqlite3_control.commit('insert into peti_react_tb (peti_id, author_id, react_type, content) values(?, ?, "default", ?)', [peti_id, react_author_id, content])
         ### Insert End ###
         return redirect('/a/{}'.format(article_id))
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = peti_postname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Write
 @app.route('/a/write', methods=['GET', 'POST'])
@@ -595,7 +617,7 @@ def flask_a_write():
                 </script>
                 ''')
                 body_content += template
-                return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+                return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
         ### Save Author Data ###
         if peti_status == 1:
@@ -631,7 +653,7 @@ def flask_a_write():
             {publish_comment}
             '''.format(provider = redirect_target[0], provider_uri = redirect_target[1], publish_comment = publish_comment)
             body_content = viewer.render_var(body_content)
-            return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+            return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
         else:
             return redirect('/a/')
     template = template.replace('%_value:peti_display_name_%', '')
@@ -639,7 +661,7 @@ def flask_a_write():
     template = template.replace('%_value:peti_body_content_%', '')
     template = template.replace('%_recaptcha_alert_%', '')
     body_content += template
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Delete
 @app.route('/a/<article_id>/delete', methods=['GET', 'POST'])
@@ -688,7 +710,7 @@ def flask_a_article_id_delete(article_id):
         sqlite3_control.commit('update peti_data_tb set peti_status = 3 where peti_id = ?', [article_id])
         return redirect('/a/')
     body_content = body_content.replace('%_form_alerts_%', '')
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Official React
 @app.route('/a/<article_id>/official', methods=['GET', 'POST'])
@@ -734,7 +756,7 @@ def flask_a_article_id_official(article_id):
 
     if request.method == 'POST':
         return redirect('http://localhost:2500/admin/static/add?type=reply&target={}'.format(article_id))
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 @app.route('/a/<article_id>/complete', methods=['GET', 'POST'])
 @app.route('/a/<article_id>/complete/', methods=['GET', 'POST'])
@@ -783,7 +805,7 @@ def flask_a_article_id_complete(article_id):
         sqlite3_control.commit('update peti_data_tb set peti_status = 2 where peti_id = ?', [article_id])
         return redirect('/a/')
     body_content = body_content.replace('%_form_alerts_%', '')
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 
 # ## flask: Activity Log
@@ -805,7 +827,7 @@ def flask_log():
 
     nav_bar = user_control.load_nav_bar()
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Static Page Viewer
 @app.route('/static/<title>')
@@ -824,7 +846,7 @@ def flask_static(title):
     body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' | 마지막으로 수정 '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Notice Static Page
 @app.route('/notice')
@@ -841,7 +863,7 @@ def flask_notice():
     body_content += '<h2>'+static_data[0][1]+'</h2><b>사용자: '+static_data[0][2]+' | 마지막으로 수정 '+static_data[0][3]+'</b><hr>'+static_data[0][4]
     body_content = viewer.render_var(body_content)
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 
 # ## flask: Admin Page
@@ -1958,19 +1980,19 @@ def error_acl():
     body_content += '<p>현재 ACL 그룹: {} | 현재 ACL 구분자: {}</p>'.format(acl, acl_id)
     nav_bar = user_control.load_nav_bar()
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 @app.errorhandler(404)
 def error_404(self):
     body_content = '<h1>Oops!</h1><h2>404 NOT FOUND</h2><p>존재하지 않는 페이지입니다.</p>'
     nav_bar = user_control.load_nav_bar()
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 @app.errorhandler(500)
 def error_500(self):
     body_content = '<h1>Oops!</h1><h2>500 Internal Server Error</h2><p>서버 내부에 오류가 발생했습니다.</p><p><a href="https://github.com/kpjhg0124/PetitionApplication-py/issues">Github의 fetea 이슈 트래커</a>에 버그 상황을 자세히 남겨주시면 바로 조치하겠습니다.</p>'
     nav_bar = user_control.load_nav_bar()
 
-    return render_template('index.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+    return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 ### === Application Run === ###
 app.run(LocalSettings.flask_host, flask_port_set, debug = LocalSettings.flask_debug_mode)

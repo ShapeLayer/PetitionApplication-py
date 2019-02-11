@@ -313,7 +313,11 @@ class viewer:
             user_profile_data = sqlite3_control.select('select * from site_user_tb where account_id = ?', [session['now_login']])
             return '<label for="peti_author_display_name">로그인 됨: {}</label>'.format(user_profile_data[0][3])
         else:
-            return '<label for="peti_author_display_name">비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">로그인</a>.</label>'
+            try:
+                login_display = json.loads(open('variable/str_variables.json', encoding='utf-8').read())['login']
+            except:
+                login_display = '로그인'
+            return '<label for="peti_author_display_name">비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">'+login_display+'</a>.</label>'
 
     def load_metatag():
         meta = """
