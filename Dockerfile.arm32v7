@@ -1,4 +1,4 @@
-FROM arm32v8/python:3.6
+FROM arm32v7/python:3.6
 
 MAINTAINER hoparkgo9ma <me@ho9.me>
 
