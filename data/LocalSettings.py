@@ -4,7 +4,7 @@
 # SQLITE3_FILENAME must be in string format.
 sqlite3_filename = 'data/db.db'
 # flask_host must be in string format.
-flask_host = 'localhost'
+flask_host = '0.0.0.0'
 # flask_host must be in integer format.
 flask_host_port = 2500
 # CRYPT_SECRET_KEY must be in string format.
