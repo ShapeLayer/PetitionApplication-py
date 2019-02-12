@@ -1,4 +1,4 @@
-FROM arm64v8/python:3.6
+FROM arm64v8/python:3.6.8-stretch
 
 MAINTAINER hoparkgo9ma <me@ho9.me>
 
