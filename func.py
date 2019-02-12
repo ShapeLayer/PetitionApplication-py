@@ -87,7 +87,7 @@ class user_control:
         else:
             ### Render Navbar ###
             template = template.replace('%_user_display_name_%', '비로그인 상태')
-            template = template.replace('%_user_display_profile_img_%', 'http://www.gravatar.com/avatar/?d=identicon')
+            template = template.replace('%_user_display_profile_img_%', '//www.gravatar.com/avatar/?d=identicon')
             user_profile_menu_content += """
             <a class="dropdown-item" href="/login/">로그인</a>
             """
