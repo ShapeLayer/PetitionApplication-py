@@ -1995,4 +1995,9 @@ def error_500(self):
     return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 ### === Application Run === ###
-app.run(LocalSettings.flask_host, flask_port_set, debug = LocalSettings.flask_debug_mode)
+if LocalSettings.flask_ssl_key == '':
+    app.run(LocalSettings.flask_host, flask_port_set, debug = LocalSettings.flask_debug_mode)
+else:
+    from OpenSSL import SSL
+    context = ( LocalSettings.flask_ssl_key + '.crt', LocalSettings.flask_ssl_key + '.key')
+    app.run(LocalSettings.flask_host, flask_port_set, debug = LocalSettings.flask_debug_mode, ssl_context=context)

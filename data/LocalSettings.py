@@ -2,7 +2,7 @@
 ####################### ENTREE Flask Web App Config File #######################
 
 # SQLITE3_FILENAME must be in string format.
-sqlite3_filename = 'data/db.db'
+sqlite3_filename = 'data/' + 'db.db'
 # flask_host must be in string format.
 flask_host = '0.0.0.0'
 # flask_host must be in integer format.
@@ -19,3 +19,5 @@ publish_host_name = 'http://localhost:2500'
 
 # If you publish application, You must turn off the debug mode.
 flask_debug_mode = True
+
+flask_ssl_key = 'data/ssl/' + '' # flask_ssl_key + '.key' / flask_ssl_key + '.crt'
