@@ -3,8 +3,8 @@ Fe-tea, Flask 기반 청원 수집 웹 애플리케이션
 
 ![Python Required](https://img.shields.io/badge/python-3.5%20or%20higher-blue.svg?style=flat-square)
 ![BSD-3 License](https://img.shields.io/badge/license-BSD--3-lightgrey.svg?style=flat-square)
-[![Latest Release](https://img.shields.io/badge/latest%20release-1.2.2--Dockerized-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/tree/828ef831b0044a04f571920d93cd43ed2bb9127b)
-[![Latest Stable Release](https://img.shields.io/badge/stable-1.2.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.2)
+[![Latest Release](https://img.shields.io/badge/latest%20release-1.2.2--Dockerized2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.2-d2)
+[![Latest Stable Release](https://img.shields.io/badge/stable-1.2.2--Dockerized2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.2-d2)
 [![Bootstrap-License](https://img.shields.io/badge/bootstrap-MIT-cef19e.svg?style=flat-square)](https://github.com/twbs/bootstrap/blob/master/LICENSE)
 [![Minty-License](https://img.shields.io/badge/minty-MIT-cef19e.svg?style=flat-square)](https://github.com/thomaspark/bootswatch/blob/master/LICENSE)
 
@@ -17,7 +17,9 @@ Fe-tea는 숭덕고등학교 학생회의 요청으로 개발되고 있는 플�
 자동 생성된 다량 청원 방지 대책으로 reCaptcha v2가 추가되어있으며, 익명 청원에 대한 법적 문제 해결을 위해 익명 사용자의 명의를 기록, 확인하는 기능도 추가되어 있습니다. reCaptcha v2 API 키 정보를 `oauthsettings.json`에 추가하지 않으면 reCaptcha v2 정보를 입력하지 않으면 reCapthcha v2를 비활성화 한 것으로 처리됩니다.
 
 # 시작하기
-Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로, 파이썬 환경을 필요로 합니다. 
+Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로, 파이썬 환경을 필요로 합니다.
+
+Fe-tea는 1.2.2-d2 판 부터 도커를 지원하기 시작했습니다. 도커 사용법은 [Docker-Install.md]를 참고하세요. 
 
 ## 환경 구성
 ### 파이썬 설치
@@ -29,6 +31,7 @@ Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로
 
 | 구분 | 릴리즈 |
 | :----: | :----: |
+| stable | [![](https://img.shields.io/badge/stable-1.2.2--Dockerized2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.2-d2) |
 | stable | [![](https://img.shields.io/badge/stable-1.2.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.2) |
 | stable | [![](https://img.shields.io/badge/stable-1.2.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.1-stable-fix) |
 | stable | [![](https://img.shields.io/badge/stable-1.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2) |
