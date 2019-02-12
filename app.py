@@ -17,8 +17,8 @@ import bcrypt
 import urllib.parse, urllib.request
 
 from func import *
-import LocalSettings
-import variable.app_variables as vs
+import data.LocalSettings as LocalSettings
+import data.app_variables as vs
 ### === Import End === ###
 
 ### === Initialize Application === ###
@@ -633,7 +633,7 @@ def flask_a_write():
         ### Insert Data into Database ###
         sqlite3_control.commit('insert into peti_data_tb (peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content) values(?, ?, ?, ?, ?)', [peti_display_name, peti_publish_date, peti_status, peti_author_id, peti_body_content])
         ### Insert End ###
-        if request.args.get('outer').lower() == 'yes':
+        if 'from' in request.args:
             if request.args.get('from') == 'facebook':
                 redirect_target = ['Facebook', 'https://facebook.com']
             elif request.args.get('from') == 'naver':
@@ -1819,7 +1819,7 @@ def flask_admin_var(func = None):
                     if func == 'var':
                         new_dict_[request.form[str(i)+'-key']] = request.form[str(i)+'-var']
         if func == 'var':
-            with open('variable/str_variables.json', 'w', encoding='utf-8') as f:
+            with open('data/str_variables.json', 'w', encoding='utf-8') as f:
                 f.write(json.dumps(new_dict_))
         elif func == 'seo':
             keys = list(dict_.keys())
@@ -1841,7 +1841,7 @@ def flask_admin_var(func = None):
         dict_
     except:
         if func == 'var':
-            dict_ = json.loads(open('variable/str_variables.json', encoding='utf-8').read())
+            dict_ = json.loads(open('data/str_variables.json', encoding='utf-8').read())
         elif func == 'seo':
             sql_result = sqlite3_control.select('select name, data from seo_set')
             dict_ = {}
@@ -1995,4 +1995,9 @@ def error_500(self):
     return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 ### === Application Run === ###
-app.run(LocalSettings.flask_host, flask_port_set, debug = LocalSettings.flask_debug_mode)
+if LocalSettings.flask_ssl_key == 'data/ssl/':
+    app.run(LocalSettings.flask_host, flask_port_set, debug = LocalSettings.flask_debug_mode)
+else:
+    from OpenSSL import SSL
+    context = ( LocalSettings.flask_ssl_key + '.crt', LocalSettings.flask_ssl_key + '.key')
+    app.run(LocalSettings.flask_host, flask_port_set, debug = LocalSettings.flask_debug_mode, ssl_context=context)

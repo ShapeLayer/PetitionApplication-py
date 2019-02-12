@@ -3,8 +3,8 @@ Fe-tea, Flask 기반 청원 수집 웹 애플리케이션
 
 ![Python Required](https://img.shields.io/badge/python-3.5%20or%20higher-blue.svg?style=flat-square)
 ![BSD-3 License](https://img.shields.io/badge/license-BSD--3-lightgrey.svg?style=flat-square)
-[![Latest Release](https://img.shields.io/badge/latest%20release-1.2.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.1-stable-fix)
-[![Latest Stable Release](https://img.shields.io/badge/stable-1.2.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.1-stable-fix)
+[![Latest Release](https://img.shields.io/badge/latest%20release-1.2.2--Dockerized-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/tree/828ef831b0044a04f571920d93cd43ed2bb9127b)
+[![Latest Stable Release](https://img.shields.io/badge/stable-1.2.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.2)
 [![Bootstrap-License](https://img.shields.io/badge/bootstrap-MIT-cef19e.svg?style=flat-square)](https://github.com/twbs/bootstrap/blob/master/LICENSE)
 [![Minty-License](https://img.shields.io/badge/minty-MIT-cef19e.svg?style=flat-square)](https://github.com/thomaspark/bootswatch/blob/master/LICENSE)
 
@@ -14,9 +14,7 @@ Fe-tea는 숭덕고등학교 학생회의 요청으로 개발되고 있는 플�
 
 공개된 의견은 다른 구성원들이 청원 반응 기능으로 청원에 대한 의견을 보낼 수 있게 해 해당 의견에 대한 여론도 확인할 수 있습니다. 또한 장난성 청원 방지 대책으로 SNS 로그인 기능이 추가되어 있으며, SNS 로그인을 사용하지 않고 청원을 작성할 경우, 비공개로 운영자에게 청원을 작성 할 수 있게 되어 있습니다.또한 익명 청원에 대한 법적 문제 해결을 위해 익명 사용자의 명의를 기록, 확인하는 기능도 추가되어 있습니다.
 
-자동 생성된 다량 청원 방지 대책으로 reCaptcha v2가 추가되어있으며, 익명 청원에 대한 법적 문제 해결을 위해 익명 사용자의 명의를 기록, 확인하는 기능도 추가되어 있습니다. reCaptcha v2 API 키 정보를 `oauthsettings.json`에 추가하지 않으면 청원 작성 기능이 제대로 작동하지 않을 수 있습니다. [자세한 내용 확인하기](#api-%ED%82%A4-%EC%84%A4%EC%A0%95)
-
-**1.2.2 이후 변경될 예정입니다.** 이제 reCaptcha v2 정보를 입력하지 않으면 reCapthcha v2를 비활성화 한 것으로 처리됩니다.
+자동 생성된 다량 청원 방지 대책으로 reCaptcha v2가 추가되어있으며, 익명 청원에 대한 법적 문제 해결을 위해 익명 사용자의 명의를 기록, 확인하는 기능도 추가되어 있습니다. reCaptcha v2 API 키 정보를 `oauthsettings.json`에 추가하지 않으면 reCaptcha v2 정보를 입력하지 않으면 reCapthcha v2를 비활성화 한 것으로 처리됩니다.
 
 # 시작하기
 Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로, 파이썬 환경을 필요로 합니다. 
@@ -31,6 +29,7 @@ Fe-tea는 파이썬 환경에서 동작하는 파이썬 애플리케이션으로
 
 | 구분 | 릴리즈 |
 | :----: | :----: |
+| stable | [![](https://img.shields.io/badge/stable-1.2.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.2) |
 | stable | [![](https://img.shields.io/badge/stable-1.2.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2.1-stable-fix) |
 | stable | [![](https://img.shields.io/badge/stable-1.2-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.2) |
 | stable | [![](https://img.shields.io/badge/stable-1.1-brightgreen.svg?style=flat-square)](https://github.com/kpjhg0124/PetitionApplication-py/releases/tag/1.1-stable) |

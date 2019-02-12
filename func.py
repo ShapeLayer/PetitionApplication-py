@@ -6,8 +6,8 @@ from datetime import datetime
 import random
 import urllib.parse, urllib.request
 
-import LocalSettings
-import variable.app_variables as vs
+import data.LocalSettings as LocalSettings
+import data.app_variables as vs
 
 conn = sqlite3.connect(LocalSettings.sqlite3_filename, check_same_thread = False)
 curs = conn.cursor()
@@ -146,7 +146,7 @@ class user_control:
         
 class config:
     def load_oauth_settings():
-        oauth_native = open('oauthsettings.json', encoding='utf-8').read()
+        oauth_native = open('data/oauthsettings.json', encoding='utf-8').read()
         oauth_json = json.loads(oauth_native)
         return oauth_json
 
@@ -176,7 +176,7 @@ class config:
             return [True, False]
 
     def recaptcha_existed():
-        oauthsettings = json.loads(open('oauthsettings.json', encoding='utf-8').read())
+        oauthsettings = json.loads(open('data/oauthsettings.json', encoding='utf-8').read())
         if oauthsettings['recaptcha_site_key'] == '' or oauthsettings['recaptcha_secret_key'] == '':
             return False
         else:
@@ -314,7 +314,7 @@ class viewer:
             return '<label for="peti_author_display_name">로그인 됨: {}</label>'.format(user_profile_data[0][3])
         else:
             try:
-                login_display = json.loads(open('variable/str_variables.json', encoding='utf-8').read())['login']
+                login_display = json.loads(open('data/str_variables.json', encoding='utf-8').read())['login']
             except:
                 login_display = '로그인'
             return '<label for="peti_author_display_name">비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">'+login_display+'</a>.</label>'
@@ -472,7 +472,7 @@ class viewer:
         content = content.replace('%_appname_%', LocalSettings.entree_appname)
         content = content.replace('%_now_%', str(datetime.today()))
         content = content.replace('%_fetea_ver_%', fetea_ver)
-        static = json.loads(open('variable/str_variables.json', encoding='utf-8').read())
+        static = json.loads(open('data/str_variables.json', encoding='utf-8').read())
         keys = list(static.keys())
         for i in range(len(static)):
             if i == 0:
