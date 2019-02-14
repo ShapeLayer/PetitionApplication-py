@@ -129,7 +129,7 @@ class user_control:
             return user_data[0][1]
 
         if user_data[0][2] == 0:
-            user_identify_badge = ' <span class="badge badge-pill badge-dark" data-toggle="tooltip" title="비로그인 청원 작성자는 명의를 확인할 수 없습니다.">명의</span>'.format(target_id)
+            user_identify_badge = ' <span class="badge badge-pill badge-dark" data-toggle="tooltip" title="비로그인 %_article_% 작성자는 명의를 확인할 수 없습니다.">명의</span>'.format(target_id)
         else:
             user_identify_badge = ' <a href="/admin/member/identify?user={}"><span class="badge badge-pill badge-info">명의</span></a>'.format(target_id)
         script = '<script>$(function () {$(\'[data-toggle="tooltip"]\').tooltip()})</script>'
@@ -193,7 +193,7 @@ class viewer:
             if user_auth[0][0] == 1:
                 control_delete = ' <a href="/a/{}/delete/"><span class="badge badge-pill badge-danger">삭제</span></a>'.format(target_id)
                 control_official_reply = ' <a href="/a/{}/official/"><span class="badge badge-pill badge-primary">답변</span></a>'.format(target_id)
-                petition_control = '<p> 이 청원을... ' + control_delete + control_official_reply + '</p>'
+                petition_control = '<p> 이 %_article_%을... ' + control_delete + control_official_reply + '</p>'
             else:
                 petition_control = ''
         else:
@@ -222,11 +222,11 @@ class viewer:
             '''
             <div class="bs-component">
                 <form action="" accept-charset="utf-8" name="form_write" method="post">
-                    <h3 id="progress-animated">청원 반응</h3>
+                    <h3 id="progress-animated">%_article_% 반응</h3>
                     <p> %_article_react_count_% 개 반응</p>
                     <input type="text" class="form-control" name="react_author_display_name" placeholder="이름" style="margin-bottom: 5px;" value="%_react_author_display_name_%" %_react_display_name_is_enabled_%>
                     <textarea class="form-control" id="react_content" name="react_content" rows="3" style="resize: none;" required></textarea>
-                    <button type="submit" name="submit" class="btn btn-primary" value="publish" %_is_enabled_%>청원 반응하기</button>
+                    <button type="submit" name="submit" class="btn btn-primary" value="publish" %_is_enabled_%>%_article_% 반응하기</button>
                 </form>
                 <div class="bs-component article-margin">
                     %_article_reacts_%
@@ -298,7 +298,7 @@ class viewer:
 
         #### Render Official Reply ####
         if peti_data[0][3] == 2 and len(reply_official_data) != 0:
-            official_reply_content = '<p style="text-align: right; padding-bottom: 0; margin-bottom:0;">청원 답변</p><h4><a href="/static/'+reply_official_data[0][0]+'" data-toggle="tooltip" title="새 창으로 원문 보기" target="_blank">'+reply_official_content[0][1]+'</a></h4><b>사용자: '+reply_official_content[0][2]+' 마지막으로 수정 | '+reply_official_content[0][3]+'</b><hr>'+reply_official_content[0][4]
+            official_reply_content = '<p style="text-align: right; padding-bottom: 0; margin-bottom:0;">%_article_% 답변</p><h4><a href="/static/'+reply_official_data[0][0]+'" data-toggle="tooltip" title="새 창으로 원문 보기" target="_blank">'+reply_official_content[0][1]+'</a></h4><b>사용자: '+reply_official_content[0][2]+' 마지막으로 수정 | '+reply_official_content[0][3]+'</b><hr>'+reply_official_content[0][4]
             template = template.replace('%_article_official_reply_%', '<div class="bs-component bs-official-reply"><p>' + official_reply_content + '</p></div>')
         else:
             template = template.replace('%_article_official_reply_%', '')
@@ -317,7 +317,7 @@ class viewer:
                 login_display = json.loads(open('data/str_variables.json', encoding='utf-8').read())['login']
             except:
                 login_display = '로그인'
-            return '<label for="peti_author_display_name">비로그인 상태로 비공개 청원을 작성합니다. 또는 <a href="/login">'+login_display+'</a>.</label>'
+            return '<label for="peti_author_display_name">비로그인 상태로 비공개 %_article_%을 작성합니다. 또는 <a href="/login?from=a/write/">'+login_display+'</a>.</label>'
 
     def load_metatag():
         meta = """
@@ -329,10 +329,10 @@ class viewer:
         <meta property="og:title" content="%_title_%">
         <meta property="og:description" content="%_desc_%">
         """
-        meta = meta.replace('%_desc_%', LocalSettings.entree_appname + ', 청원페이지입니다.')
+        meta = meta.replace('%_desc_%', LocalSettings.entree_appname + ', %_article_%페이지입니다.')
         meta = meta.replace('%_dist_%', LocalSettings.entree_appname)
         meta = meta.replace('%_title_%', LocalSettings.entree_appname)
-        meta = meta.replace('%_keyword_%', LocalSettings.entree_appname + ' ' + '청원페이지 청원')
+        meta = meta.replace('%_keyword_%', LocalSettings.entree_appname + ' ' + '%_article_%페이지 %_article_%')
         return meta
 
     def load_search():

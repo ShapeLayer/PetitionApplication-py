@@ -94,7 +94,6 @@ def flask_login():
     nav_bar = user_control.load_nav_bar()
 
     if 'from' in request.args:
-        print(True)
         session['login_from'] = request.args.get('from')
 
     oauth = config.load_oauth_settings()
@@ -530,6 +529,7 @@ def flask_a_article_id(article_id):
         sqlite3_control.commit('insert into peti_react_tb (peti_id, author_id, react_type, content) values(?, ?, "default", ?)', [peti_id, react_author_id, content])
         ### Insert End ###
         return redirect('/a/{}'.format(article_id))
+    body_content = viewer.render_var(body_content)
     return render_template('index.html', appname = LocalSettings.entree_appname, pagename = peti_postname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Write
@@ -542,7 +542,7 @@ def flask_a_write():
     body_content = ''
     nav_bar = user_control.load_nav_bar()
 
-    template = viewer.render_var(open('templates/a_write.html', encoding='utf-8').read())
+    template = open('templates/a_write.html', encoding='utf-8').read()
     
     recaptcha_site_key = config.load_oauth_settings()['recaptcha_site_key']
     template = template.replace('%_recaptcha_site_key_%', recaptcha_site_key)
@@ -661,6 +661,7 @@ def flask_a_write():
     template = template.replace('%_value:peti_body_content_%', '')
     template = template.replace('%_recaptcha_alert_%', '')
     body_content += template
+    body_content = viewer.render_var(body_content)
     return render_template('index.html', appname = LocalSettings.entree_appname, pagename = '', body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
 
 # ## flask: Petition Delete
@@ -751,8 +752,7 @@ def flask_a_article_id_official(article_id):
     reply_template = reply_template.replace('%_sns_login_status_%', '{} 연결됨: {}'.format(user_profile[0][1], user_profile[0][3]))
     ### Render End ###
 
-    reply_template = viewer.render_var(reply_template)
-    body_content += reply_template
+    body_content = viewer.render_var(reply_template)
 
     if request.method == 'POST':
         return redirect('http://localhost:2500/admin/static/add?type=reply&target={}'.format(article_id))
