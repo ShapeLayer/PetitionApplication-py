@@ -407,7 +407,7 @@ class viewer:
                     <fieldset>
                         <div class="form-group">
                             <div class="form-group">
-                                %_sns_login_status_%
+                                {}
                             </div>
                             <div class="form-group">
                                 <label class="custom-control-label" for="description">처리 사유를 입력하십시오.</label>
@@ -427,8 +427,7 @@ class viewer:
         </div>
     </div>
 </div>
-        """
-        overlay_code = viewer.load_sns_login_status(overlay_code)
+        """.format(viewer.load_sns_login_status())
         ### Render End ###
 
         ### Javascript Code Render ###
