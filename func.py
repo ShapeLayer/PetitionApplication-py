@@ -1,5 +1,5 @@
 # coding=utf-8
-from flask import Flask, session
+from flask import Flask, session, request
 import sqlite3
 import json
 from datetime import datetime
@@ -486,6 +486,13 @@ class viewer:
         render = '<h1>{head}</h1><h2>{code}</h2><p>{body}</p>'.format(head = vs.err[code]['head'], code = vs.err[code]['code'], body = vs.err[code]['body'])
         return render
 
+class f_sys:
+    def shutdown_server():
+        func = request.environ.get('werkzeug.server.shutdown')
+        if func is None:
+            raise RuntimeError('Not running with the Werkzeug Server')
+        func()
+
 def register(callback_json, sns_type):
     account_data = sqlite3_control.select('select * from site_user_tb where sns_type = ? and sns_id = ?', [sns_type, callback_json['id']])
     if len(account_data) == 0: # 회원가입 절차
@@ -507,4 +514,15 @@ def load_header():
     now_header += [sqlite3_control.select('select data from server_set where name="custom_header_top"')[0][0]]
     now_header += [sqlite3_control.select('select data from server_set where name="custom_header_bottom"')[0][0]]
     return now_header
+
+def request_update():
+    try:
+        body_content = ''
+        github_stable = json.loads(urllib.request.urlopen('https://raw.githubusercontent.com/kpjhg0124/PetitionApplication-py/master/version.json').read().decode('utf-8'))
+        done = True
+    except:
+        body_content = '업데이트 확인 작업 중 문제가 발생했습니다. 나중에 다시 시도하세요.'
+        done = False
+        github_stable = {'ver' : 0, 'rel' : 0}
+    return github_stable, done, body_content
 ### === Define End === ###

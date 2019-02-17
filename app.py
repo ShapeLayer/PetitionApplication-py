@@ -1288,13 +1288,7 @@ def flask_admin_update():
 
     local_stable = json.loads(open('version.json', encoding='utf-8').read())
     
-    try:
-        github_stable = json.loads(urllib.request.urlopen('https://raw.githubusercontent.com/kpjhg0124/PetitionApplication-py/master/version.json').read().decode('utf-8'))
-        done = True
-    except:
-        body_content += '업데이트 확인 작업 중 문제가 발생했습니다. 나중에 다시 시도하세요.'
-        done = False
-        github_stable = {'ver' : 0, 'rel' : 0}
+    github_stable, done, body_content = request_update()
 
     latest = '<i class="fas fa-check"></i> fetea가 최신버전입니다. 업데이트가 필요하지 않습니다.'
     old = '<i class="fas fa-download"></i> fetea의 최신버전이 발견되었습니다. <a href="https://github.com/kpjhg0124/PetitionApplication-py/releases">Github 릴리즈 페이지</a>에서 최신 릴리즈를 받아 업데이트하세요.'
@@ -1308,6 +1302,21 @@ def flask_admin_update():
 
     body_content += '<hr><h4>fetea 버전</h4><p>현재: {}. {}번째 추가 릴리즈<br>최신: {}. {}번째 추가 릴리즈</p>'.format(local_stable['ver'], local_stable['rel'], github_stable['ver'], github_stable['rel'])
     return render_template('admin.html', appname = LocalSettings.entree_appname, body_content = body_content, nav_bar = nav_bar, custom_header = load_header())
+
+@app.route('/admin/update/<regex("download|exec"):func>')
+@app.route('/admin/update/<regex("download|exec"):func>/')
+def flask_admin_update_exec(func = None):
+    if 'now_login' in session:
+        if user_control.identify_user(session['now_login']) == False:
+            return redirect('/error/acl')
+    else:
+        return redirect('/error/acl/')
+
+    if func == 'download':
+        local_stable = json.loads(open('version.json', encoding='utf-8').read())
+        github_stable, done, body_content = request_update()
+        if local_stable['ver'] < github_stable['ver'] and done == True:
+
 
 # ## flask: Admin-Petition Manage
 @app.route('/admin/petition')
