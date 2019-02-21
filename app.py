@@ -1316,7 +1316,7 @@ def flask_admin_update_exec(func = None):
         local_stable = json.loads(open('version.json', encoding='utf-8').read())
         github_stable, done, body_content = request_update()
         if local_stable['ver'] < github_stable['ver'] and done == True:
-
+            pass
 
 # ## flask: Admin-Petition Manage
 @app.route('/admin/petition')
@@ -1964,6 +1964,11 @@ def flask_ajax_a():
         else:
             return_json += [{"peti_id" : peti_data[i][0], "peti_display" : peti_data[i][1], "peti_status" : peti_data[i][3]}]
     return str(return_json)
+
+@app.route('/assets/<target>')
+@app.route('/assets/<target>/')
+def assets_route(target = None):
+    return flask.send_from_directory('assets', target)
 
 # ## flask: Error Handler
 @app.route('/error/acl', methods=['GET'])

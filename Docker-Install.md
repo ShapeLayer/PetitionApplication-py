@@ -15,5 +15,5 @@ $ docker pull kpjhg0124/fetea-dev
 ## Start Application
 ```
 $ docker run -d --name <name> -v <data-path>:/app/data -p <port>:2500 kpjhg0124/fetea(-dev)
-$ docker urn -d --name fetea -v data:/app/data -p 2500:2500 kpjhg0124/fetea(-dev)
+$ docker run -d --name fetea -v data:/app/data -p 2500:2500 kpjhg0124/fetea(-dev)
 ```
